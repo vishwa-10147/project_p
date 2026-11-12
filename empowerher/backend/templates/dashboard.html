@@ -318,6 +318,44 @@
                 </p>
             </div>
 
+            <!-- Documents -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('documents')"
+                onkeydown="handleModuleKey(event, 'documents')"
+            >
+                <div class="icon">📄</div>
+
+                <h2>Document Verification</h2>
+
+                <p>
+                    Upload PAN, Aadhaar, GST or Udyam documents for OCR-based
+                    checks. Files are stored encrypted.
+                </p>
+            </div>
+
+            <!-- Idea Vault -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('vault')"
+                onkeydown="handleModuleKey(event, 'vault')"
+            >
+                <div class="icon">🔐</div>
+
+                <h2>Idea Vault</h2>
+
+                <p>
+                    Protect confidential ideas and prove ownership to investors
+                    with zero-knowledge proofs.
+                </p>
+            </div>
+
             <!-- AI Assistant -->
 
             <div
@@ -487,6 +525,8 @@
                 market: "/market/",
                 assistant: "/assistant/",
                 safety: "/safety/",
+                documents: "/documents/",
+                vault: "/vault/",
                 profile: "/profile/"
             };
 

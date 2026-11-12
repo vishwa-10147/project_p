@@ -1,0 +1,245 @@
+{% extends "base_app.html" %}
+{% block title %}Government Schemes{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Government Schemes 🏛️</h1>
+    <p>
+        Find central and state schemes for loans, subsidies, grants,
+        guarantees and training. Recommendations explain why each scheme
+        matches you.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>Recommended for you</h2>
+    <form id="recommendForm" class="form-grid">
+        <div class="field">
+            <label for="state">State</label>
+            <select id="state" name="state"></select>
+        </div>
+        <div class="field">
+            <label for="category">Business category</label>
+            <select id="category" name="category">
+                <option value="">Any</option>
+                <option value="food">Food and Beverages</option>
+                <option value="clothing">Clothing and Fashion</option>
+                <option value="beauty">Beauty and Personal Care</option>
+                <option value="handicrafts">Handicrafts</option>
+                <option value="agriculture">Agriculture</option>
+                <option value="education">Education</option>
+                <option value="technology">Technology</option>
+                <option value="retail">Retail</option>
+                <option value="services">Professional or Local Services</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="stage">Business stage</label>
+            <select id="stage" name="stage">
+                <option value="idea">Business idea</option>
+                <option value="startup">Startup</option>
+                <option value="existing">Existing business</option>
+                <option value="expansion">Expansion</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="amount">Amount needed (₹)</label>
+            <input id="amount" name="amount" type="number" min="0" step="1000"
+                   placeholder="e.g. 300000">
+        </div>
+        <div class="field full">
+            <label for="description">Describe your business (optional)</label>
+            <textarea id="description" name="description"
+                      placeholder="e.g. Homemade pickles and millet snacks sold to offices"></textarea>
+        </div>
+        <fieldset class="field full" style="border:0;padding:0;margin:0">
+            <legend style="font-weight:700;font-size:14px;margin-bottom:6px">
+                Do any of these apply to you? (optional)
+            </legend>
+            <div id="groups" class="tags"></div>
+        </fieldset>
+        <div class="actions field full">
+            <button type="submit" id="recommendButton">Find schemes</button>
+        </div>
+    </form>
+    <div id="recommendMessage" class="hidden" role="status"></div>
+    <div id="recommendations" class="cards" style="margin-top:18px"></div>
+</section>
+
+<section class="panel">
+    <h2>Browse all schemes</h2>
+    <div class="form-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input id="search" type="search" placeholder="e.g. tailoring, subsidy">
+        </div>
+        <div class="field">
+            <label for="benefit">Type of support</label>
+            <select id="benefit">
+                <option value="">All</option>
+                <option value="loan">Loan</option>
+                <option value="subsidy">Subsidy</option>
+                <option value="grant">Grant</option>
+                <option value="guarantee">Credit guarantee</option>
+                <option value="training">Training</option>
+                <option value="incubation">Incubation</option>
+                <option value="market_access">Market access</option>
+            </select>
+        </div>
+    </div>
+    <p class="muted" id="disclaimer"></p>
+    <div id="allSchemes" class="cards"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const user = currentUser();
+const profile = user.profile || {};
+const stateSelect = document.getElementById("state");
+const groupsBox = document.getElementById("groups");
+const recommendations = document.getElementById("recommendations");
+const recommendMessage = document.getElementById("recommendMessage");
+let catalogue = [];
+
+function formatAmount(scheme) {
+    if (scheme.max_amount_inr) {
+        return (scheme.min_amount_inr ? money(scheme.min_amount_inr) + " – " : "Up to ")
+            + money(scheme.max_amount_inr);
+    }
+    return null;
+}
+
+function schemeCard(scheme, extra) {
+    const card = el("article", "card");
+    card.appendChild(el("h3", "", scheme.name));
+    card.appendChild(el("span", "muted", scheme.authority +
+        (scheme.level === "state" ? " · " + scheme.states.join(", ") : " · All India")));
+
+    const tags = el("div", "tags");
+    scheme.benefit_type.forEach(function (type) {
+        tags.appendChild(el("span", "tag", type.replace("_", " ")));
+    });
+    if (scheme.women_specific) {
+        tags.appendChild(el("span", "tag green", "for women"));
+    }
+    const amount = formatAmount(scheme);
+    if (amount) {
+        tags.appendChild(el("span", "tag amber", amount));
+    }
+    card.appendChild(tags);
+    card.appendChild(el("p", "", scheme.summary));
+
+    if (extra) {
+        extra.reasons.forEach(function (reason) {
+            card.appendChild(el("span", "", "✓ " + reason));
+        });
+        extra.cautions.forEach(function (caution) {
+            card.appendChild(el("span", "muted", "⚠ " + caution));
+        });
+    }
+
+    const details = el("details");
+    details.appendChild(el("summary", "", "Eligibility and how to apply"));
+    const list = el("ul");
+    scheme.eligibility.forEach(function (item) {
+        list.appendChild(el("li", "", item));
+    });
+    details.appendChild(list);
+    details.appendChild(el("p", "", scheme.how_to_apply));
+    card.appendChild(details);
+    card.appendChild(externalLink(scheme.source_url, "Official website ↗"));
+    return card;
+}
+
+function renderCatalogue() {
+    const query = document.getElementById("search").value.toLowerCase().trim();
+    const benefit = document.getElementById("benefit").value;
+    const box = document.getElementById("allSchemes");
+    box.replaceChildren();
+    catalogue
+        .filter(function (s) {
+            const text = (s.name + " " + s.summary + " " + s.keywords).toLowerCase();
+            return (!benefit || s.benefit_type.includes(benefit)) &&
+                (!query || query.split(/\s+/).every(function (w) { return text.includes(w); }));
+        })
+        .forEach(function (s) { box.appendChild(schemeCard(s)); });
+    if (!box.children.length) {
+        box.appendChild(el("p", "muted", "No schemes match your search."));
+    }
+}
+
+async function loadCatalogue() {
+    const [data, states] = await Promise.all([
+        api("/api/schemes/"),
+        api("/api/market/states/")
+    ]);
+    catalogue = data.schemes;
+    document.getElementById("disclaimer").textContent =
+        data.disclaimer + " Last reviewed: " + data.last_reviewed + ".";
+
+    stateSelect.appendChild(new Option("Select state", ""));
+    states.states.forEach(function (state) {
+        stateSelect.appendChild(new Option(state, state));
+    });
+    stateSelect.value = states.states.find(function (s) {
+        return s.toLowerCase() === String(profile.state || "").toLowerCase();
+    }) || "";
+    document.getElementById("stage").value = profile.business_stage || "idea";
+
+    Object.entries(data.social_groups).forEach(function ([value, label]) {
+        const wrapper = el("label", "tag");
+        wrapper.style.cursor = "pointer";
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.value = value;
+        box.name = "group";
+        box.style.width = "auto";
+        box.style.marginRight = "6px";
+        wrapper.appendChild(box);
+        wrapper.appendChild(document.createTextNode(label));
+        groupsBox.appendChild(wrapper);
+    });
+    renderCatalogue();
+}
+
+document.getElementById("search").addEventListener("input", renderCatalogue);
+document.getElementById("benefit").addEventListener("change", renderCatalogue);
+
+document.getElementById("recommendForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const button = document.getElementById("recommendButton");
+    button.disabled = true;
+    clearMessage(recommendMessage);
+
+    const params = new URLSearchParams();
+    ["state", "category", "stage", "amount", "description"].forEach(function (name) {
+        const value = document.getElementById(name).value.trim();
+        if (value) { params.append(name, value); }
+    });
+    groupsBox.querySelectorAll("input:checked").forEach(function (box) {
+        params.append("group", box.value);
+    });
+
+    try {
+        const data = await api("/api/schemes/recommend/?" + params.toString());
+        recommendations.replaceChildren();
+        if (!data.recommendations.length) {
+            showMessage(recommendMessage, "No schemes matched. Try fewer filters.", "info");
+        }
+        data.recommendations.forEach(function (item) {
+            recommendations.appendChild(schemeCard(item.scheme, item));
+        });
+    } catch (error) {
+        showMessage(recommendMessage, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+loadCatalogue().catch(function (error) {
+    showMessage(recommendMessage, error.message, "error");
+});
+</script>
+{% endblock %}

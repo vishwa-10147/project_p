@@ -1,0 +1,99 @@
+{% extends "base_app.html" %}
+{% block title %}Women Safety{% endblock %}
+
+{% block extra_style %}
+<style>
+    .sos {
+        background: var(--red);
+        color: white;
+        border-radius: 16px;
+        padding: 22px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .sos h2 { margin: 0; color: white; }
+    .sos a.button { background: white; color: var(--red); font-size: 20px; }
+    .number { font-size: 22px; font-weight: 800; color: var(--purple-dark); text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="sos" aria-label="Emergency">
+    <div>
+        <h2>In danger? Call 112</h2>
+        <span>Police, ambulance and fire, anywhere in India.</span>
+    </div>
+    <a class="button" href="tel:112">📞 Call 112</a>
+</section>
+
+<section class="hero">
+    <h1>Women Safety 🛡️</h1>
+    <p>
+        Helplines, official reporting portals and practical safety guidance
+        for running your business, online and offline.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>Helplines</h2>
+    <div id="helplines" class="cards"></div>
+    <p class="muted" id="disclaimer"></p>
+</section>
+
+<section class="panel">
+    <h2>Report online</h2>
+    <div id="portals" class="cards"></div>
+</section>
+
+<section class="panel">
+    <h2>Safety guides</h2>
+    <div id="guides" class="cards"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const profile = currentUser().profile || {};
+
+api("/api/safety/resources/?state=" + encodeURIComponent(profile.state || "")).then(function (data) {
+    document.getElementById("disclaimer").textContent = data.meta.disclaimer;
+
+    const helplines = document.getElementById("helplines");
+    data.helplines.forEach(function (h) {
+        const card = el("article", "card");
+        card.appendChild(el("h3", "", h.name));
+        const number = el("a", "number", h.number);
+        number.href = "tel:" + h.number;
+        card.appendChild(number);
+        card.appendChild(el("span", "tag", h.scope));
+        card.appendChild(el("p", "", h.use_for));
+        if (h.url) { card.appendChild(externalLink(h.url, "Website ↗")); }
+        helplines.appendChild(card);
+    });
+
+    const portals = document.getElementById("portals");
+    data.reporting_portals.forEach(function (p) {
+        const card = el("article", "card");
+        card.appendChild(el("h3", "", p.name));
+        card.appendChild(el("p", "", p.use_for));
+        card.appendChild(externalLink(p.url, p.url.replace("https://", "") + " ↗"));
+        portals.appendChild(card);
+    });
+
+    const guides = document.getElementById("guides");
+    data.guides.forEach(function (g) {
+        const card = el("article", "card");
+        card.appendChild(el("h3", "", g.title));
+        card.appendChild(el("span", "tag", g.category));
+        const list = el("ul");
+        g.tips.forEach(function (tip) { list.appendChild(el("li", "", tip)); });
+        card.appendChild(list);
+        guides.appendChild(card);
+    });
+});
+</script>
+{% endblock %}

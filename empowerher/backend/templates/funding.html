@@ -1,0 +1,319 @@
+{% extends "base_app.html" %}
+{% load static %}
+{% block title %}Funding & Loans{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Funding &amp; Loans 💰</h1>
+    <p>
+        Plan your loan: calculate EMIs, check how much you can afford,
+        see the PMEGP subsidy split, and run a private affordability check
+        on encrypted figures.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>EMI calculator</h2>
+    <form id="emiForm" class="form-grid">
+        <div class="field">
+            <label for="principal">Loan amount (₹)</label>
+            <input id="principal" type="number" min="1000" step="1000" value="500000" required>
+        </div>
+        <div class="field">
+            <label for="rate">Interest rate (% per year)</label>
+            <input id="rate" type="number" min="0" max="40" step="0.1" value="10.5" required>
+        </div>
+        <div class="field">
+            <label for="tenure">Tenure (months)</label>
+            <input id="tenure" type="number" min="1" max="360" value="60" required>
+        </div>
+        <div class="actions field full"><button type="submit">Calculate EMI</button></div>
+    </form>
+    <div id="emiMessage" class="hidden" role="status"></div>
+    <div id="emiResult" class="hidden">
+        <div class="metrics" id="emiMetrics"></div>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Year</th><th>Principal paid</th><th>Interest paid</th><th>Balance</th></tr></thead>
+                <tbody id="scheduleBody"></tbody>
+            </table>
+        </div>
+        <h3 style="margin-top:18px">Loan routes for this amount</h3>
+        <div id="emiProducts" class="cards"></div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>How much loan can I afford?</h2>
+    <form id="affordForm" class="form-grid">
+        <div class="field">
+            <label for="income">Monthly business + household income (₹)</label>
+            <input id="income" type="number" min="0" step="500" required>
+        </div>
+        <div class="field">
+            <label for="expenses">Monthly expenses (₹)</label>
+            <input id="expenses" type="number" min="0" step="500" required>
+        </div>
+        <div class="field">
+            <label for="existing">Existing EMIs (₹ per month)</label>
+            <input id="existing" type="number" min="0" step="100" value="0">
+        </div>
+        <div class="field">
+            <label for="affordRate">Expected interest rate (%)</label>
+            <input id="affordRate" type="number" min="0" max="40" step="0.1" value="11">
+        </div>
+        <div class="field">
+            <label for="affordTenure">Tenure (months)</label>
+            <input id="affordTenure" type="number" min="1" max="360" value="60">
+        </div>
+        <div class="actions field full"><button type="submit">Check affordability</button></div>
+    </form>
+    <div id="affordMessage" class="hidden" role="status"></div>
+    <div id="affordResult" class="hidden">
+        <div class="metrics" id="affordMetrics"></div>
+        <p class="muted" id="affordNote"></p>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>🔒 Private affordability check (homomorphic encryption)</h2>
+    <p>
+        Your browser creates its own encryption key and encrypts your
+        income, expenses and EMIs. The server calculates your loan headroom
+        <strong>on the encrypted numbers</strong> and sends back encrypted
+        results that only this page can decrypt. The server never sees your
+        figures.
+    </p>
+    <form id="heForm" class="form-grid">
+        <div class="field">
+            <label for="heIncome">Monthly income (₹)</label>
+            <input id="heIncome" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+            <label for="heExpenses">Monthly expenses (₹)</label>
+            <input id="heExpenses" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+            <label for="heExisting">Existing EMIs (₹)</label>
+            <input id="heExisting" type="number" min="0" step="1" value="0">
+        </div>
+        <div class="field">
+            <label for="heProposed">EMI of the loan you are considering (₹)</label>
+            <input id="heProposed" type="number" min="0" step="1" required>
+        </div>
+        <div class="actions field full">
+            <button type="submit" id="heButton">Run private check</button>
+        </div>
+    </form>
+    <div id="heMessage" class="hidden" role="status"></div>
+    <div id="heResult" class="hidden">
+        <div class="metrics" id="heMetrics"></div>
+        <details>
+            <summary>What the server received</summary>
+            <p class="muted">Public key and ciphertexts only (truncated):</p>
+            <pre class="mono" id="heSent" style="white-space:pre-wrap"></pre>
+        </details>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>PMEGP subsidy calculator</h2>
+    <p class="muted">Women applicants: 5% own contribution; subsidy of 25% (urban) or 35% (rural) of project cost.</p>
+    <form id="pmegpForm" class="form-grid">
+        <div class="field">
+            <label for="projectCost">Project cost (₹)</label>
+            <input id="projectCost" type="number" min="1" max="5000000" step="1000" value="1000000" required>
+        </div>
+        <div class="field">
+            <label for="area">Location</label>
+            <select id="area"><option value="rural">Rural</option><option value="urban">Urban</option></select>
+        </div>
+        <div class="actions field full"><button type="submit">Calculate subsidy</button></div>
+    </form>
+    <div id="pmegpMessage" class="hidden" role="status"></div>
+    <div id="pmegpResult" class="hidden">
+        <div class="metrics" id="pmegpMetrics"></div>
+        <p class="muted" id="pmegpNote"></p>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Loan routes</h2>
+    <p class="muted" id="productsDisclaimer"></p>
+    <div id="allProducts" class="cards"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/paillier.js' %}"></script>
+<script>
+function productCard(product) {
+    const card = el("article", "card");
+    card.appendChild(el("h3", "", product.name));
+    const tags = el("div", "tags");
+    tags.appendChild(el("span", "tag amber", "Up to " + money(product.max_amount_inr)));
+    tags.appendChild(el("span", "tag",
+        product.indicative_rate_min === product.indicative_rate_max
+            ? product.indicative_rate_min + "% p.a."
+            : product.indicative_rate_min + "–" + product.indicative_rate_max + "% p.a. (indicative)"));
+    tags.appendChild(el("span", "tag green", "Collateral: " + product.collateral));
+    card.appendChild(tags);
+    card.appendChild(el("p", "", product.suits));
+    card.appendChild(el("span", "muted", "Lenders: " + product.lender_type));
+    return card;
+}
+
+function value(id) { return document.getElementById(id).value; }
+
+async function submitWith(form, messageId, handler) {
+    const message = document.getElementById(messageId);
+    const button = form.querySelector("button");
+    clearMessage(message);
+    button.disabled = true;
+    try {
+        await handler();
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+}
+
+document.getElementById("emiForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    submitWith(this, "emiMessage", async function () {
+        const data = await api("/api/funding/emi/", {
+            method: "POST",
+            body: { principal: value("principal"), annual_rate: value("rate"), tenure_months: value("tenure") }
+        });
+        const metrics = document.getElementById("emiMetrics");
+        metrics.replaceChildren();
+        addMetric(metrics, "Monthly EMI", money(data.emi));
+        addMetric(metrics, "Total interest", money(data.total_interest));
+        addMetric(metrics, "Total payment", money(data.total_payment));
+
+        const body = document.getElementById("scheduleBody");
+        body.replaceChildren();
+        data.yearly_schedule.forEach(function (row) {
+            const tr = el("tr");
+            [row.year, money(row.principal_paid), money(row.interest_paid), money(row.closing_balance)]
+                .forEach(function (cell) { tr.appendChild(el("td", "", cell)); });
+            body.appendChild(tr);
+        });
+
+        const products = document.getElementById("emiProducts");
+        products.replaceChildren();
+        data.matching_products.forEach(function (p) { products.appendChild(productCard(p)); });
+        if (!data.matching_products.length) {
+            products.appendChild(el("p", "muted", "No listed loan route covers this amount."));
+        }
+        document.getElementById("emiResult").classList.remove("hidden");
+    });
+});
+
+document.getElementById("affordForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    submitWith(this, "affordMessage", async function () {
+        const data = await api("/api/funding/affordability/", {
+            method: "POST",
+            body: {
+                monthly_income: value("income"),
+                monthly_expenses: value("expenses"),
+                existing_emis: value("existing") || 0,
+                annual_rate: value("affordRate"),
+                tenure_months: value("affordTenure")
+            }
+        });
+        const metrics = document.getElementById("affordMetrics");
+        metrics.replaceChildren();
+        addMetric(metrics, "Monthly surplus", money(data.monthly_surplus));
+        addMetric(metrics, "Affordable EMI", money(data.affordable_emi));
+        addMetric(metrics, "Maximum loan", money(data.max_loan_amount));
+        document.getElementById("affordNote").textContent = data.note;
+        document.getElementById("affordResult").classList.remove("hidden");
+    });
+});
+
+document.getElementById("heForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    const form = this;
+    const message = document.getElementById("heMessage");
+    submitWith(form, "heMessage", async function () {
+        const numbers = ["heIncome", "heExpenses", "heExisting", "heProposed"].map(function (id) {
+            const number = Number(value(id) || 0);
+            if (!Number.isInteger(number) || number < 0) {
+                throw new Error("Enter whole rupee amounts of 0 or more.");
+            }
+            return number;
+        });
+
+        showMessage(message, "Generating your 2048-bit key in this browser…", "info");
+        await new Promise(function (resolve) { setTimeout(resolve, 30); });
+        const keys = Paillier.generateKeyPair(2048);
+        const enc = function (n) { return Paillier.toHex(Paillier.encrypt(keys.publicKey, n)); };
+
+        const payload = {
+            public_key: { n: Paillier.toHex(keys.publicKey.n) },
+            monthly_income: enc(numbers[0]),
+            monthly_expenses: enc(numbers[1]),
+            existing_emis: enc(numbers[2]),
+            proposed_emi: numbers[3],
+            foir_percent: 50
+        };
+
+        showMessage(message, "Server is computing on encrypted values…", "info");
+        const data = await api("/api/privacy/financial-check/", { method: "POST", body: payload });
+        const dec = function (name) {
+            return Number(Paillier.decrypt(keys.privateKey, Paillier.fromHex(data.encrypted_results[name])));
+        };
+
+        const headroom = dec("emi_headroom_x100") / 100;
+        const metrics = document.getElementById("heMetrics");
+        metrics.replaceChildren();
+        addMetric(metrics, "Monthly surplus (decrypted)", money(dec("monthly_surplus")));
+        addMetric(metrics, "Yearly surplus (decrypted)", money(dec("annual_surplus")));
+        addMetric(metrics, "Total EMIs incl. new loan", money(dec("total_emi")));
+        addMetric(metrics, "EMI headroom", money(headroom));
+
+        showMessage(message, headroom >= 0
+            ? "✓ The proposed EMI fits within 50% of your monthly surplus."
+            : "⚠ The proposed EMI exceeds 50% of your monthly surplus by " + money(-headroom) + ".",
+            headroom >= 0 ? "success" : "error");
+
+        const shorten = function (hex) { return hex.slice(0, 48) + "… (" + hex.length * 4 + " bits)"; };
+        document.getElementById("heSent").textContent = [
+            "public_key.n:      " + shorten(payload.public_key.n),
+            "monthly_income:    " + shorten(payload.monthly_income),
+            "monthly_expenses:  " + shorten(payload.monthly_expenses),
+            "existing_emis:     " + shorten(payload.existing_emis),
+            "proposed_emi:      " + payload.proposed_emi + " (the loan offer, not private)"
+        ].join("\n");
+        document.getElementById("heResult").classList.remove("hidden");
+    });
+});
+
+document.getElementById("pmegpForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    submitWith(this, "pmegpMessage", async function () {
+        const data = await api("/api/funding/pmegp/", {
+            method: "POST",
+            body: { project_cost: value("projectCost"), area: value("area") }
+        });
+        const metrics = document.getElementById("pmegpMetrics");
+        metrics.replaceChildren();
+        addMetric(metrics, "Your contribution (5%)", money(data.own_contribution));
+        addMetric(metrics, "Bank loan", money(data.bank_loan));
+        addMetric(metrics, "Subsidy (" + data.subsidy_rate_percent + "%)", money(data.margin_money_subsidy));
+        addMetric(metrics, "Loan after subsidy", money(data.effective_loan_after_subsidy));
+        document.getElementById("pmegpNote").textContent = data.note;
+        document.getElementById("pmegpResult").classList.remove("hidden");
+    });
+});
+
+api("/api/funding/products/").then(function (data) {
+    document.getElementById("productsDisclaimer").textContent = data.meta.disclaimer;
+    const box = document.getElementById("allProducts");
+    data.products.forEach(function (p) { box.appendChild(productCard(p)); });
+});
+</script>
+{% endblock %}

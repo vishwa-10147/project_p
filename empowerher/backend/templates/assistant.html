@@ -1,0 +1,195 @@
+{% extends "base_app.html" %}
+{% block title %}AI Assistant{% endblock %}
+
+{% block extra_style %}
+<style>
+    .chat {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-height: 320px;
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 6px 2px;
+    }
+    .bubble {
+        max-width: 85%;
+        padding: 11px 14px;
+        border-radius: 14px;
+        white-space: pre-line;
+    }
+    .bubble.user { align-self: flex-end; background: var(--purple); color: white; }
+    .bubble.assistant { align-self: flex-start; background: var(--purple-light); }
+    .bubble .meta { display: block; font-size: 11px; opacity: 0.7; margin-top: 6px; }
+    .composer { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .composer input { flex: 1 1 240px; }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .suggestions button { font-weight: 600; font-size: 13px; padding: 7px 12px; }
+    button.listening { background: var(--red); }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>AI Assistant 🤖</h1>
+    <p>
+        Ask in English, Telugu or Hindi, by typing or by voice. The
+        assistant answers from EmpowerHer's scheme, loan and safety data.
+    </p>
+</section>
+
+<section class="panel">
+    <div class="form-grid" style="margin-bottom:12px">
+        <div class="field">
+            <label for="language">Language</label>
+            <select id="language">
+                <option value="en">English</option>
+                <option value="te">తెలుగు (Telugu)</option>
+                <option value="hi">हिन्दी (Hindi)</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="speak">Read answers aloud</label>
+            <select id="speak"><option value="no">No</option><option value="yes">Yes</option></select>
+        </div>
+    </div>
+
+    <div id="chat" class="chat" aria-live="polite"></div>
+
+    <form id="composer" class="composer">
+        <label for="question" class="hidden">Your question</label>
+        <input id="question" autocomplete="off" maxlength="1000" placeholder="Ask a question…">
+        <button type="button" id="mic" class="secondary" title="Speak your question">🎤</button>
+        <button type="submit" id="send">Send</button>
+    </form>
+    <div id="suggestions" class="suggestions"></div>
+    <div id="message" class="hidden" role="status"></div>
+    <p class="muted" style="margin-top:14px">
+        Answers may be incomplete. Confirm scheme details on official
+        websites. In an emergency call 112.
+    </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chat = document.getElementById("chat");
+const question = document.getElementById("question");
+const languageSelect = document.getElementById("language");
+const message = document.getElementById("message");
+const history = [];
+const SPEECH_LANG = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
+const SUGGESTIONS = {
+    en: ["Which schemes suit me?", "EMI for 5 lakh at 10% for 3 years",
+         "How do I protect my idea?", "Someone cheated me online"],
+    te: ["నాకు సరిపోయే ప్రభుత్వ పథకాలు ఏమిటి?", "EMI for 5 lakh at 10% for 3 years",
+         "నా ఆలోచనను ఎలా రక్షించుకోవాలి?", "ఆన్‌లైన్‌లో మోసం జరిగింది"],
+    hi: ["मेरे लिए कौन सी सरकारी योजनाएँ हैं?", "EMI for 5 lakh at 10% for 3 years",
+         "अपने विचार को गोपनीय कैसे रखूँ?", "मेरे साथ ऑनलाइन धोखा हुआ"]
+};
+const GREETING = {
+    en: "Hello! Ask me about schemes, loans, your market, documents, idea protection or safety.",
+    te: "నమస్కారం! పథకాలు, రుణాలు, మార్కెట్, పత్రాలు, ఆలోచన రక్షణ లేదా భద్రత గురించి అడగండి.",
+    hi: "नमस्ते! योजनाओं, लोन, बाज़ार, दस्तावेज़ों, विचार की सुरक्षा या सुरक्षा के बारे में पूछें।"
+};
+
+function addBubble(role, text, meta, link) {
+    const bubble = el("div", "bubble " + role, text);
+    if (link) {
+        const anchor = el("a", "", " → " + meta.linkLabel);
+        anchor.href = link;
+        bubble.appendChild(document.createElement("br"));
+        bubble.appendChild(anchor);
+    }
+    if (meta && meta.mode) {
+        bubble.appendChild(el("span", "meta", meta.mode === "ai" ? "AI answer" : "From EmpowerHer data"));
+    }
+    chat.appendChild(bubble);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function renderSuggestions() {
+    const box = document.getElementById("suggestions");
+    box.replaceChildren();
+    SUGGESTIONS[languageSelect.value].forEach(function (text) {
+        const button = el("button", "secondary", text);
+        button.type = "button";
+        button.addEventListener("click", function () { ask(text); });
+        box.appendChild(button);
+    });
+}
+
+function speak(text) {
+    if (document.getElementById("speak").value !== "yes" || !("speechSynthesis" in window)) { return; }
+    const utterance = new SpeechSynthesisUtterance(text.replace(/https?:\/\/\S+/g, ""));
+    utterance.lang = SPEECH_LANG[languageSelect.value];
+    const voice = speechSynthesis.getVoices().find(function (v) { return v.lang === utterance.lang; });
+    if (voice) { utterance.voice = voice; }
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+}
+
+async function ask(text) {
+    text = text.trim();
+    if (!text) { return; }
+    clearMessage(message);
+    addBubble("user", text);
+    question.value = "";
+    const send = document.getElementById("send");
+    send.disabled = true;
+    try {
+        const data = await api("/api/assistant/chat/", {
+            method: "POST",
+            body: { message: text, language: languageSelect.value, history: history.slice(-6) }
+        });
+        history.push({ role: "user", content: text }, { role: "assistant", content: data.reply });
+        addBubble("assistant", data.reply,
+            { mode: data.mode, linkLabel: data.link_label }, data.link);
+        speak(data.reply);
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        send.disabled = false;
+        question.focus();
+    }
+}
+
+document.getElementById("composer").addEventListener("submit", function (event) {
+    event.preventDefault();
+    ask(question.value);
+});
+
+languageSelect.addEventListener("change", function () {
+    renderSuggestions();
+    question.placeholder = { en: "Ask a question…", te: "మీ ప్రశ్న అడగండి…", hi: "अपना सवाल पूछें…" }[languageSelect.value];
+});
+
+/* Voice input via the browser's Web Speech API (Chrome, Edge, Safari). */
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = document.getElementById("mic");
+if (!Recognition) {
+    mic.disabled = true;
+    mic.title = "Voice input is not supported in this browser";
+} else {
+    let recognizer = null;
+    mic.addEventListener("click", function () {
+        if (recognizer) { recognizer.stop(); return; }
+        recognizer = new Recognition();
+        recognizer.lang = SPEECH_LANG[languageSelect.value];
+        recognizer.interimResults = false;
+        recognizer.onresult = function (event) { ask(event.results[0][0].transcript); };
+        recognizer.onerror = function (event) {
+            showMessage(message, "Voice input error: " + event.error, "error");
+        };
+        recognizer.onend = function () { recognizer = null; mic.classList.remove("listening"); };
+        mic.classList.add("listening");
+        recognizer.start();
+    });
+}
+
+const preferred = (currentUser().profile || {}).preferred_language;
+if (preferred && SPEECH_LANG[preferred]) { languageSelect.value = preferred; }
+renderSuggestions();
+addBubble("assistant", GREETING[languageSelect.value]);
+</script>
+{% endblock %}

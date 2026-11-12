@@ -104,10 +104,16 @@ DOC_TYPES = {
 }
 
 
+def squash(text):
+    """Lower-case and drop whitespace: OCR often merges or splits words."""
+    return re.sub(r"\s+", "", text.lower())
+
+
 def detect_type(text):
     lower = text.lower()
+    squashed = squash(text)
     scores = {
-        doc_type: sum(word in lower for word in words)
+        doc_type: sum(squash(word) in squashed for word in words)
         for doc_type, words in DOC_TYPE_KEYWORDS.items()
     }
     # Strong identifiers win over keywords.
@@ -116,7 +122,7 @@ def detect_type(text):
         scores["udyam"] += 3
     if GSTIN_PATTERN.search(upper.replace(" ", "")):
         scores["gst"] += 2
-    if PAN_PATTERN.search(upper) and "income tax" in lower:
+    if PAN_PATTERN.search(upper) and "incometax" in squashed:
         scores["pan"] += 2
     best = max(scores, key=scores.get)
     return best if scores[best] > 0 else "other"
@@ -201,8 +207,8 @@ def extract_fields(text, doc_type):
 
 def name_matches(text, *names):
     """True when every non-empty name part appears in the text."""
-    parts = [p.lower() for p in names if p and len(p) > 1]
+    parts = [squash(p) for p in names if p and len(p.strip()) > 1]
     if not parts:
         return None
-    lower = text.lower()
-    return all(part in lower for part in parts)
+    squashed = squash(text)
+    return all(part in squashed for part in parts)

@@ -16,6 +16,8 @@ from pypdf import PdfReader
 
 MAX_PDF_PAGES = 5
 MAX_IMAGE_SIDE = 2000
+# A white margin helps the text detector with words near the edges.
+PADDING = 40
 
 
 @lru_cache(maxsize=1)
@@ -29,6 +31,7 @@ def _engine():
 def _prepare(image):
     image = ImageOps.exif_transpose(image).convert("RGB")
     image.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE))
+    image = ImageOps.expand(image, border=PADDING, fill="white")
     return np.array(image)
 
 

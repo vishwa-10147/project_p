@@ -1,0 +1,171 @@
+{% extends "base_app.html" %}
+{% block title %}Documents{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Document Verification 📄</h1>
+    <p>
+        Upload your PAN, Aadhaar, GST or Udyam certificate. EmpowerHer
+        reads it with OCR, checks the numbers' formats and checksums,
+        and stores the file encrypted. Only masked numbers are kept.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>Upload a document</h2>
+    <form id="uploadForm" class="form-grid">
+        <div class="field">
+            <label for="docType">Document type</label>
+            <select id="docType">
+                <option value="auto">Detect automatically</option>
+                <option value="pan">PAN card</option>
+                <option value="aadhaar">Aadhaar card</option>
+                <option value="gst">GST registration certificate</option>
+                <option value="udyam">Udyam registration certificate</option>
+                <option value="bank_statement">Bank statement</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="file">File (PDF, JPEG, PNG or WebP, max 8 MB)</label>
+            <input id="file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" required>
+        </div>
+        <div class="actions field full">
+            <button type="submit" id="uploadButton">Upload and verify</button>
+            <span class="muted">Tip: for Aadhaar, you can upload a masked Aadhaar from the UIDAI website.</span>
+        </div>
+    </form>
+    <div id="message" class="hidden" role="status"></div>
+</section>
+
+<section class="panel">
+    <h2>Your documents</h2>
+    <p class="muted">
+        Checks confirm the format and checksums of the numbers found. They do
+        not confirm the document with the issuing authority.
+    </p>
+    <div id="documents" class="cards"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const message = document.getElementById("message");
+const list = document.getElementById("documents");
+const STATUS_TAG = { verified: "green", needs_review: "amber", failed: "red" };
+const FIELD_LABELS = {
+    pan: "PAN (masked)", pan_holder_type: "PAN holder type",
+    aadhaar_masked: "Aadhaar (masked)", gstin: "GSTIN", gst_state_code: "GST state code",
+    udyam_number: "Udyam number", ifsc: "IFSC", bank_code: "Bank code",
+    dates_found: "Dates found"
+};
+
+function documentCard(doc) {
+    const card = el("article", "card");
+    card.appendChild(el("h3", "", doc.doc_type_label));
+    card.appendChild(el("span", "muted", doc.original_name + " · " +
+        new Date(doc.created_at).toLocaleString("en-IN")));
+
+    const tags = el("div", "tags");
+    tags.appendChild(el("span", "tag " + STATUS_TAG[doc.status], doc.status_label));
+    tags.appendChild(el("span", "tag", "OCR confidence " + Math.round(doc.ocr_confidence * 100) + "%"));
+    tags.appendChild(el("span", "tag green", "🔒 encrypted"));
+    card.appendChild(tags);
+
+    const fields = Object.entries(doc.extracted_fields);
+    if (fields.length) {
+        const table = el("table");
+        fields.forEach(function ([key, value]) {
+            const tr = el("tr");
+            tr.appendChild(el("th", "", FIELD_LABELS[key] || key));
+            tr.appendChild(el("td", "", [].concat(value).join(", ")));
+            table.appendChild(tr);
+        });
+        card.appendChild(table);
+    }
+
+    doc.checks.forEach(function (check) {
+        card.appendChild(el("span", check.passed ? "" : "muted",
+            (check.passed ? "✓ " : "✗ ") + check.check + ": " + check.detail));
+    });
+
+    const actions = el("div", "actions");
+    const download = el("button", "secondary", "Download");
+    download.type = "button";
+    download.addEventListener("click", function () { downloadDocument(doc); });
+    const remove = el("button", "danger", "Delete");
+    remove.type = "button";
+    remove.addEventListener("click", function () { deleteDocument(doc); });
+    actions.appendChild(download);
+    actions.appendChild(remove);
+    card.appendChild(actions);
+    return card;
+}
+
+async function loadDocuments() {
+    const data = await api("/api/documents/");
+    list.replaceChildren();
+    data.documents.forEach(function (doc) { list.appendChild(documentCard(doc)); });
+    if (!data.documents.length) {
+        list.appendChild(el("p", "muted", "No documents uploaded yet."));
+    }
+}
+
+async function downloadDocument(doc) {
+    try {
+        const response = await fetch("/api/documents/" + doc.id + "/download/", {
+            headers: { "Authorization": "Token " + token }
+        });
+        if (!response.ok) { throw new Error("Download failed."); }
+        const url = URL.createObjectURL(await response.blob());
+        const link = el("a");
+        link.href = url;
+        link.download = doc.original_name;
+        link.click();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    }
+}
+
+async function deleteDocument(doc) {
+    if (!confirm("Delete " + doc.original_name + "? This cannot be undone.")) { return; }
+    try {
+        await api("/api/documents/" + doc.id + "/", { method: "DELETE" });
+        showMessage(message, "Document deleted.", "success");
+        loadDocuments();
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    }
+}
+
+document.getElementById("uploadForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const button = document.getElementById("uploadButton");
+    const file = document.getElementById("file").files[0];
+    if (!file) { return; }
+    button.disabled = true;
+    button.textContent = "Reading document…";
+    clearMessage(message);
+
+    const form = new FormData();
+    form.append("file", file);
+    form.append("doc_type", document.getElementById("docType").value);
+
+    try {
+        const doc = await api("/api/documents/", { method: "POST", body: form });
+        showMessage(message, doc.doc_type_label + ": " + doc.status_label + ".",
+            doc.status === "verified" ? "success" : "info");
+        this.reset();
+        loadDocuments();
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Upload and verify";
+    }
+});
+
+loadDocuments().catch(function (e) { showMessage(message, e.message, "error"); });
+</script>
+{% endblock %}

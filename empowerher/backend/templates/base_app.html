@@ -1,0 +1,404 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EmpowerHer{% endblock %} | EmpowerHer</title>
+
+    <style>
+        :root {
+            --purple: #6d3bb5;
+            --purple-dark: #4d267f;
+            --purple-light: #f2ebff;
+            --background: #f7f5fb;
+            --text: #292238;
+            --muted: #706a7d;
+            --border: #e7e0ef;
+            --white: #ffffff;
+            --green: #177245;
+            --green-light: #e6f4ec;
+            --red: #a52d3b;
+            --red-light: #fbeaec;
+            --amber: #8a5a00;
+            --amber-light: #fff4dc;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+        }
+
+        header.app-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .brand {
+            font-size: 23px;
+            font-weight: 800;
+            color: var(--purple);
+            text-decoration: none;
+        }
+
+        .app-nav {
+            display: flex;
+            gap: 6px 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .app-nav a {
+            color: var(--purple-dark);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .app-nav a[aria-current="page"] {
+            text-decoration: underline;
+            text-underline-offset: 4px;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 18px 60px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #6d3bb5, #9164d5);
+            color: white;
+            padding: 30px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 { margin: 0 0 8px; font-size: clamp(25px, 4vw, 35px); }
+        .hero p { margin: 0; max-width: 780px; }
+
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 24px;
+        }
+
+        h2 { margin-top: 0; font-size: 22px; }
+        h3 { margin: 0 0 6px; font-size: 18px; }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .field { display: flex; flex-direction: column; gap: 6px; }
+        .field.full { grid-column: 1 / -1; }
+
+        label { font-weight: 700; font-size: 14px; }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #d7cfe2;
+            border-radius: 9px;
+            font: inherit;
+            color: var(--text);
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: 2px solid #c6adf0;
+            border-color: var(--purple);
+        }
+
+        textarea { min-height: 110px; resize: vertical; }
+
+        .hint, .muted { color: var(--muted); font-size: 13px; }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 18px;
+            align-items: center;
+        }
+
+        button, .button {
+            border: 0;
+            border-radius: 9px;
+            padding: 11px 20px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--purple);
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        button:hover, .button:hover { background: var(--purple-dark); }
+        button:disabled { opacity: 0.6; cursor: wait; }
+
+        button.secondary, .button.secondary {
+            background: var(--purple-light);
+            color: var(--purple-dark);
+        }
+
+        button.danger { background: var(--red-light); color: var(--red); }
+
+        .message {
+            padding: 12px 14px;
+            border-radius: 9px;
+            margin-top: 14px;
+        }
+
+        .message.error { background: var(--red-light); color: var(--red); }
+        .message.success { background: var(--green-light); color: var(--green); }
+        .message.info { background: var(--purple-light); color: var(--purple-dark); }
+        .hidden { display: none !important; }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .tag {
+            font-size: 12px;
+            padding: 2px 9px;
+            border-radius: 20px;
+            background: var(--purple-light);
+            color: var(--purple-dark);
+            font-weight: 600;
+        }
+
+        .tag.green { background: var(--green-light); color: var(--green); }
+        .tag.amber { background: var(--amber-light); color: var(--amber); }
+        .tag.red { background: var(--red-light); color: var(--red); }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 12px;
+            margin: 14px 0;
+        }
+
+        .metric {
+            background: var(--purple-light);
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .metric span { display: block; font-size: 13px; color: var(--muted); }
+        .metric strong { font-size: 20px; color: var(--purple-dark); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 600; }
+        .table-wrap { overflow-x: auto; }
+
+        .bar {
+            height: 10px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            min-width: 80px;
+        }
+
+        .bar > div { height: 100%; background: var(--purple); }
+
+        a { color: var(--purple-dark); }
+
+        code, .mono {
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        @media (max-width: 700px) {
+            header.app-header { padding: 12px 16px; position: static; }
+            main { padding: 0 16px 50px; margin-top: 20px; }
+            .hero { padding: 22px; }
+            .panel { padding: 18px; }
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body>
+    <header class="app-header">
+        <a class="brand" href="/dashboard/">EmpowerHer</a>
+        <nav class="app-nav" aria-label="Main">
+            <a href="/dashboard/">Dashboard</a>
+            <a href="/schemes/">Schemes</a>
+            <a href="/funding/">Funding</a>
+            <a href="/market/">Market</a>
+            <a href="/documents/">Documents</a>
+            <a href="/vault/">Idea Vault</a>
+            <a href="/assistant/">Assistant</a>
+            <a href="/safety/">Safety</a>
+            <a href="/profile/">Profile</a>
+            {% block auth_link %}
+            <a href="#" onclick="logout(); return false;">Logout</a>
+            {% endblock %}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        "use strict";
+
+        const PUBLIC_PAGE = {% block public_page %}false{% endblock %};
+        const token = localStorage.getItem("empowerher_token");
+
+        if (!token && !PUBLIC_PAGE) {
+            window.location.href = "/login/";
+        }
+
+        document.querySelectorAll(".app-nav a").forEach(function (link) {
+            if (link.getAttribute("href") === window.location.pathname) {
+                link.setAttribute("aria-current", "page");
+            }
+        });
+
+        function currentUser() {
+            try {
+                return JSON.parse(localStorage.getItem("empowerher_user")) || {};
+            } catch (error) {
+                return {};
+            }
+        }
+
+        /* JSON API helper: adds the auth token and surfaces errors. */
+        async function api(path, options) {
+            options = options || {};
+            const headers = Object.assign({}, options.headers || {});
+            if (token) {
+                headers["Authorization"] = "Token " + token;
+            }
+            let body = options.body;
+            if (body && !(body instanceof FormData) && typeof body !== "string") {
+                body = JSON.stringify(body);
+                headers["Content-Type"] = "application/json";
+            }
+            const response = await fetch(path, {
+                method: options.method || "GET",
+                headers: headers,
+                body: body
+            });
+            if (response.status === 401 && !PUBLIC_PAGE) {
+                localStorage.removeItem("empowerher_token");
+                window.location.href = "/login/";
+                throw new Error("Session expired.");
+            }
+            if (response.status === 204) {
+                return null;
+            }
+            const data = await response.json().catch(function () { return {}; });
+            if (!response.ok) {
+                throw new Error(errorText(data));
+            }
+            return data;
+        }
+
+        function errorText(data) {
+            if (data && data.error) { return data.error; }
+            if (data && data.detail) { return data.detail; }
+            if (data && typeof data === "object") {
+                const first = Object.entries(data)[0];
+                if (first) {
+                    return first[0] + ": " + [].concat(first[1]).join(" ");
+                }
+            }
+            return "Something went wrong. Please try again.";
+        }
+
+        function el(tag, className, text) {
+            const element = document.createElement(tag);
+            if (className) { element.className = className; }
+            if (text !== undefined && text !== null) {
+                element.textContent = String(text);
+            }
+            return element;
+        }
+
+        function externalLink(url, text) {
+            const link = el("a", "", text);
+            link.href = url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            return link;
+        }
+
+        function showMessage(target, text, kind) {
+            target.textContent = text;
+            target.className = "message " + (kind || "info");
+        }
+
+        function clearMessage(target) {
+            target.textContent = "";
+            target.className = "hidden";
+        }
+
+        const rupee = new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: "INR",
+            maximumFractionDigits: 0
+        });
+
+        function money(value) {
+            const number = Number(value);
+            return Number.isFinite(number) ? rupee.format(number) : "—";
+        }
+
+        function addMetric(container, label, value) {
+            const metric = el("div", "metric");
+            metric.appendChild(el("span", "", label));
+            metric.appendChild(el("strong", "", value));
+            container.appendChild(metric);
+        }
+
+        async function logout() {
+            try {
+                await api("/api/users/logout/", { method: "POST" });
+            } catch (error) {
+                /* Clear local session regardless. */
+            }
+            localStorage.removeItem("empowerher_token");
+            localStorage.removeItem("empowerher_user");
+            window.location.href = "/login/";
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -28,6 +28,15 @@ def business_validation_page(request):
     return render(request, "business_validation.html")
 
 
+def page(template):
+    """Simple view that renders a module page; data loads via the APIs."""
+
+    def view(request):
+        return render(request, template)
+
+    return view
+
+
 urlpatterns = [
     # Django Admin
     path("admin/", admin.site.urls),
@@ -44,6 +53,16 @@ urlpatterns = [
         business_validation_page,
         name="business-validation-page",
     ),
+    path("schemes/", page("schemes.html"), name="schemes-page"),
+    path("funding/", page("funding.html"), name="funding-page"),
+    path("market/", page("market.html"), name="market-page"),
+    path("documents/", page("documents.html"), name="documents-page"),
+    path("vault/", page("vault.html"), name="vault-page"),
+    path("vault/verify/", page("vault_verify.html"),
+         name="vault-verify-page"),
+    path("assistant/", page("assistant.html"), name="assistant-page"),
+    path("safety/", page("safety.html"), name="safety-page"),
+    path("profile/", page("profile.html"), name="profile-page"),
 
     # Existing APIs
     path("api/users/", include("users.urls")),

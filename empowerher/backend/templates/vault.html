@@ -1,0 +1,210 @@
+{% extends "base_app.html" %}
+{% block title %}Idea Vault{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Idea Vault 🔐</h1>
+    <p>
+        Register a confidential business idea. It is encrypted, and you
+        receive a cryptographic commitment with a timestamp. Later you can
+        prove to an investor or mentor that the idea is yours, using a
+        zero-knowledge proof, without revealing it.
+    </p>
+</section>
+
+<section class="panel">
+    <h2>Register an idea</h2>
+    <form id="ideaForm" class="form-grid">
+        <div class="field full">
+            <label for="title">Title (visible in your list)</label>
+            <input id="title" maxlength="150" required placeholder="e.g. Millet snack subscription">
+        </div>
+        <div class="field full">
+            <label for="idea">Your confidential idea</label>
+            <textarea id="idea" maxlength="10000" required
+                      placeholder="Describe the idea in detail. It is encrypted before it is stored."></textarea>
+        </div>
+        <div class="actions field full"><button type="submit">Encrypt and register</button></div>
+    </form>
+    <div id="message" class="hidden" role="status"></div>
+
+    <div id="witnessBox" class="hidden message info">
+        <strong>Save your witness secret now.</strong>
+        It is shown only once and is not stored anywhere. You need it to
+        create ownership proofs.
+        <p class="mono" id="witness" style="margin:10px 0"></p>
+        <div class="actions">
+            <button type="button" class="secondary" id="copyWitness">Copy</button>
+            <button type="button" class="secondary" id="downloadWitness">Download as file</button>
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Your registered ideas</h2>
+    <div id="ideas" class="cards"></div>
+</section>
+
+<section class="panel hidden" id="proofPanel">
+    <h2>Create an ownership proof</h2>
+    <p class="muted" id="proofFor"></p>
+    <form id="proofForm" class="form-grid">
+        <div class="field full">
+            <label for="proofWitness">Witness secret</label>
+            <input id="proofWitness" class="mono" required autocomplete="off">
+        </div>
+        <div class="field full">
+            <label for="context">Who is this proof for?</label>
+            <input id="context" maxlength="300" required
+                   placeholder="e.g. Shared with ABC Angels for pitch review, Nov 2026">
+            <span class="hint">The proof is bound to this text, so it cannot be reused for someone else.</span>
+        </div>
+        <div class="actions field full"><button type="submit">Generate proof</button></div>
+    </form>
+    <div id="proofMessage" class="hidden" role="status"></div>
+    <div id="proofResult" class="hidden">
+        <p>Share this proof. The recipient can check it at
+            <a href="/vault/verify/" target="_blank">/vault/verify/</a> without seeing your idea.</p>
+        <textarea id="proofJson" class="mono" readonly style="min-height:180px"></textarea>
+        <div class="actions">
+            <button type="button" class="secondary" id="copyProof">Copy proof</button>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const message = document.getElementById("message");
+let selectedIdea = null;
+
+function copyText(text, target) {
+    navigator.clipboard.writeText(text).then(function () {
+        showMessage(target, "Copied to clipboard.", "success");
+    });
+}
+
+function ideaCard(idea) {
+    const card = el("article", "card");
+    card.appendChild(el("h3", "", idea.title));
+    card.appendChild(el("span", "muted", "Registered " + new Date(idea.created_at).toLocaleString("en-IN")));
+    const tags = el("div", "tags");
+    tags.appendChild(el("span", "tag green", "🔒 encrypted"));
+    tags.appendChild(el("span", "tag", idea.pedersen_commitment ? "ZK proofs enabled" : "commitment only"));
+    card.appendChild(tags);
+    card.appendChild(el("span", "", "Commitment:"));
+    card.appendChild(el("span", "mono", (idea.pedersen_commitment || idea.commitment).slice(0, 64) + "…"));
+
+    const actions = el("div", "actions");
+    const view = el("button", "secondary", "View idea");
+    view.type = "button";
+    view.addEventListener("click", async function () {
+        try {
+            const data = await api("/api/ideas/" + idea.id + "/");
+            alert(data.title + "\n\n" + data.idea);
+        } catch (error) { showMessage(message, error.message, "error"); }
+    });
+    const prove = el("button", "", "Create proof");
+    prove.type = "button";
+    prove.disabled = !idea.pedersen_commitment;
+    prove.addEventListener("click", function () {
+        selectedIdea = idea;
+        document.getElementById("proofFor").textContent = "Idea: " + idea.title;
+        document.getElementById("proofPanel").classList.remove("hidden");
+        document.getElementById("proofResult").classList.add("hidden");
+        document.getElementById("proofPanel").scrollIntoView({ behavior: "smooth" });
+    });
+    const remove = el("button", "danger", "Delete");
+    remove.type = "button";
+    remove.addEventListener("click", async function () {
+        if (!confirm("Delete \"" + idea.title + "\"? Proofs for it will no longer verify as registered.")) { return; }
+        try {
+            await api("/api/ideas/" + idea.id + "/", { method: "DELETE" });
+            loadIdeas();
+        } catch (error) { showMessage(message, error.message, "error"); }
+    });
+    [view, prove, remove].forEach(function (b) { actions.appendChild(b); });
+    card.appendChild(actions);
+    return card;
+}
+
+async function loadIdeas() {
+    const data = await api("/api/ideas/");
+    const box = document.getElementById("ideas");
+    box.replaceChildren();
+    data.ideas.forEach(function (idea) { box.appendChild(ideaCard(idea)); });
+    if (!data.ideas.length) { box.appendChild(el("p", "muted", "No ideas registered yet.")); }
+}
+
+document.getElementById("ideaForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const button = this.querySelector("button");
+    button.disabled = true;
+    clearMessage(message);
+    try {
+        const data = await api("/api/ideas/", {
+            method: "POST",
+            body: {
+                title: document.getElementById("title").value,
+                idea: document.getElementById("idea").value
+            }
+        });
+        document.getElementById("witness").textContent = data.witness_secret;
+        document.getElementById("witnessBox").classList.remove("hidden");
+        showMessage(message, data.message, "success");
+        this.reset();
+        loadIdeas();
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("copyWitness").addEventListener("click", function () {
+    copyText(document.getElementById("witness").textContent, message);
+});
+
+document.getElementById("downloadWitness").addEventListener("click", function () {
+    const blob = new Blob([
+        "EmpowerHer Idea Vault witness secret\n",
+        "Keep this file private.\n\n",
+        document.getElementById("witness").textContent, "\n"
+    ], { type: "text/plain" });
+    const link = el("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "empowerher-witness.txt";
+    link.click();
+});
+
+document.getElementById("proofForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const proofMessage = document.getElementById("proofMessage");
+    const button = this.querySelector("button");
+    button.disabled = true;
+    clearMessage(proofMessage);
+    try {
+        const data = await api("/api/ideas/" + selectedIdea.id + "/proof/", {
+            method: "POST",
+            body: {
+                witness_secret: document.getElementById("proofWitness").value.trim(),
+                context: document.getElementById("context").value.trim()
+            }
+        });
+        document.getElementById("proofJson").value = JSON.stringify({ proof: data.proof }, null, 2);
+        document.getElementById("proofResult").classList.remove("hidden");
+        showMessage(proofMessage, data.note, "success");
+    } catch (error) {
+        showMessage(proofMessage, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("copyProof").addEventListener("click", function () {
+    copyText(document.getElementById("proofJson").value, document.getElementById("proofMessage"));
+});
+
+loadIdeas().catch(function (e) { showMessage(message, e.message, "error"); });
+</script>
+{% endblock %}

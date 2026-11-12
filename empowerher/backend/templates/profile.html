@@ -1,0 +1,117 @@
+{% extends "base_app.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>My Profile 👤</h1>
+    <p>Your state, business stage and language personalise schemes, market analysis and the assistant.</p>
+</section>
+
+<section class="panel">
+    <form id="profileForm" class="form-grid">
+        <div class="field">
+            <label for="first_name">First name</label>
+            <input id="first_name" maxlength="150">
+        </div>
+        <div class="field">
+            <label for="last_name">Last name</label>
+            <input id="last_name" maxlength="150">
+        </div>
+        <div class="field">
+            <label for="phone_number">Phone number</label>
+            <input id="phone_number" maxlength="15" inputmode="tel">
+        </div>
+        <div class="field">
+            <label for="state">State</label>
+            <select id="state"></select>
+        </div>
+        <div class="field">
+            <label for="city">City / district</label>
+            <input id="city" maxlength="100" list="districtList">
+            <datalist id="districtList"></datalist>
+        </div>
+        <div class="field">
+            <label for="business_stage">Business stage</label>
+            <select id="business_stage">
+                <option value="idea">Business idea</option>
+                <option value="startup">Startup</option>
+                <option value="existing">Existing business</option>
+                <option value="expansion">Business expansion</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="preferred_language">Preferred language</label>
+            <select id="preferred_language">
+                <option value="en">English</option>
+                <option value="te">Telugu</option>
+                <option value="hi">Hindi</option>
+            </select>
+        </div>
+        <div class="actions field full"><button type="submit">Save profile</button></div>
+    </form>
+    <div id="message" class="hidden" role="status"></div>
+    <p class="muted" id="account"></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const message = document.getElementById("message");
+const PROFILE_FIELDS = ["phone_number", "state", "city", "business_stage", "preferred_language"];
+const USER_FIELDS = ["first_name", "last_name"];
+
+async function loadDistricts() {
+    const list = document.getElementById("districtList");
+    list.replaceChildren();
+    const state = document.getElementById("state").value;
+    if (!state) { return; }
+    const data = await api("/api/market/districts/?state=" + encodeURIComponent(state));
+    data.districts.forEach(function (d) { list.appendChild(new Option(d)); });
+}
+
+function fill(user) {
+    const profile = user.profile || {};
+    USER_FIELDS.forEach(function (f) { document.getElementById(f).value = user[f] || ""; });
+    PROFILE_FIELDS.forEach(function (f) {
+        if (profile[f] !== undefined && profile[f] !== null) {
+            document.getElementById(f).value = profile[f];
+        }
+    });
+    document.getElementById("account").textContent =
+        "Username: " + user.username + (user.email ? " · Email: " + user.email : "");
+}
+
+document.getElementById("state").addEventListener("change", loadDistricts);
+
+document.getElementById("profileForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const button = this.querySelector("button");
+    button.disabled = true;
+    clearMessage(message);
+    const body = {};
+    USER_FIELDS.concat(PROFILE_FIELDS).forEach(function (f) {
+        body[f] = document.getElementById(f).value.trim();
+    });
+    try {
+        const user = await api("/api/users/profile/", { method: "PATCH", body: body });
+        localStorage.setItem("empowerher_user", JSON.stringify(user));
+        fill(user);
+        showMessage(message, "Profile saved.", "success");
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+(async function init() {
+    const [states, user] = await Promise.all([api("/api/market/states/"), api("/api/users/profile/")]);
+    const select = document.getElementById("state");
+    select.appendChild(new Option("Select state", ""));
+    states.states.forEach(function (s) { select.appendChild(new Option(s, s)); });
+    localStorage.setItem("empowerher_user", JSON.stringify(user));
+    fill(user);
+    await loadDistricts();
+})().catch(function (e) { showMessage(message, e.message, "error"); });
+</script>
+{% endblock %}

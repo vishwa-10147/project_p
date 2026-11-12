@@ -1,0 +1,228 @@
+{% extends "base_app.html" %}
+{% block title %}Local Market Demand{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Local Market Demand 📊</h1>
+    <p>
+        Compare your district with all 640 Indian districts using census
+        indicators chosen for your business category, and see how many
+        women-owned enterprises already operate in your state.
+    </p>
+</section>
+
+<section class="panel">
+    <form id="marketForm" class="form-grid">
+        <div class="field">
+            <label for="state">State</label>
+            <select id="state" required></select>
+        </div>
+        <div class="field">
+            <label for="district">District</label>
+            <select id="district"><option value="">State average</option></select>
+        </div>
+        <div class="field">
+            <label for="category">Business category</label>
+            <select id="category" required>
+                <option value="food">Food and Beverages</option>
+                <option value="clothing">Clothing and Fashion</option>
+                <option value="beauty">Beauty and Personal Care</option>
+                <option value="handicrafts">Handicrafts</option>
+                <option value="agriculture">Agriculture</option>
+                <option value="education">Education</option>
+                <option value="technology">Technology</option>
+                <option value="retail">Retail</option>
+                <option value="services">Professional or Local Services</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="actions field full"><button type="submit">Analyse market</button></div>
+    </form>
+    <div id="message" class="hidden" role="status"></div>
+</section>
+
+<div id="result" class="hidden">
+    <section class="panel">
+        <h2 id="resultTitle"></h2>
+        <div class="metrics" id="headline"></div>
+        <div id="insights"></div>
+        <p class="muted" id="note"></p>
+    </section>
+
+    <section class="panel" id="indicatorPanel">
+        <h2>What drives the score</h2>
+        <p class="muted">Percentile compared with all 640 districts (higher is stronger).</p>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Indicator</th><th>Weight</th><th>Value</th><th>National percentile</th></tr></thead>
+                <tbody id="indicatorBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Top districts in the state for this category</h2>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>District</th><th>Demand potential index</th><th></th></tr></thead>
+                <tbody id="topBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Women entrepreneurship ecosystem</h2>
+        <div class="metrics" id="ecosystem"></div>
+        <p id="ecosystemNote"></p>
+    </section>
+
+    <section class="panel">
+        <h2>Method and sources</h2>
+        <p id="method"></p>
+        <p class="muted" id="dataNote"></p>
+        <ul id="sources"></ul>
+    </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const stateSelect = document.getElementById("state");
+const districtSelect = document.getElementById("district");
+const message = document.getElementById("message");
+const profile = currentUser().profile || {};
+
+function percent(value) { return (Number(value) * 100).toFixed(1) + "%"; }
+function count(value) {
+    return value === null || value === undefined ? "Not available"
+        : Number(value).toLocaleString("en-IN");
+}
+
+function bar(score) {
+    const outer = el("div", "bar");
+    const inner = el("div");
+    inner.style.width = Math.max(0, Math.min(100, score)) + "%";
+    outer.appendChild(inner);
+    return outer;
+}
+
+async function loadDistricts() {
+    districtSelect.replaceChildren(new Option("State average", ""));
+    if (!stateSelect.value) { return; }
+    const data = await api("/api/market/districts/?state=" + encodeURIComponent(stateSelect.value));
+    data.districts.forEach(function (d) { districtSelect.appendChild(new Option(d, d)); });
+    const city = String(profile.city || "").toLowerCase();
+    const match = data.districts.find(function (d) { return d.toLowerCase() === city; });
+    if (match) { districtSelect.value = match; }
+}
+
+function render(data) {
+    document.getElementById("resultTitle").textContent =
+        (data.matched_district ? data.matched_district + ", " : "") + data.state;
+
+    const headline = document.getElementById("headline");
+    headline.replaceChildren();
+    addMetric(headline, "Demand potential index", data.demand_index + " / 100");
+    addMetric(headline, "Band", data.demand_band);
+    if (data.rank_in_state) {
+        addMetric(headline, "Rank in state", data.rank_in_state + " of " + data.districts_in_state);
+        addMetric(headline, "Population (2011)", count(data.population_2011));
+        addMetric(headline, "Households (2011)", count(data.households_2011));
+    }
+    if (data.state_average_score !== undefined) {
+        addMetric(headline, "State average", data.state_average_score + " / 100");
+    }
+
+    const insights = document.getElementById("insights");
+    insights.replaceChildren();
+    (data.insights || []).forEach(function (text) { insights.appendChild(el("p", "", "• " + text)); });
+    document.getElementById("note").textContent = data.note || "";
+
+    const indicatorPanel = document.getElementById("indicatorPanel");
+    const body = document.getElementById("indicatorBody");
+    body.replaceChildren();
+    indicatorPanel.classList.toggle("hidden", !data.indicators);
+    (data.indicators || []).forEach(function (row) {
+        const tr = el("tr");
+        tr.appendChild(el("td", "", row.indicator));
+        tr.appendChild(el("td", "", Math.round(row.weight * 100) + "%"));
+        tr.appendChild(el("td", "", row.value <= 1 ? percent(row.value) : count(row.value)));
+        const cell = el("td");
+        cell.appendChild(el("span", "", row.national_percentile));
+        cell.appendChild(bar(row.national_percentile));
+        tr.appendChild(cell);
+        body.appendChild(tr);
+    });
+
+    const top = document.getElementById("topBody");
+    top.replaceChildren();
+    data.top_districts_in_state.forEach(function (row) {
+        const tr = el("tr");
+        tr.appendChild(el("td", "", row.district + (row.district === data.matched_district ? " (yours)" : "")));
+        tr.appendChild(el("td", "", row.score));
+        const cell = el("td");
+        cell.appendChild(bar(row.score));
+        tr.appendChild(cell);
+        top.appendChild(tr);
+    });
+
+    const eco = data.ecosystem || {};
+    const ecosystem = document.getElementById("ecosystem");
+    ecosystem.replaceChildren();
+    addMetric(ecosystem, "Women-owned MSMEs (Udyam + UAP)", count(eco.women_owned_msmes));
+    addMetric(ecosystem, "Per 1,000 women", eco.women_msmes_per_1000_women ?? "—");
+    addMetric(ecosystem, "National average per 1,000 women", eco.national_women_msmes_per_1000_women ?? "—");
+    addMetric(ecosystem, "CGTMSE guarantees for women", count(eco.cgtmse_guarantees_for_women));
+    addMetric(ecosystem, "PMEGP projects by women", count(eco.pmegp_women_projects));
+    document.getElementById("ecosystemNote").textContent = eco.interpretation || "";
+
+    document.getElementById("method").textContent = data.method;
+    document.getElementById("dataNote").textContent = data.data_year_note;
+    const sources = document.getElementById("sources");
+    sources.replaceChildren();
+    data.sources.forEach(function (source) {
+        const li = el("li");
+        li.appendChild(externalLink(source.url, source.name));
+        sources.appendChild(li);
+    });
+
+    document.getElementById("result").classList.remove("hidden");
+}
+
+stateSelect.addEventListener("change", function () {
+    loadDistricts().catch(function (e) { showMessage(message, e.message, "error"); });
+});
+
+document.getElementById("marketForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const button = this.querySelector("button");
+    button.disabled = true;
+    clearMessage(message);
+    try {
+        const params = new URLSearchParams({
+            state: stateSelect.value,
+            category: document.getElementById("category").value
+        });
+        if (districtSelect.value) { params.append("district", districtSelect.value); }
+        render(await api("/api/market/analysis/?" + params.toString()));
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+(async function init() {
+    const data = await api("/api/market/states/");
+    stateSelect.appendChild(new Option("Select state", ""));
+    data.states.forEach(function (s) { stateSelect.appendChild(new Option(s, s)); });
+    const match = data.states.find(function (s) {
+        return s.toLowerCase() === String(profile.state || "").toLowerCase();
+    });
+    if (match) {
+        stateSelect.value = match;
+        await loadDistricts();
+    }
+})().catch(function (e) { showMessage(message, e.message, "error"); });
+</script>
+{% endblock %}

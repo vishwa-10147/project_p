@@ -1,0 +1,77 @@
+{% extends "base_app.html" %}
+{% block title %}Verify Ownership Proof{% endblock %}
+{% block public_page %}true{% endblock %}
+{% block auth_link %}<a href="/login/">Login</a>{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Verify an idea ownership proof ✅</h1>
+    <p>
+        An entrepreneur shared a zero-knowledge proof with you. Paste it
+        below to check that they registered the idea on EmpowerHer and
+        know its contents, without the idea being revealed to you.
+    </p>
+</section>
+
+<section class="panel">
+    <form id="verifyForm">
+        <div class="field">
+            <label for="proof">Proof (JSON)</label>
+            <textarea id="proof" class="mono" required style="min-height:200px"
+                      placeholder='{"proof": {"commitment": "...", "t": "...", "z1": "...", "z2": "...", "context": "..."}}'></textarea>
+        </div>
+        <div class="actions"><button type="submit">Verify proof</button></div>
+    </form>
+    <div id="message" class="hidden" role="status"></div>
+    <div id="result" class="hidden">
+        <div class="metrics" id="metrics"></div>
+        <p id="explanation"></p>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>How it works</h2>
+    <p>
+        When the idea was registered, EmpowerHer stored a Pedersen
+        commitment <span class="mono">C = gᵐ·hʳ mod p</span>, where m is a
+        hash of the idea and r comes from a secret only the owner holds.
+        The proof is a Schnorr-style (Okamoto) proof of knowledge of m and
+        r, bound to the context text. Verifying it shows the owner knows the
+        idea behind C, and reveals nothing else about it.
+    </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("verifyForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const message = document.getElementById("message");
+    clearMessage(message);
+    let payload;
+    try {
+        payload = JSON.parse(document.getElementById("proof").value);
+    } catch (error) {
+        showMessage(message, "That is not valid JSON.", "error");
+        return;
+    }
+    try {
+        const data = await api("/api/ideas/verify-proof/", { method: "POST", body: payload });
+        const metrics = document.getElementById("metrics");
+        metrics.replaceChildren();
+        addMetric(metrics, "Proof valid", data.valid_proof ? "Yes ✓" : "No ✗");
+        addMetric(metrics, "Registered on EmpowerHer", data.registered_on_empowerher ? "Yes" : "No");
+        if (data.registered_at) {
+            addMetric(metrics, "Registered at", new Date(data.registered_at).toLocaleString("en-IN"));
+        }
+        if (data.context) { addMetric(metrics, "Proof created for", data.context); }
+        document.getElementById("explanation").textContent = data.explanation;
+        document.getElementById("result").classList.remove("hidden");
+        showMessage(message, data.valid_proof && data.registered_on_empowerher
+            ? "Verified." : "Not verified.", data.valid_proof && data.registered_on_empowerher ? "success" : "error");
+    } catch (error) {
+        showMessage(message, error.message, "error");
+    }
+});
+</script>
+{% endblock %}
