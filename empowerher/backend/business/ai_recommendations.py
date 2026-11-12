@@ -83,6 +83,14 @@ def generate_ai_recommendations(idea, report):
             "calculated_financial_estimate": report.get(
                 "financial_estimate", {}
             ),
+            "census_market_indicators": {
+                k: report.get("market_research", {}).get(k)
+                for k in ("matched_district", "demand_index",
+                          "demand_band", "insights")
+            },
+            "matched_government_schemes": [
+                s["name"] for s in report.get("recommended_schemes", [])
+            ],
             "existing_rule_based_analysis": {
                 "strengths": report.get("strengths", []),
                 "risks": report.get("risks", []),
@@ -127,7 +135,9 @@ def generate_ai_recommendations(idea, report):
         return {
             "status": "AI recommendations generated",
             "recommendations": [text],
-            "market_data_used": False,
+            "market_data_used": bool(
+                report.get("market_research", {}).get("demand_index")
+            ),
         }
 
     except Exception:

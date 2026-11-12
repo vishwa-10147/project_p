@@ -9,7 +9,12 @@ A Privacy-Preserving AI Framework for Women Entrepreneurship.
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load local secrets (encryption keys, API keys) from backend/.env.
+load_dotenv(BASE_DIR / ".env")
 
 # Security: use environment variables for deployment.
 # Rotate the previously exposed development SECRET_KEY before deployment.
@@ -20,7 +25,9 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1"
+    ).split(",")
     if host.strip()
 ]
 
@@ -50,6 +57,7 @@ INSTALLED_APPS = [
 
     # New app
     "idea_vault",
+    "market",
 ]
 
 MIDDLEWARE = [
@@ -147,3 +155,10 @@ REST_FRAMEWORK = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Uploaded documents are encrypted at rest; keep uploads small.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+
+# Curated datasets (schemes, loans, safety resources, market data).
+DATASETS_DIR = BASE_DIR / "datasets"

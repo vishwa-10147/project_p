@@ -1,0 +1,91 @@
+{
+  "meta": {
+    "description": "Emergency contacts, reporting channels and safety guidance for women entrepreneurs in India.",
+    "last_reviewed": "2026-11-12",
+    "disclaimer": "In an emergency call 112. Check state-specific numbers with your local police."
+  },
+  "helplines": [
+    {"name": "Emergency Response Support System", "number": "112", "scope": "All India", "use_for": "Any emergency: police, fire, ambulance. Also available through the 112 India app with an SOS button.", "url": "https://112.gov.in/"},
+    {"name": "Women Helpline", "number": "181", "scope": "All India", "use_for": "Women in distress; connects to One Stop Centres (Sakhi) for police, medical, legal and counselling help.", "url": "https://wcd.gov.in/"},
+    {"name": "Cyber Crime Helpline", "number": "1930", "scope": "All India", "use_for": "Report online financial fraud immediately (UPI, card, loan-app fraud) so money can be frozen.", "url": "https://cybercrime.gov.in/"},
+    {"name": "National Commission for Women helpline", "number": "7827170170", "scope": "All India", "use_for": "Complaints of violence, harassment or rights violations against women.", "url": "https://ncw.gov.in/"},
+    {"name": "Police", "number": "100", "scope": "All India", "use_for": "Police assistance (also reachable via 112).", "url": null},
+    {"name": "National Consumer Helpline", "number": "1915", "scope": "All India", "use_for": "Disputes with suppliers, sellers or service providers.", "url": "https://consumerhelpline.gov.in/"},
+    {"name": "Hyderabad SHE Teams (WhatsApp)", "number": "9490616555", "scope": "Telangana (Hyderabad)", "use_for": "Reporting eve-teasing, stalking and harassment to the women-safety wing of Hyderabad Police.", "url": null}
+  ],
+  "reporting_portals": [
+    {"name": "National Cyber Crime Reporting Portal", "url": "https://cybercrime.gov.in/", "use_for": "Online harassment, cyber stalking, morphed images, financial fraud."},
+    {"name": "SHe-Box", "url": "https://shebox.wcd.gov.in/", "use_for": "Complaints of sexual harassment at the workplace (POSH Act), including the private sector."},
+    {"name": "RBI Sachet", "url": "https://sachet.rbi.org.in/", "use_for": "Check whether a lender is registered; report illegal deposit schemes and unauthorised lenders."},
+    {"name": "RBI Complaint Management System", "url": "https://cms.rbi.org.in/", "use_for": "Complaints against banks, NBFCs and payment apps (Integrated Ombudsman)."}
+  ],
+  "guides": [
+    {
+      "id": "digital-payments",
+      "title": "Safe digital payments",
+      "category": "financial",
+      "tips": [
+        "You never need to enter your UPI PIN to RECEIVE money. A request asking for your PIN is a payment request.",
+        "Do not scan QR codes sent by unknown buyers who say they are sending you money.",
+        "Never share OTPs, card CVV or net-banking passwords, even with someone claiming to be from your bank.",
+        "Use a separate bank account and UPI ID for your business.",
+        "If you are defrauded, call 1930 immediately and report on cybercrime.gov.in."
+      ]
+    },
+    {
+      "id": "loan-apps",
+      "title": "Avoiding fake loan apps and lenders",
+      "category": "financial",
+      "tips": [
+        "Borrow only from banks, or NBFCs registered with RBI (check on RBI Sachet).",
+        "Avoid apps that ask for access to your contacts and photos.",
+        "Legitimate lenders give a Key Fact Statement with the total cost of the loan before you sign.",
+        "Never pay an upfront 'processing fee' to unknown agents to release a government-scheme loan; scheme applications are free."
+      ]
+    },
+    {
+      "id": "online-presence",
+      "title": "Protecting your online business presence",
+      "category": "digital",
+      "tips": [
+        "Use a business phone number and email for customers instead of your personal ones.",
+        "Turn on two-step verification on WhatsApp, email and social media.",
+        "Do not post your home address or live location; use a pickup point or business address.",
+        "Keep screenshots of harassing messages before blocking, and report them on cybercrime.gov.in."
+      ]
+    },
+    {
+      "id": "meeting-customers",
+      "title": "Meeting customers, suppliers and investors",
+      "category": "physical",
+      "tips": [
+        "Meet new contacts in public places during the day and tell a trusted person where you are going.",
+        "Share your live location with family when travelling for deliveries or meetings.",
+        "Keep 112 on speed dial and install the 112 India app.",
+        "Verify suppliers' GSTIN and business details before paying advances."
+      ]
+    },
+    {
+      "id": "workplace",
+      "title": "Workplace rights (POSH Act)",
+      "category": "legal",
+      "tips": [
+        "Workplaces with 10 or more employees must have an Internal Committee for sexual-harassment complaints.",
+        "Smaller workplaces fall under the district Local Committee.",
+        "Complaints can be filed online on SHe-Box.",
+        "As an employer, display your POSH policy and Internal Committee details."
+      ]
+    },
+    {
+      "id": "idea-protection",
+      "title": "Protecting your business idea",
+      "category": "digital",
+      "tips": [
+        "Register your idea in the EmpowerHer Idea Vault to create a timestamped commitment before sharing it.",
+        "Use a non-disclosure agreement (NDA) before sharing detailed plans.",
+        "Share only what is needed; use a zero-knowledge proof to show ownership without revealing the idea.",
+        "Consider trademark registration for your brand name."
+      ]
+    }
+  ]
+}

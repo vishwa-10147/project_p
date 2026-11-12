@@ -623,18 +623,76 @@ function renderReport(report) {
     );
 
     marketSection.appendChild(
-        makeElement("p", "", market.status || "Not connected")
+        makeElement("p", "muted", market.status || "Not available")
     );
 
-    marketSection.appendChild(
-        makeElement(
-            "p",
-            "muted",
-            market.note || "No verified market statistics are available."
-        )
-    );
+    if (market.demand_index !== undefined) {
+        const marketMetrics = makeElement("div", "metrics");
+        addMetric(
+            marketMetrics,
+            "Demand potential index",
+            market.demand_index + " / 100 (" + market.demand_band + ")"
+        );
+        addMetric(
+            marketMetrics,
+            "District",
+            market.matched_district || "Not matched (state average)"
+        );
+        if (market.rank_in_state) {
+            addMetric(
+                marketMetrics,
+                "Rank in state",
+                market.rank_in_state + " of " + market.districts_in_state
+            );
+        }
+        marketSection.appendChild(marketMetrics);
+
+        (market.insights || []).forEach(function (insight) {
+            marketSection.appendChild(makeElement("p", "", insight));
+        });
+        if (market.ecosystem_interpretation) {
+            marketSection.appendChild(
+                makeElement("p", "", market.ecosystem_interpretation)
+            );
+        }
+        const link = makeElement("a", "", "Open the full market analysis");
+        link.href = "/market/";
+        marketSection.appendChild(link);
+    }
+
+    [market.note, market.data_year_note].forEach(function (text) {
+        if (text) {
+            marketSection.appendChild(makeElement("p", "muted", text));
+        }
+    });
 
     reportContent.appendChild(marketSection);
+
+    const schemes = report.recommended_schemes || [];
+    if (schemes.length) {
+        const schemeSection = makeElement("div", "report-section");
+        schemeSection.appendChild(
+            makeElement("h3", "", "Government schemes to explore")
+        );
+        const list = document.createElement("ul");
+        schemes.forEach(function (scheme) {
+            const item = document.createElement("li");
+            const name = makeElement("a", "", scheme.name);
+            name.href = scheme.source_url;
+            name.target = "_blank";
+            name.rel = "noopener noreferrer";
+            item.appendChild(name);
+            item.appendChild(
+                makeElement("span", "", " — " + scheme.summary)
+            );
+            list.appendChild(item);
+        });
+        schemeSection.appendChild(list);
+        const more = makeElement("a", "", "See all matching schemes");
+        more.href = "/schemes/";
+        schemeSection.appendChild(more);
+        reportContent.appendChild(schemeSection);
+    }
 
     const aiSection = makeElement("div", "report-section");
     aiSection.appendChild(

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "empowerher",
+      "runtimeExecutable": "/Users/vishwak/project_p/.venv/bin/python",
+      "runtimeArgs": ["/Users/vishwak/project_p/empowerher/backend/manage.py", "runserver", "8000"],
+      "port": 8000
+    }
+  ]
+}

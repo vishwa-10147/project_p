@@ -8,6 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from market.analysis import analyse
+from schemes.recommender import recommend
+
 from .models import BusinessIdea
 from .ai_recommendations import generate_ai_recommendations
 
@@ -137,14 +140,63 @@ def generate_report(idea):
         "strengths": strengths,
         "risks": risks,
         "suggestions": list(dict.fromkeys(suggestions)),
-        "market_research": {
-            "status": "Not connected",
-            "note": (
-                "This version does not access verified local demand, "
-                "market-size or competitor datasets."
-            ),
-        },
+        "market_research": market_summary(idea),
+        "recommended_schemes": scheme_summary(idea),
     }
+
+
+def market_summary(idea):
+    """Census-based local demand indicators for the idea's location."""
+    try:
+        result = analyse(
+            state=idea.state,
+            category=idea.category,
+            location=idea.location,
+        )
+    except Exception:  # Keep validation working if data is unavailable.
+        result = {"error": "Market data unavailable."}
+
+    if "error" in result:
+        return {
+            "status": "Not available",
+            "note": result["error"],
+        }
+
+    keys = [
+        "state", "matched_district", "demand_index", "demand_band",
+        "rank_in_state", "districts_in_state", "state_average_score",
+        "insights", "note", "method", "data_year_note", "sources",
+    ]
+    summary = {key: result[key] for key in keys if key in result}
+    summary["status"] = "Census 2011 and Ministry of MSME indicators"
+    ecosystem = result.get("ecosystem") or {}
+    summary["ecosystem_interpretation"] = ecosystem.get("interpretation")
+    return summary
+
+
+def scheme_summary(idea, limit=3):
+    profile = getattr(idea.user, "entrepreneur_profile", None)
+    try:
+        matches = recommend(
+            state=idea.state,
+            category=idea.category,
+            stage=profile.business_stage if profile else None,
+            amount_needed=float(idea.investment) or None,
+            description=f"{idea.description} {idea.target_customers}",
+            limit=limit,
+        )
+    except Exception:
+        return []
+    return [
+        {
+            "id": item["scheme"]["id"],
+            "name": item["scheme"]["name"],
+            "summary": item["scheme"]["summary"],
+            "source_url": item["scheme"]["source_url"],
+            "reasons": item["reasons"],
+        }
+        for item in matches
+    ]
 
 
 def validate_business_data(data):

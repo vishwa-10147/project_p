@@ -51,4 +51,9 @@ urlpatterns = [
 
     # New Idea Vault API
     path("api/ideas/", include("idea_vault.urls")),
+
+    # Module APIs
+    path("api/schemes/", include("schemes.urls")),
+    path("api/funding/", include("funding.urls")),
+    path("api/market/", include("market.urls")),
 ]

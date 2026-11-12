@@ -1,0 +1,128 @@
+{
+  "meta": {
+    "description": "Loan routes commonly used by women entrepreneurs, with indicative terms for EMI planning.",
+    "last_reviewed": "2026-11-12",
+    "disclaimer": "Interest rates are indicative ranges for planning only. Actual rates depend on the lender, the repo-linked benchmark rate and your credit profile. Confirm with the lender before applying."
+  },
+  "products": [
+    {
+      "id": "mudra-shishu",
+      "name": "MUDRA Shishu loan",
+      "scheme_id": "pmmy-mudra",
+      "lender_type": "Banks, NBFCs, MFIs",
+      "min_amount_inr": 0,
+      "max_amount_inr": 50000,
+      "indicative_rate_min": 9.0,
+      "indicative_rate_max": 12.0,
+      "max_tenure_months": 60,
+      "collateral": "Not required",
+      "suits": "Very small start-ups: home food business, tailoring, small shop equipment."
+    },
+    {
+      "id": "mudra-kishore",
+      "name": "MUDRA Kishore loan",
+      "scheme_id": "pmmy-mudra",
+      "lender_type": "Banks, NBFCs, MFIs",
+      "min_amount_inr": 50001,
+      "max_amount_inr": 500000,
+      "indicative_rate_min": 9.0,
+      "indicative_rate_max": 14.0,
+      "max_tenure_months": 60,
+      "collateral": "Not required",
+      "suits": "Growing micro businesses that need equipment or working capital."
+    },
+    {
+      "id": "mudra-tarun",
+      "name": "MUDRA Tarun / Tarun Plus loan",
+      "scheme_id": "pmmy-mudra",
+      "lender_type": "Banks, NBFCs",
+      "min_amount_inr": 500001,
+      "max_amount_inr": 2000000,
+      "indicative_rate_min": 9.0,
+      "indicative_rate_max": 14.0,
+      "max_tenure_months": 84,
+      "collateral": "Not required (covered by credit guarantee)",
+      "suits": "Established micro enterprises expanding capacity."
+    },
+    {
+      "id": "stand-up-india-loan",
+      "name": "Stand-Up India composite loan",
+      "scheme_id": "stand-up-india",
+      "lender_type": "Scheduled commercial banks",
+      "min_amount_inr": 1000000,
+      "max_amount_inr": 10000000,
+      "indicative_rate_min": 9.0,
+      "indicative_rate_max": 12.5,
+      "max_tenure_months": 84,
+      "collateral": "Primary security; CGSSI guarantee cover may replace collateral",
+      "suits": "First-time (greenfield) enterprises needing Rs 10 lakh to Rs 1 crore.",
+      "notes": "Repayment within 7 years with a moratorium of up to 18 months."
+    },
+    {
+      "id": "pmegp-loan",
+      "name": "PMEGP bank loan with margin-money subsidy",
+      "scheme_id": "pmegp",
+      "lender_type": "Banks",
+      "min_amount_inr": 0,
+      "max_amount_inr": 5000000,
+      "indicative_rate_min": 9.0,
+      "indicative_rate_max": 12.0,
+      "max_tenure_months": 84,
+      "collateral": "Not required up to Rs 10 lakh; CGTMSE cover above",
+      "suits": "New manufacturing or service units that qualify for the 25–35% subsidy.",
+      "subsidy_percent_women": {"urban": 25, "rural": 35}
+    },
+    {
+      "id": "cgtmse-msme-loan",
+      "name": "Collateral-free MSME term loan (CGTMSE covered)",
+      "scheme_id": "cgtmse",
+      "lender_type": "Banks, NBFCs",
+      "min_amount_inr": 0,
+      "max_amount_inr": 50000000,
+      "indicative_rate_min": 9.5,
+      "indicative_rate_max": 14.0,
+      "max_tenure_months": 120,
+      "collateral": "Not required (guarantee fee applies)",
+      "suits": "Existing micro and small enterprises needing term loans or working capital."
+    },
+    {
+      "id": "shg-bank-linkage",
+      "name": "SHG bank linkage loan",
+      "scheme_id": "dayny-nrlm",
+      "lender_type": "Banks via SHG",
+      "min_amount_inr": 0,
+      "max_amount_inr": 2000000,
+      "indicative_rate_min": 7.0,
+      "indicative_rate_max": 12.0,
+      "max_tenure_months": 60,
+      "collateral": "Not required",
+      "suits": "SHG members; interest subvention can reduce the effective rate in eligible districts."
+    },
+    {
+      "id": "pm-vishwakarma-loan",
+      "name": "PM Vishwakarma concessional loan",
+      "scheme_id": "pm-vishwakarma",
+      "lender_type": "Banks",
+      "min_amount_inr": 0,
+      "max_amount_inr": 300000,
+      "indicative_rate_min": 5.0,
+      "indicative_rate_max": 5.0,
+      "max_tenure_months": 30,
+      "collateral": "Not required",
+      "suits": "Registered artisans: Rs 1 lakh (18 months) then Rs 2 lakh (30 months)."
+    },
+    {
+      "id": "pm-svanidhi-loan",
+      "name": "PM SVANidhi working-capital loan",
+      "scheme_id": "pm-svanidhi",
+      "lender_type": "Banks, MFIs",
+      "min_amount_inr": 10000,
+      "max_amount_inr": 50000,
+      "indicative_rate_min": 7.0,
+      "indicative_rate_max": 12.0,
+      "max_tenure_months": 36,
+      "collateral": "Not required",
+      "suits": "Urban street vendors. 7% interest subsidy is credited for timely repayment."
+    }
+  ]
+}
