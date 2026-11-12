@@ -1,3 +1,6 @@
-from django.db import models
+"""
+The schemes module has no database tables.
 
-# Create your models here.
+It works from the datasets in backend/datasets/ or computes results on
+request (see the other modules in this app) and stores nothing.
+"""
