@@ -5,38 +5,35 @@ Django + Django REST Framework backend with server-rendered pages.
 
 ## Quick start
 
-```bash
-cd empowerher/backend
-python3.12 -m venv ../../.venv            # once
-../../.venv/bin/pip install -r requirements.txt
-cp .env.example .env                      # then fill in the keys (see below)
-../../.venv/bin/python manage.py migrate
-../../.venv/bin/python manage.py runserver
-```
-
-Open http://localhost:8000, register, and use the dashboard.
-
-Generate each encryption key with:
+**See [SETUP.md](SETUP.md).** One command sets up and runs everything:
 
 ```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+./setup.sh          # macOS / Linux
+setup.bat           # Windows
 ```
+
+The script creates the virtual environment, installs packages, generates encryption keys in `empowerher/backend/.env`, prepares the database and datasets, creates a demo account, and opens http://localhost:8000.
+
+Environment variables in `empowerher/backend/.env`:
 
 | Variable | Purpose |
 | --- | --- |
 | `DJANGO_SECRET_KEY` | Django secret key |
-| `IDEA_VAULT_ENCRYPTION_KEY` | Encrypts Idea Vault ideas (Fernet) |
+| `IDEA_VAULT_ENCRYPTION_KEY` | Encrypts Idea Vault ideas and confidential business ideas (Fernet) |
 | `DOCUMENT_ENCRYPTION_KEY` | Encrypts uploaded documents and their OCR text (Fernet) |
 | `OPENAI_API_KEY` | Optional. Enables AI recommendations and AI assistant answers |
 | `OPENAI_MODEL` | Optional, default `gpt-4.1-mini` |
 
 Losing an encryption key makes the data encrypted with it unreadable. Back keys up separately from the database.
 
-Run the tests:
+Useful commands (run from `empowerher/backend` with the virtual environment's Python):
 
-```bash
-../../.venv/bin/python manage.py test
-```
+| Command | Purpose |
+| --- | --- |
+| `python manage.py test` | Run the 49 automated tests |
+| `python manage.py seed_demo` | Create or reset the demo account |
+| `python manage.py run_benchmarks` | Measure performance (results in `report/results/benchmarks.json`) |
+| `python datasets/build_datasets.py` | Rebuild the processed datasets from the raw downloads |
 
 ## Modules
 

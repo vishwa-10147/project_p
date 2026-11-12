@@ -161,6 +161,10 @@ document.getElementById("composer").addEventListener("submit", function (event) 
 
 languageSelect.addEventListener("change", function () {
     renderSuggestions();
+    if (!history.length) {
+        chat.replaceChildren();
+        addBubble("assistant", GREETING[languageSelect.value]);
+    }
     question.placeholder = { en: "Ask a question…", te: "మీ ప్రశ్న అడగండి…", hi: "अपना सवाल पूछें…" }[languageSelect.value];
 });
 

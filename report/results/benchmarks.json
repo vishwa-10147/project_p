@@ -1,0 +1,166 @@
+{
+  "environment": {
+    "python": "3.12.10",
+    "machine": "arm64",
+    "system": "Darwin 25.5.0"
+  },
+  "fernet": {
+    "plaintext_bytes": 1000,
+    "ciphertext_bytes": 1420,
+    "encrypt": {
+      "median_ms": 0.006,
+      "min_ms": 0.006,
+      "runs": 200
+    },
+    "decrypt": {
+      "median_ms": 0.005,
+      "min_ms": 0.005,
+      "runs": 200
+    }
+  },
+  "paillier": {
+    "key_bits": 2048,
+    "ciphertext_bits": 4095,
+    "keygen": {
+      "median_ms": 494.02,
+      "min_ms": 364.054,
+      "runs": 5
+    },
+    "encrypt_one_value": {
+      "median_ms": 65.622,
+      "min_ms": 65.175,
+      "runs": 20
+    },
+    "server_affordability_computation": {
+      "median_ms": 68.349,
+      "min_ms": 67.624,
+      "runs": 20
+    },
+    "decrypt_one_value": {
+      "median_ms": 65.691,
+      "min_ms": 64.882,
+      "runs": 20
+    },
+    "check": {
+      "expected": 150000,
+      "decrypted": 150000
+    }
+  },
+  "zkp": {
+    "group_bits": 2048,
+    "proof_size_bytes": 2128,
+    "commit": {
+      "median_ms": 31.168,
+      "min_ms": 30.942,
+      "runs": 20
+    },
+    "prove": {
+      "median_ms": 62.663,
+      "min_ms": 62.021,
+      "runs": 20
+    },
+    "verify": {
+      "median_ms": 82.733,
+      "min_ms": 82.103,
+      "runs": 20
+    },
+    "valid_proof_accepted": true,
+    "tampered_proof_rejected": true,
+    "wrong_context_rejected": true
+  },
+  "ocr": {
+    "image": "synthetic PAN card, 1000x560 px",
+    "time": {
+      "median_ms": 232.261,
+      "min_ms": 225.25,
+      "runs": 5
+    },
+    "confidence": 0.9911,
+    "detected_type": "pan",
+    "masked_pan": "ABXXX1234K",
+    "checks_passed": true
+  },
+  "recommender": {
+    "schemes_in_dataset": 25,
+    "time": {
+      "median_ms": 0.327,
+      "min_ms": 0.319,
+      "runs": 50
+    },
+    "top_3": [
+      {
+        "id": "pmfme",
+        "score": 64.6
+      },
+      {
+        "id": "telangana-stree-nidhi",
+        "score": 63.0
+      },
+      {
+        "id": "we-hub-telangana",
+        "score": 48.0
+      }
+    ]
+  },
+  "market": {
+    "districts_in_dataset": 640,
+    "time": {
+      "median_ms": 4.605,
+      "min_ms": 4.418,
+      "runs": 20
+    },
+    "example": {
+      "district": "Warangal",
+      "category": "food",
+      "demand_index": 70.5,
+      "rank_in_state": 4,
+      "top_districts": [
+        {
+          "district": "Hyderabad",
+          "score": 84.9
+        },
+        {
+          "district": "Rangareddy",
+          "score": 84.0
+        },
+        {
+          "district": "Karimnagar",
+          "score": 71.6
+        },
+        {
+          "district": "Warangal",
+          "score": 70.5
+        },
+        {
+          "district": "Adilabad",
+          "score": 66.8
+        }
+      ]
+    },
+    "all_categories_warangal": {
+      "food": 70.5,
+      "clothing": 62.6,
+      "beauty": 49.3,
+      "handicrafts": 59.4,
+      "agriculture": 63.7,
+      "education": 52.9,
+      "technology": 66.1,
+      "retail": 77.9,
+      "services": 69.6
+    }
+  },
+  "emi": {
+    "example": {
+      "principal": 500000,
+      "rate": 10,
+      "months": 36,
+      "emi": 16133.59,
+      "total_interest": 80809.37
+    },
+    "time": {
+      "median_ms": 0.008,
+      "min_ms": 0.008,
+      "runs": 200
+    }
+  }
+}

@@ -18,3 +18,7 @@ empowerher/backend/staticfiles/
 
 # Keep the downloaded source PDF used to build the datasets.
 !empowerher/backend/datasets/raw/*.pdf
+
+# Report outputs (Results chapter and preview)
+!report/*.pdf
+.tools-venv/
