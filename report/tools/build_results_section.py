@@ -18,11 +18,13 @@ report/results/charts/ (make_charts.py).
 
 import json
 import re
+import sys
 from pathlib import Path
 
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 REPORT = ROOT / "report"
 RESULTS = REPORT / "results"
 SHOTS = RESULTS / "screenshots"
@@ -481,6 +483,11 @@ def fitted_width(image, width_in):
     return min(width_in, MAX_FIG_HEIGHT_IN * w / h)
 
 
+FIRST_RESULTS_PAGE = 19          # printed number of the first Results page
+PAGE_NUMBER_CENTER_X = 305.5     # matches the report's page-number position
+PAGE_NUMBER_BASELINE = 33.0
+
+
 def build_pdf(path):
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
@@ -552,39 +559,37 @@ def build_pdf(path):
             story.append(tbl)
             story.append(Spacer(1, 12))
 
+    def number_page(canvas, doc):
+        canvas.setFont(regular, 11)
+        canvas.drawCentredString(
+            PAGE_NUMBER_CENTER_X, PAGE_NUMBER_BASELINE,
+            str(FIRST_RESULTS_PAGE + doc.page - 1),
+        )
+
     SimpleDocTemplate(
         str(path), pagesize=A4, leftMargin=inch, rightMargin=inch,
         topMargin=inch, bottomMargin=inch, title="Empower-Her: Results",
-    ).build(story)
+    ).build(story, onFirstPage=number_page, onLaterPages=number_page)
     print("saved", path.relative_to(ROOT))
 
 
-def merge(chapter_pdf, out_path):
-    from pypdf import PdfReader, PdfWriter
+def assemble(chapter_pdf, out_path):
+    """
+    Insert the chapter before Conclusion and repair the pagination:
+    regenerated Table of Contents, List of Figures and List of Tables,
+    Conclusion renumbered to Chapter 5, and continued page numbers.
+    """
+    from report_pagination import assemble_report
 
-    original = PdfReader(str(ORIGINAL_PDF))
-    chapter = PdfReader(str(chapter_pdf))
-    marker = " ".join((original.pages[CONCLUSION_PAGE_INDEX].extract_text() or "").split())
-    if "CONCLUSION" not in marker[:60].upper():
-        raise SystemExit("Conclusion page not found at the expected index.")
-
-    writer = PdfWriter()
-    for i, page in enumerate(original.pages):
-        if i == CONCLUSION_PAGE_INDEX:
-            for new_page in chapter.pages:
-                writer.add_page(new_page)
-        writer.add_page(page)
-    with open(out_path, "wb") as handle:
-        writer.write(handle)
-    print("saved", out_path.relative_to(ROOT),
-          f"({len(chapter.pages)} result pages inserted before Conclusion)")
+    assemble_report(ORIGINAL_PDF, chapter_pdf, out_path, CONTENT,
+                    CONCLUSION_PAGE_INDEX, FIRST_RESULTS_PAGE)
 
 
 def main():
     build_docx(REPORT / "results_chapter.docx")
     build_pdf(REPORT / "results_chapter.pdf")
-    merge(REPORT / "results_chapter.pdf",
-          REPORT / "final_project-report_with_results.pdf")
+    assemble(REPORT / "results_chapter.pdf",
+             REPORT / "final_project-report_with_results.pdf")
 
 
 if __name__ == "__main__":
