@@ -1,82 +1,29 @@
+"""
+Main URL routing.
+
+- Website pages (frontend) come from frontend/urls.py.
+- The JSON REST API (backend) is under /api/, one prefix per app in apps/.
+"""
 
 from django.contrib import admin
-from django.urls import path, include
-from django.shortcuts import render
-
-
-def home(request):
-    return render(request, "home.html")
-
-
-def login_page(request):
-    return render(request, "login.html")
-
-
-def register_page(request):
-    return render(request, "register.html")
-
-
-def about_page(request):
-    return render(request, "about.html")
-
-
-def dashboard_page(request):
-    return render(request, "dashboard.html")
-
-
-def business_validation_page(request):
-    return render(request, "business_validation.html")
-
-
-def page(template):
-    """Simple view that renders a module page; data loads via the APIs."""
-
-    def view(request):
-        return render(request, template)
-
-    return view
-
+from django.urls import include, path
 
 urlpatterns = [
-    # Django Admin
+    # Django admin panel
     path("admin/", admin.site.urls),
 
-    # Website pages
-    path("", home, name="home"),
-    path("login/", login_page, name="login-page"),
-    path("register/", register_page, name="register-page"),
-    path("about/", about_page, name="about-page"),
-    path("dashboard/", dashboard_page, name="dashboard-page"),
+    # ---- Frontend: HTML pages ------------------------------------------
+    path("", include("frontend.urls")),
 
-    path(
-        "business/validation/",
-        business_validation_page,
-        name="business-validation-page",
-    ),
-    path("schemes/", page("schemes.html"), name="schemes-page"),
-    path("funding/", page("funding.html"), name="funding-page"),
-    path("market/", page("market.html"), name="market-page"),
-    path("documents/", page("documents.html"), name="documents-page"),
-    path("vault/", page("vault.html"), name="vault-page"),
-    path("vault/verify/", page("vault_verify.html"),
-         name="vault-verify-page"),
-    path("assistant/", page("assistant.html"), name="assistant-page"),
-    path("safety/", page("safety.html"), name="safety-page"),
-    path("profile/", page("profile.html"), name="profile-page"),
-
-    # Existing APIs
-    path("api/users/", include("users.urls")),
-    path("api/business/", include("business.urls")),
-
-    # New Idea Vault API
-    path("api/ideas/", include("idea_vault.urls")),
-
-    # Module APIs
-    path("api/schemes/", include("schemes.urls")),
-    path("api/funding/", include("funding.urls")),
-    path("api/market/", include("market.urls")),
-    path("api/documents/", include("documents.urls")),
-    path("api/privacy/", include("privacy.urls")),
-    path("api/safety/", include("safety.urls")),
-    path("api/assistant/", include("assistant.urls")),
+    # ---- Backend: REST API ---------------------------------------------
+    path("api/users/", include("apps.users.urls")),
+    path("api/business/", include("apps.business.urls")),
+    path("api/schemes/", include("apps.schemes.urls")),
+    path("api/funding/", include("apps.funding.urls")),
+    path("api/privacy/", include("apps.privacy.urls")),
+    path("api/market/", include("apps.market.urls")),
+    path("api/documents/", include("apps.documents.urls")),
+    path("api/ideas/", include("apps.idea_vault.urls")),
+    path("api/assistant/", include("apps.assistant.urls")),
+    path("api/safety/", include("apps.safety.urls")),
 ]

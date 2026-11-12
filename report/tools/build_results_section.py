@@ -38,7 +38,7 @@ B = json.loads((RESULTS / "benchmarks.json").read_text())
 
 TEST_COUNT = sum(
     path.read_text().count("    def test_")
-    for path in (ROOT / "empowerher" / "backend").glob("*/tests.py")
+    for path in (ROOT / "empowerher" / "backend" / "apps").glob("*/tests.py")
 )
 
 

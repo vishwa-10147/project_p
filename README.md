@@ -2,7 +2,7 @@
 
 **A privacy-preserving AI framework for women entrepreneurship.**
 
-New here? Read [EXPLAIN.md](EXPLAIN.md) for how the project works and why it is secure, and [SETUP.md](SETUP.md) to run it.
+New here? Read [EXPLAIN.md](EXPLAIN.md) for how the project works and why it is secure, [SETUP.md](SETUP.md) to run it, and [empowerher/backend/README.md](empowerher/backend/README.md) for the code layout. The frontend is in `empowerher/backend/frontend/` (Django templates + JavaScript, no React); the backend is in `empowerher/backend/apps/`.
 Django + Django REST Framework backend with server-rendered pages.
 
 ## Quick start
@@ -87,13 +87,13 @@ There is no automatic "sensitive or not" detection. **The user decides**, either
 - a timestamp.
 
 Keys:
-- **Two separate keys**, both read from `backend/.env` (see `idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
+- **Two separate keys**, both read from `backend/.env` (see `apps/idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
   - `IDEA_VAULT_ENCRYPTION_KEY` protects ideas: the Idea Vault and confidential business-validation ideas.
   - `DOCUMENT_ENCRYPTION_KEY` protects uploaded documents.
 - **Keys are never stored in the database and never generated automatically.** A new key would make existing data unreadable, so the server refuses to start encryption without one.
 - **Even the admin panel cannot show ciphertext:** the encrypted fields are excluded there.
 
-#### Idea Vault: what happens when an idea is registered (`idea_vault/views.py`)
+#### Idea Vault: what happens when an idea is registered (`apps/idea_vault/views.py`)
 
 1. **Encrypt.** The idea text is encrypted with the vault key, and only the ciphertext is saved (`encrypted_idea`). The title stays plain so it can be listed.
 2. **Create a witness.** A random 32-byte **witness secret** is generated.
@@ -104,7 +104,7 @@ Keys:
 5. **Viewing.** Only the owner's account can request decryption (`GET /api/ideas/<id>/`). The list endpoint never returns ciphertext or plaintext.
 6. **Proving ownership.** The owner submits the witness. The server checks it against the stored commitment, then produces a zero-knowledge proof (described below).
 
-#### Confidential business validation: what happens on submit (`business/views.py`)
+#### Confidential business validation: what happens on submit (`apps/business/views.py`)
 
 1. **Build the report in memory.** The idea is built in memory with the plain text, and the report is calculated: completeness, finances, market data and TF-IDF scheme matching.
 2. **Keep the text out of the report.** Target customers in the report are replaced with "Confidential (encrypted)". The description is never copied into the report.
@@ -112,9 +112,9 @@ Keys:
 4. **AI sees only the safe fields.** If OpenAI is configured, it receives the name, category, location, figures, market indicators and scheme names, but **never** the description or target customers.
 5. **Owner access.** `BusinessIdea.confidential_details()` can decrypt the text for its owner.
 
-Tests in `business/tests.py` check the database row, the saved report and the exact OpenAI request (mocked).
+Tests in `apps/business/tests.py` check the database row, the saved report and the exact OpenAI request (mocked).
 
-#### Documents: what happens on upload (`documents/views.py`)
+#### Documents: what happens on upload (`apps/documents/views.py`)
 
 1. **Check the file.** Its size (≤ 8 MB) and its real file signature are checked, not just the extension.
 2. **OCR in memory.** Text is extracted in memory, and the ID numbers are validated and masked.
@@ -122,13 +122,13 @@ Tests in `business/tests.py` check the database row, the saved report and the ex
 4. **Download.** Decryption happens only when the owner downloads the file. The response is marked `no-store`.
 
 ### Homomorphic encryption (Paillier)
-- **Server:** `privacy/paillier.py`. **Browser:** `static/js/paillier.js`.
+- **Server:** `apps/privacy/paillier.py`. **Browser:** `frontend/static/js/paillier.js`.
 - The browser generates a 2048-bit key pair, encrypts income, expenses and EMIs, and sends only the public key and ciphertexts.
 - The server computes `Enc(surplus)`, `Enc(12 × surplus)`, `Enc(EMI headroom)` and `Enc(total EMI)` using homomorphic addition and scalar multiplication.
 - Only the browser can decrypt the results. Nothing is stored.
 
 ### Zero-knowledge proof of idea ownership
-- **Code:** `idea_vault/zkp.py`.
+- **Code:** `apps/idea_vault/zkp.py`.
 - On registration, the server stores a Pedersen commitment `C = g^m · h^r mod p`:
   - `m` is a hash of the idea;
   - `r` is derived from a witness secret given only to the owner;

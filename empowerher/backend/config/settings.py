@@ -64,18 +64,18 @@ INSTALLED_APPS = [
     "corsheaders",
 
     # Existing EmpowerHer apps
-    "users",
-    "business",
-    "schemes",
-    "funding",
-    "privacy",
-    "documents",
-    "assistant",
-    "safety",
+    "apps.users",
+    "apps.business",
+    "apps.schemes",
+    "apps.funding",
+    "apps.privacy",
+    "apps.documents",
+    "apps.assistant",
+    "apps.safety",
 
     # New app
-    "idea_vault",
-    "market",
+    "apps.idea_vault",
+    "apps.market",
 ]
 
 MIDDLEWARE = [
@@ -96,7 +96,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [BASE_DIR / "frontend" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -152,7 +152,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "frontend" / "static"]
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -169,7 +169,7 @@ STORAGES = {
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-TEMPLATES_DIR = BASE_DIR / "templates"
+TEMPLATES_DIR = BASE_DIR / "frontend" / "templates"
 
 # Any origin in development; only the listed origins in production.
 CORS_ALLOW_ALL_ORIGINS = DEBUG

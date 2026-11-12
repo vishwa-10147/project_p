@@ -51,7 +51,7 @@ What makes the project different from an ordinary information portal is **privac
 ```
 
 - **One server.** The same Django server provides the pages (frontend) and the JSON API (backend). Each page loads, then fetches its data from the API with the user's login token.
-- **Code layout.** Each feature is a Django app in `empowerher/backend/<app>/`, with `views.py` (API), `urls.py`, and logic modules such as `recommender.py`, `analysis.py`, `paillier.py`, `zkp.py` and `ocr.py`.
+- **Code layout.** The **backend** is in `empowerher/backend/apps/`, one folder per feature, each with `views.py` (API), `urls.py`, and logic modules such as `recommender.py`, `analysis.py`, `paillier.py`, `zkp.py` and `ocr.py`. The **frontend** (HTML pages and JavaScript) is in `empowerher/backend/frontend/`. Section 8 has the full map.
 - **Data.** The database holds users and their records. Reference data (schemes, census and so on) is read from files in `datasets/` and never changed by users.
 - **Size.** About 6,000 lines of Python in 11 apps, 18 page templates, and 56 automated tests.
 
@@ -75,13 +75,13 @@ What makes the project different from an ordinary information portal is **privac
 
 ## 3. How each module works
 
-### 3.1 Users and profile (`users/`)
+### 3.1 Users and profile (`apps/users/`)
 - **Registration** creates a Django user and an `EntrepreneurProfile` (phone, city, state, business stage, preferred language).
 - **Login** checks the password and returns a random **token**. The browser stores it and sends it with every API request as `Authorization: Token …`.
 - **Personalisation.** The profile's state, stage and language are used by the scheme recommender, the market page and the assistant.
 - **Self-service.** Users can change their password, download all their data, or delete their account (Section 5.10).
 
-### 3.2 Business idea validation (`business/`)
+### 3.2 Business idea validation (`apps/business/`)
 1. **Input validation.** Required fields, length limits, categories, and numbers that must be finite and non-negative, with whole units for sales.
 2. **Financial model:**
    - revenue = price × units;
@@ -94,7 +94,7 @@ What makes the project different from an ordinary information portal is **privac
 6. **Optional AI advice** (OpenAI) built only from the figures and the facts above. The AI is told never to invent schemes or statistics.
 7. **🔒 Confidential option** (Section 5.4): the description and target customers are encrypted and never sent to the AI.
 
-### 3.3 Scheme recommendation (`schemes/recommender.py`)
+### 3.3 Scheme recommendation (`apps/schemes/recommender.py`)
 For every scheme in `datasets/curated/schemes.json`:
 1. **Hard rules exclude schemes that cannot apply:**
    - a state scheme for another state;
@@ -108,7 +108,7 @@ For every scheme in `datasets/curated/schemes.json`:
    - **Text similarity:** TF-IDF cosine similarity between the user's description and the scheme's text, worth up to +60.
 3. **Results are sorted by score.** Each one lists its **reasons** (✓) and **cautions** (⚠), so the recommendation is explainable.
 
-### 3.4 Funding (`funding/calculator.py`)
+### 3.4 Funding (`apps/funding/calculator.py`)
 - **EMI** = P·r·(1+r)ⁿ ÷ ((1+r)ⁿ − 1), where r is the monthly rate and n the number of months, with a year-by-year amortisation schedule.
 - **Affordability:** lenders typically allow EMIs of up to about 50% of monthly surplus. The tool works out the affordable EMI and inverts the EMI formula to get the maximum loan.
 - **PMEGP split for women:**
@@ -117,7 +117,7 @@ For every scheme in `datasets/curated/schemes.json`:
   - the rest as a bank loan.
 - **Loan routes** for the amount come from `loan_products.json`.
 
-### 3.5 Market demand (`market/analysis.py`)
+### 3.5 Market demand (`apps/market/analysis.py`)
 - **Data:**
   - **Census 2011:** 640 districts, 118 columns. The 10 Telangana districts are separated from the 2011 Andhra Pradesh data.
   - **Ministry of MSME (PIB, Feb 2024):** women-owned MSMEs, CGTMSE guarantees and PMEGP projects, by state.
@@ -125,7 +125,7 @@ For every scheme in `datasets/curated/schemes.json`:
 - **Scoring.** Each indicator becomes a **percentile across all 640 districts**. A weighted average gives the **demand potential index** (0–100), along with the district's rank in its state and plain-language insights.
 - **Ecosystem.** The state's women-owned MSMEs per 1,000 women are compared with the national average, which signals both how strong the support ecosystem is and how much competition to expect.
 
-### 3.6 Documents (`documents/`)
+### 3.6 Documents (`apps/documents/`)
 1. **Upload checks:** the file must be under 8 MB, and its real file signature must match its type (PDF, JPEG, PNG or WebP).
 2. **Text extraction:**
    - **PDF** text with pypdf;
@@ -142,15 +142,15 @@ For every scheme in `datasets/curated/schemes.json`:
 5. **Status:** "Checks passed", "Needs review" or "Could not read document".
 6. **Storage:** see Section 5.5. The file is encrypted and only masked numbers are kept.
 
-### 3.7 Idea Vault (`idea_vault/`)
+### 3.7 Idea Vault (`apps/idea_vault/`)
 - **Registering** an idea encrypts it and creates a timestamped commitment. The owner receives a one-time **witness secret**.
 - **Proving ownership.** The owner can later create a **zero-knowledge proof of ownership** for a named recipient.
 - **Verifying.** Anyone can check the proof at `/vault/verify/`. The proof shows the prover registered the idea at that time and knows it, without revealing the idea. Section 5.7 explains the mathematics.
 
-### 3.8 Private affordability check (`privacy/`)
+### 3.8 Private affordability check (`apps/privacy/`)
 The browser and server compute loan affordability **on encrypted numbers** using Paillier homomorphic encryption. Section 5.6 explains how.
 
-### 3.9 Assistant (`assistant/engine.py`)
+### 3.9 Assistant (`apps/assistant/engine.py`)
 1. **Detect the intent** (schemes, loan, EMI, safety, emergency, market, documents, privacy, validation, greeting) from English, Telugu and Hindi keywords.
 2. **Gather facts from EmpowerHer's own data:**
    - scheme recommendations for the user's profile;
@@ -163,7 +163,7 @@ The browser and server compute loan affordability **on encrypted numbers** using
    - **Emergencies** always get the fixed safety answer (call 112), never an AI answer.
 4. **Voice:** speech recognition and speech output use the browser's Web Speech API (`en-IN`, `te-IN`, `hi-IN`).
 
-### 3.10 Safety (`safety/`)
+### 3.10 Safety (`apps/safety/`)
 - **Emergency:** a large "Call 112" button.
 - **Helplines:** national numbers (112, 181, 1930, NCW), plus Telangana SHE Teams (via Dial 100 or the Hawk Eye app) for users in Telangana.
 - **Reporting portals:** cybercrime.gov.in, SHe-Box, RBI Sachet and the RBI complaint system.
@@ -287,7 +287,7 @@ There is no automatic guessing. **The user chooses** by picking a module or tick
   - Enc(a) × Enc(b) mod n² = **Enc(a + b)**;
   - Enc(a)ᵏ mod n² = **Enc(k · a)**.
 
-**Steps in EmpowerHer** (`static/js/paillier.js`, `privacy/paillier.py`, `privacy/views.py`):
+**Steps in EmpowerHer** (`frontend/static/js/paillier.js`, `apps/privacy/paillier.py`, `apps/privacy/views.py`):
 
 1. **The browser generates the key pair.** The private key never leaves the page.
 2. **The browser encrypts** income, expenses and existing EMIs, and sends only **n and the ciphertexts**. These are 4096-bit numbers that reveal nothing.
@@ -306,7 +306,7 @@ There is no automatic guessing. **The user chooses** by picking a module or tick
 
 **The problem:** an entrepreneur wants to show an investor "I had this idea, registered on this date", without handing over the idea.
 
-**The setup** (`idea_vault/zkp.py`):
+**The setup** (`apps/idea_vault/zkp.py`):
 - **Group:** the 2048-bit safe prime p from RFC 3526, where q = (p−1)/2 is also prime. The proof works in the subgroup of order q, with generator g = 4 and a second generator h derived by hashing, so that nobody knows log_g(h).
 - **Registration:** the server stores a **Pedersen commitment** C = gᵐ · hʳ mod p.
   - m is a hash of the idea.
@@ -388,12 +388,12 @@ All of these properties are covered by automated tests.
 | Check | Where |
 | --- | --- |
 | 56 automated tests | `python manage.py test` |
-| Owner isolation (ideas, documents, assessments) | `idea_vault/tests.py`, `documents/tests.py`, `users/tests.py` |
-| Confidential text not stored plain, not in report, not sent to AI | `business/tests.py` |
-| Paillier correctness and endpoint results | `privacy/tests.py` |
-| ZKP valid, tampered, wrong context, wrong witness | `idea_vault/tests.py` |
-| Aadhaar/GSTIN checksums, masking, fake file types | `documents/tests.py` |
-| Token expiry, rotation, rate limiting, password change, account deletion | `users/tests.py` |
+| Owner isolation (ideas, documents, assessments) | `apps/idea_vault/tests.py`, `apps/documents/tests.py`, `apps/users/tests.py` |
+| Confidential text not stored plain, not in report, not sent to AI | `apps/business/tests.py` |
+| Paillier correctness and endpoint results | `apps/privacy/tests.py` |
+| ZKP valid, tampered, wrong context, wrong witness | `apps/idea_vault/tests.py` |
+| Aadhaar/GSTIN checksums, masking, fake file types | `apps/documents/tests.py` |
+| Token expiry, rotation, rate limiting, password change, account deletion | `apps/users/tests.py` |
 | Production configuration | `run_production.sh` → `check --deploy` |
 | Measured performance | `python manage.py run_benchmarks` |
 
@@ -416,27 +416,58 @@ Security is about knowing what is **not** covered as well as what is:
 
 ## 8. File map
 
+The backend and frontend are separated inside `empowerher/backend/`:
+
 ```
 project_p/
-├── SETUP.md                 one-command setup, production deployment
-├── README.md                feature and API reference
-├── EXPLAIN.md               this document
-├── setup.sh / setup.bat     set up and run (macOS/Linux / Windows)
-├── run_production.sh        production mode with gunicorn
-├── report/                  Results chapter, screenshots, charts, benchmarks
+├── SETUP.md / README.md / EXPLAIN.md      setup, reference, this document
+├── setup.sh / setup.bat                   one-command setup and run
+├── run_production.sh                      production mode (gunicorn)
+├── report/                                project report: Results chapter, screenshots, charts
 └── empowerher/backend/
-    ├── config/              settings, expiring-token auth, Fernet helpers, dataset loader
-    ├── users/               accounts, profile, password, export, delete, demo/benchmark commands
-    ├── business/            idea validation, confidential mode
-    ├── schemes/             scheme catalogue + recommender
-    ├── funding/             EMI, affordability, PMEGP
-    ├── privacy/             Paillier homomorphic encryption
-    ├── market/              census-based demand analysis
-    ├── documents/           OCR, ID validation, encrypted storage
-    ├── idea_vault/          encrypted ideas, commitments, zero-knowledge proofs
-    ├── assistant/           multilingual assistant
-    ├── safety/              helplines and guides
-    ├── datasets/            raw downloads, processed CSVs, curated JSON
-    ├── templates/           all pages
-    └── static/js/paillier.js  browser-side Paillier
+    ├── manage.py, requirements.txt, .env  Django entry point, packages, secrets
+    │
+    ├── config/          PROJECT SETTINGS AND SHARED HELPERS
+    │   ├── settings.py        all settings (security, apps, database, static files)
+    │   ├── urls.py            main routing: pages -> frontend/, /api/... -> apps/
+    │   ├── authentication.py  expiring login tokens
+    │   ├── crypto.py          Fernet encryption helpers
+    │   └── datasets.py        loads the files in datasets/
+    │
+    ├── apps/            BACKEND: one folder per feature (REST API + logic + tests)
+    │   ├── users/        accounts, profile, password, data export, delete account,
+    │   │                 management commands (seed_demo, run_benchmarks)
+    │   ├── business/     idea validation, confidential mode, AI recommendations
+    │   ├── schemes/      scheme catalogue + recommender.py
+    │   ├── funding/      calculator.py (EMI, affordability, PMEGP)
+    │   ├── privacy/      paillier.py (homomorphic encryption) + encrypted check API
+    │   ├── market/       analysis.py (census-based demand index)
+    │   ├── documents/    ocr.py, validators.py, encrypted document storage
+    │   ├── idea_vault/   encryption.py, zkp.py (zero-knowledge proofs)
+    │   ├── assistant/    engine.py (multilingual assistant)
+    │   └── safety/       helplines and guides API
+    │
+    ├── frontend/        FRONTEND: what users see in the browser
+    │   ├── urls.py, views.py   which URL shows which page
+    │   ├── templates/          one HTML page per screen (base_app.html = shared layout)
+    │   └── static/js/          paillier.js (browser-side homomorphic encryption)
+    │
+    └── datasets/        DATA: raw downloads, processed CSVs, curated JSON
 ```
+
+Inside each backend app the files follow the same pattern:
+
+| File | Role |
+| --- | --- |
+| `urls.py` | API routes of the app (mounted under `/api/<prefix>/` in `config/urls.py`) |
+| `views.py` | API endpoints: read the request, check permissions, call the logic, return JSON |
+| logic module (`recommender.py`, `paillier.py`, `zkp.py`, `ocr.py`…) | the actual algorithm, independent of the web layer |
+| `models.py` | database tables (only apps that store data) |
+| `tests.py` | automated tests |
+| `migrations/` | database schema history |
+
+**How a page talks to the backend:**
+1. The browser opens a page, for example `/schemes/`. `frontend/urls.py` renders `frontend/templates/schemes.html`.
+2. JavaScript in that page calls the API, for example `GET /api/schemes/recommend/` with the login token.
+3. `config/urls.py` routes the call to `apps/schemes/views.py`, which uses `apps/schemes/recommender.py` and returns JSON.
+4. The page displays the JSON with `textContent`.

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
-from users.models import EntrepreneurProfile
+from apps.users.models import EntrepreneurProfile
 
 for _var in ("IDEA_VAULT_ENCRYPTION_KEY", "DOCUMENT_ENCRYPTION_KEY"):
     os.environ.setdefault(_var, Fernet.generate_key().decode())

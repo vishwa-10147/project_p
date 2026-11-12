@@ -103,7 +103,7 @@ TEST_MODULES = {
 def count_tests():
     backend = ROOT / "empowerher" / "backend"
     return [
-        (label, (backend / app / "tests.py").read_text().count("    def test_"))
+        (label, (backend / "apps" / app / "tests.py").read_text().count("    def test_"))
         for app, label in TEST_MODULES.items()
     ]
 
