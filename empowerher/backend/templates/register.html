@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Register - EmpowerHer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 30px;
+
+            background: linear-gradient(135deg, #fff0f6, #eee7ff);
+        }
+
+        .register-container {
+
+            width: 600px;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 35px rgba(0,0,0,0.1);
+
+        }
+
+        h1 {
+
+            text-align: center;
+
+            color: #8e3b9d;
+
+            margin-bottom: 10px;
+
+        }
+
+        .subtitle {
+
+            text-align: center;
+
+            color: #777;
+
+            margin-bottom: 25px;
+
+        }
+
+        .row {
+
+            display: flex;
+
+            gap: 15px;
+        }
+
+        .field {
+
+            flex: 1;
+        }
+
+        label {
+
+            display: block;
+
+            margin-top: 14px;
+
+            margin-bottom: 6px;
+
+            font-weight: bold;
+
+            color: #444;
+
+        }
+
+        input,
+        select {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 14px;
+
+        }
+
+        input:focus,
+        select:focus {
+
+            outline: none;
+
+            border-color: #8e3b9d;
+        }
+
+        button {
+
+            width: 100%;
+
+            padding: 14px;
+
+            margin-top: 25px;
+
+            border: none;
+
+            border-radius: 25px;
+
+            background: #8e3b9d;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+
+            background: #6d2879;
+        }
+
+        .message {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            text-align: center;
+
+            font-size: 14px;
+        }
+
+        .success {
+
+            background: #e8f8ed;
+
+            color: #207a3c;
+        }
+
+        .error {
+
+            background: #ffe6e6;
+
+            color: #b00020;
+        }
+
+        .back {
+
+            display: block;
+
+            text-align: center;
+
+            margin-top: 20px;
+
+            text-decoration: none;
+
+            color: #8e3b9d;
+        }
+
+        .login-link {
+
+            text-align: center;
+
+            margin-top: 20px;
+
+            color: #666;
+        }
+
+        .login-link a {
+
+            color: #8e3b9d;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+
+            .row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .register-container {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="register-container">
+
+        <h1>Join EmpowerHer</h1>
+
+        <p class="subtitle">
+            Create your entrepreneur account
+        </p>
+
+
+        <form id="registerForm">
+
+
+            <!-- Name -->
+
+            <div class="row">
+
+                <div class="field">
+
+                    <label for="first_name">
+                        First Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        placeholder="First name"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="last_name">
+                        Last Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        placeholder="Last name"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- Username -->
+
+            <label for="username">
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Choose a username"
+                required
+            >
+
+
+            <!-- Email -->
+
+            <label for="email">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="Enter your email"
+                required
+            >
+
+
+            <!-- Password -->
+
+            <div class="row">
+
+                <div class="field">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Create password"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="password_confirm">
+                        Confirm Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password_confirm"
+                        name="password_confirm"
+                        placeholder="Confirm password"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- Phone -->
+
+            <label for="phone_number">
+                Phone Number
+            </label>
+
+            <input
+                type="text"
+                id="phone_number"
+                name="phone_number"
+                placeholder="Enter phone number"
+            >
+
+
+            <!-- Location -->
+
+            <div class="row">
+
+                <div class="field">
+
+                    <label for="city">
+                        City
+                    </label>
+
+                    <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        placeholder="Your city"
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="state">
+                        State
+                    </label>
+
+                    <input
+                        type="text"
+                        id="state"
+                        name="state"
+                        placeholder="Your state"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- Business Stage -->
+
+            <label for="business_stage">
+                Business Stage
+            </label>
+
+            <select id="business_stage" name="business_stage">
+
+                <option value="idea">
+                    Business Idea
+                </option>
+
+                <option value="startup">
+                    Startup
+                </option>
+
+                <option value="existing">
+                    Existing Business
+                </option>
+
+                <option value="expansion">
+                    Business Expansion
+                </option>
+
+            </select>
+
+
+            <!-- Language -->
+
+            <label for="preferred_language">
+                Preferred Language
+            </label>
+
+            <select
+                id="preferred_language"
+                name="preferred_language"
+            >
+
+                <option value="en">
+                    English
+                </option>
+
+                <option value="te">
+                    Telugu
+                </option>
+
+                <option value="hi">
+                    Hindi
+                </option>
+
+            </select>
+
+
+            <button type="submit">
+                Create Account
+            </button>
+
+        </form>
+
+
+        <div id="message" class="message"></div>
+
+
+        <div class="login-link">
+
+            Already have an account?
+
+            <a href="{% url 'login-page' %}">
+                Login
+            </a>
+
+        </div>
+
+
+        <a href="{% url 'home' %}" class="back">
+            ← Back to Home
+        </a>
+
+    </div>
+
+
+<script>
+
+document.getElementById("registerForm").addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        const message =
+            document.getElementById("message");
+
+
+        const password =
+            document.getElementById("password").value;
+
+
+        const passwordConfirm =
+            document.getElementById("password_confirm").value;
+
+
+        /*
+         * Check passwords before sending
+         */
+
+        if (password !== passwordConfirm) {
+
+            message.className = "message error";
+
+            message.textContent =
+                "Passwords do not match.";
+
+            message.style.display = "block";
+
+            return;
+        }
+
+
+        /*
+         * Collect form data
+         */
+
+        const userData = {
+
+            username:
+                document.getElementById("username").value,
+
+            email:
+                document.getElementById("email").value,
+
+            password:
+                password,
+
+            password_confirm:
+                passwordConfirm,
+
+            first_name:
+                document.getElementById("first_name").value,
+
+            last_name:
+                document.getElementById("last_name").value,
+
+            phone_number:
+                document.getElementById("phone_number").value,
+
+            city:
+                document.getElementById("city").value,
+
+            state:
+                document.getElementById("state").value,
+
+            business_stage:
+                document.getElementById("business_stage").value,
+
+            preferred_language:
+                document.getElementById("preferred_language").value
+
+        };
+
+
+        try {
+
+            const response = await fetch(
+                "/api/users/register/",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(userData)
+                }
+            );
+
+
+            const data = await response.json();
+
+
+            if (response.ok) {
+
+                /*
+                 * Save token returned by Django
+                 */
+
+                localStorage.setItem(
+                    "empowerher_token",
+                    data.token
+                );
+
+
+                localStorage.setItem(
+                    "empowerher_user",
+                    JSON.stringify(data.user)
+                );
+
+
+                message.className =
+                    "message success";
+
+                message.textContent =
+                    "Registration successful! Redirecting...";
+
+                message.style.display = "block";
+
+
+                /*
+                 * Redirect to dashboard
+                 */
+
+                setTimeout(function() {
+
+                    window.location.href =
+                        "/dashboard/";
+
+                }, 1000);
+
+            }
+
+            else {
+
+                message.className =
+                    "message error";
+
+                /*
+                 * Convert Django validation errors
+                 * into readable text.
+                 */
+
+                let errorText = "";
+
+                for (const field in data) {
+
+                    if (Array.isArray(data[field])) {
+
+                        errorText +=
+                            field + ": " +
+                            data[field].join(", ") +
+                            " ";
+
+                    }
+
+                    else {
+
+                        errorText +=
+                            field + ": " +
+                            data[field] +
+                            " ";
+
+                    }
+
+                }
+
+                message.textContent =
+                    errorText ||
+                    "Registration failed.";
+
+                message.style.display = "block";
+
+            }
+
+        }
+
+        catch (error) {
+
+            message.className =
+                "message error";
+
+            message.textContent =
+                "Unable to connect to the server.";
+
+            message.style.display = "block";
+
+            console.error(error);
+
+        }
+
+    }
+
+);
+
+</script>
+
+
+</body>
+
+</html>

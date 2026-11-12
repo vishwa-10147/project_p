@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EmpowerHer</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff0f6, #f8e8ff, #eee7ff);
+            color: #30213f;
+        }
+
+        /* Navigation Bar */
+
+        nav {
+            width: 100%;
+            height: 75px;
+            background: rgba(255, 255, 255, 0.95);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 60px;
+
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+
+            position: fixed;
+            top: 0;
+            left: 0;
+
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #8e3b9d;
+            letter-spacing: 1px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            padding: 11px 22px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+
+            transition: 0.3s;
+        }
+
+        .about-btn {
+            color: #6d327a;
+            background: transparent;
+        }
+
+        .about-btn:hover {
+            background: #f5e5f8;
+        }
+
+        .login-btn {
+            color: #8e3b9d;
+            border: 2px solid #8e3b9d;
+        }
+
+        .login-btn:hover {
+            background: #8e3b9d;
+            color: white;
+        }
+
+        .register-btn {
+            color: white;
+            background: #8e3b9d;
+        }
+
+        .register-btn:hover {
+            background: #6d2879;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+
+        .hero {
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            text-align: center;
+
+            padding: 120px 20px 60px;
+        }
+
+        .hero-content {
+            max-width: 850px;
+        }
+
+        .hero h1 {
+            font-size: 70px;
+            color: #8e3b9d;
+            font-weight: 800;
+            letter-spacing: 3px;
+
+            margin-bottom: 20px;
+        }
+
+        .hero h2 {
+            font-size: 32px;
+            color: #392743;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .hero p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #66576b;
+
+            max-width: 700px;
+            margin: auto;
+        }
+
+        .hero-buttons {
+            margin-top: 40px;
+
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+        }
+
+        .hero-buttons a {
+            text-decoration: none;
+
+            padding: 15px 32px;
+
+            border-radius: 30px;
+
+            font-size: 16px;
+            font-weight: bold;
+
+            transition: 0.3s;
+        }
+
+        .start-btn {
+            background: #8e3b9d;
+            color: white;
+        }
+
+        .start-btn:hover {
+            background: #6d2879;
+            transform: translateY(-3px);
+        }
+
+        .learn-btn {
+            border: 2px solid #8e3b9d;
+            color: #8e3b9d;
+            background: white;
+        }
+
+        .learn-btn:hover {
+            background: #8e3b9d;
+            color: white;
+        }
+
+        /* Feature cards */
+
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+
+            margin-top: 60px;
+            flex-wrap: wrap;
+        }
+
+        .feature-card {
+            width: 210px;
+
+            background: rgba(255, 255, 255, 0.8);
+
+            padding: 25px 20px;
+
+            border-radius: 18px;
+
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+
+            transition: 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .feature-card .icon {
+            font-size: 30px;
+            margin-bottom: 12px;
+        }
+
+        .feature-card h3 {
+            color: #8e3b9d;
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Mobile */
+
+        @media (max-width: 700px) {
+
+            nav {
+                padding: 0 20px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .nav-links {
+                gap: 5px;
+            }
+
+            .nav-links a {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .hero h1 {
+                font-size: 45px;
+            }
+
+            .hero h2 {
+                font-size: 24px;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-buttons a {
+                width: 220px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+
+    <nav>
+
+        <div class="logo">
+            EmpowerHer
+        </div>
+
+        <div class="nav-links">
+
+            <a href="{% url 'about-page' %}" class="about-btn">
+                About
+            </a>
+
+            <a href="{% url 'login-page' %}" class="login-btn">
+                Login
+            </a>
+
+            <a href="{% url 'register-page' %}" class="register-btn">
+                Register
+            </a>
+
+        </div>
+
+    </nav>
+
+
+    <!-- Hero Section -->
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <h1>EMPOWERHER</h1>
+
+            <h2>
+                Empowering Women. Protecting Ideas. Building Futures.
+            </h2>
+
+            <p>
+                A privacy-preserving AI platform designed to support
+                women entrepreneurs with intelligent business guidance,
+                secure data sharing, funding assistance, government
+                scheme recommendations and business idea validation.
+            </p>
+
+
+            <div class="hero-buttons">
+
+                <a href="{% url 'register-page' %}" class="start-btn">
+                    Get Started
+                </a>
+
+                <a href="{% url 'about-page' %}" class="learn-btn">
+                    Learn More
+                </a>
+
+            </div>
+
+
+            <!-- Features -->
+
+            <div class="features">
+
+                <div class="feature-card">
+
+                    <div class="icon">🔐</div>
+
+                    <h3>Privacy</h3>
+
+                    <p>
+                        Protect sensitive business information
+                        using privacy-preserving technologies.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-card">
+
+                    <div class="icon">💡</div>
+
+                    <h3>AI Guidance</h3>
+
+                    <p>
+                        Get intelligent support for validating
+                        and developing business ideas.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-card">
+
+                    <div class="icon">💰</div>
+
+                    <h3>Funding</h3>
+
+                    <p>
+                        Explore funding opportunities and
+                        financial assistance.
+                    </p>
+
+                </div>
+
+
+                <div class="feature-card">
+
+                    <div class="icon">🌱</div>
+
+                    <h3>Growth</h3>
+
+                    <p>
+                        Discover government schemes and
+                        opportunities for business growth.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</body>
+</html>

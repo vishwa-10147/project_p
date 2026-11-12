@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard - EmpowerHer</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff5f9, #f4ecff);
+            color: #33263b;
+        }
+
+        /* NAVIGATION */
+
+        nav {
+            min-height: 75px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 50px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 27px;
+            font-weight: bold;
+            color: #8e3b9d;
+            letter-spacing: 1px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .username {
+            color: #555;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            border: none;
+            background: #8e3b9d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: #6d2879;
+        }
+
+        /* MAIN CONTENT */
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 45px 25px;
+        }
+
+        .welcome {
+            margin-bottom: 35px;
+        }
+
+        .welcome h1 {
+            font-size: 36px;
+            color: #8e3b9d;
+            margin-bottom: 10px;
+        }
+
+        .welcome p {
+            color: #6e6272;
+            font-size: 17px;
+            line-height: 1.6;
+        }
+
+        /* MODULE GRID */
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 22px;
+        }
+
+        .module-card {
+            background: white;
+            border-radius: 18px;
+            padding: 28px;
+            min-height: 210px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+            transition: transform 0.25s, box-shadow 0.25s;
+            cursor: pointer;
+        }
+
+        .module-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .module-card:focus-visible {
+            outline: 3px solid #8e3b9d;
+            outline-offset: 3px;
+        }
+
+        .icon {
+            font-size: 38px;
+            margin-bottom: 15px;
+        }
+
+        .module-card h2 {
+            color: #8e3b9d;
+            font-size: 21px;
+            margin-bottom: 10px;
+        }
+
+        .module-card p {
+            color: #6d626f;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        /* PROFILE SUMMARY */
+
+        .profile-section {
+            margin-top: 40px;
+            background: white;
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.07);
+        }
+
+        .profile-section h2 {
+            color: #8e3b9d;
+            margin-bottom: 20px;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px 30px;
+        }
+
+        .profile-item {
+            color: #555;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-item strong {
+            color: #333;
+        }
+
+        .profile-message {
+            color: #6d626f;
+            line-height: 1.6;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 700px) {
+            nav {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .username {
+                display: none;
+            }
+
+            .container {
+                padding: 30px 18px;
+            }
+
+            .welcome h1 {
+                font-size: 28px;
+            }
+
+            .module-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVIGATION -->
+
+    <nav>
+        <div class="logo">EmpowerHer</div>
+
+        <div class="nav-right">
+            <span class="username" id="usernameDisplay">
+                Entrepreneur
+            </span>
+
+            <button
+                type="button"
+                class="logout-btn"
+                onclick="logout()"
+            >
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+
+    <main class="container">
+
+        <section class="welcome">
+            <h1>Welcome to EmpowerHer 🌸</h1>
+
+            <p>
+                Your journey from business idea to
+                successful enterprise starts here.
+            </p>
+        </section>
+
+        <!-- AVAILABLE MODULES -->
+
+        <section class="module-grid" aria-label="EmpowerHer modules">
+
+            <!-- Business Idea Validation -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('business')"
+                onkeydown="handleModuleKey(event, 'business')"
+            >
+                <div class="icon">💡</div>
+
+                <h2>Business Idea Validation</h2>
+
+                <p>
+                    Evaluate your business idea, identify strengths
+                    and risks, and receive intelligent guidance.
+                </p>
+            </div>
+
+            <!-- Government Schemes -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('schemes')"
+                onkeydown="handleModuleKey(event, 'schemes')"
+            >
+                <div class="icon">🏛️</div>
+
+                <h2>Government Schemes</h2>
+
+                <p>
+                    Discover government schemes and opportunities
+                    based on your entrepreneur profile.
+                </p>
+            </div>
+
+            <!-- Funding -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('funding')"
+                onkeydown="handleModuleKey(event, 'funding')"
+            >
+                <div class="icon">💰</div>
+
+                <h2>Funding &amp; Loans</h2>
+
+                <p>
+                    Explore funding opportunities, loan assistance
+                    and EMI estimation.
+                </p>
+            </div>
+
+            <!-- Local Market -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('market')"
+                onkeydown="handleModuleKey(event, 'market')"
+            >
+                <div class="icon">📊</div>
+
+                <h2>Local Market Demand</h2>
+
+                <p>
+                    Understand local market demand, competition
+                    and potential business opportunities.
+                </p>
+            </div>
+
+            <!-- AI Assistant -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('assistant')"
+                onkeydown="handleModuleKey(event, 'assistant')"
+            >
+                <div class="icon">🤖</div>
+
+                <h2>AI Assistant</h2>
+
+                <p>
+                    Get intelligent entrepreneurial guidance
+                    through an AI-powered assistant.
+                </p>
+            </div>
+
+            <!-- Women Safety -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('safety')"
+                onkeydown="handleModuleKey(event, 'safety')"
+            >
+                <div class="icon">🛡️</div>
+
+                <h2>Women Safety</h2>
+
+                <p>
+                    Access safety information, support resources
+                    and digital safety guidance.
+                </p>
+            </div>
+
+            <!-- Profile -->
+
+            <div
+                class="module-card"
+                role="link"
+                tabindex="0"
+                onclick="openModule('profile')"
+                onkeydown="handleModuleKey(event, 'profile')"
+            >
+                <div class="icon">👤</div>
+
+                <h2>My Profile</h2>
+
+                <p>
+                    View and manage your entrepreneur profile
+                    and preferences.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- PROFILE SUMMARY -->
+
+        <section class="profile-section">
+            <h2>Your Profile</h2>
+
+            <div class="profile-info" id="profileInfo">
+                <p class="profile-message">Loading profile...</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /* CHECK LOGIN */
+
+        const token = localStorage.getItem("empowerher_token");
+
+        if (!token) {
+            window.location.href = "/login/";
+        }
+
+        /* LOAD STORED USER */
+
+        function loadStoredUser() {
+            const storedUser = localStorage.getItem("empowerher_user");
+
+            if (!storedUser) {
+                document.getElementById("profileInfo").textContent =
+                    "Profile information is not available.";
+                return;
+            }
+
+            try {
+                const user = JSON.parse(storedUser);
+
+                if (!user || typeof user !== "object") {
+                    throw new Error("Invalid user data");
+                }
+
+                document.getElementById("usernameDisplay").textContent =
+                    user.username || user.first_name || "Entrepreneur";
+
+                displayProfile(user);
+            } catch (error) {
+                document.getElementById("profileInfo").textContent =
+                    "Unable to load profile information.";
+            }
+        }
+
+        /* DISPLAY PROFILE SAFELY */
+
+        function displayProfile(user) {
+            const profile = user.profile || {};
+            const profileInfo = document.getElementById("profileInfo");
+
+            profileInfo.replaceChildren();
+
+            const fields = [
+                {
+                    label: "Name",
+                    value: [user.first_name, user.last_name]
+                        .filter(Boolean)
+                        .join(" ") || "Not provided"
+                },
+                {
+                    label: "Email",
+                    value: user.email || "Not provided"
+                },
+                {
+                    label: "City",
+                    value: profile.city || "Not provided"
+                },
+                {
+                    label: "State",
+                    value: profile.state || "Not provided"
+                },
+                {
+                    label: "Business Stage",
+                    value: profile.business_stage || "Not provided"
+                }
+            ];
+
+            fields.forEach(function (field) {
+                const item = document.createElement("div");
+                item.className = "profile-item";
+
+                const label = document.createElement("strong");
+                label.textContent = field.label + ": ";
+
+                const value = document.createElement("span");
+                value.textContent = field.value;
+
+                item.appendChild(label);
+                item.appendChild(value);
+                profileInfo.appendChild(item);
+            });
+        }
+
+        loadStoredUser();
+
+        /* OPEN MODULE */
+
+        function openModule(moduleName) {
+            const moduleRoutes = {
+                business: "/business/validation/",
+                schemes: "/schemes/",
+                funding: "/funding/",
+                market: "/market/",
+                assistant: "/assistant/",
+                safety: "/safety/",
+                profile: "/profile/"
+            };
+
+            const route = moduleRoutes[moduleName];
+
+            if (route) {
+                window.location.href = route;
+            }
+        }
+
+        /* KEYBOARD ACCESSIBILITY */
+
+        function handleModuleKey(event, moduleName) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openModule(moduleName);
+            }
+        }
+
+        /* LOGOUT */
+
+        async function logout() {
+            try {
+                if (token) {
+                    await fetch("/api/users/logout/", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": "Token " + token,
+                            "Content-Type": "application/json"
+                        }
+                    });
+                }
+            } catch (error) {
+                console.log("Logout request failed.");
+            } finally {
+                localStorage.removeItem("empowerher_token");
+                localStorage.removeItem("empowerher_user");
+                window.location.href = "/login/";
+            }
+        }
+    </script>
+
+</body>
+</html>

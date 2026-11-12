@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - EmpowerHer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: linear-gradient(135deg, #fff0f6, #eee7ff);
+        }
+
+        .login-container {
+            width: 400px;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #8e3b9d;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 7px;
+
+            font-weight: bold;
+            color: #444;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 13px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #8e3b9d;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            margin-top: 25px;
+
+            border: none;
+
+            border-radius: 25px;
+
+            background: #8e3b9d;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #6d2879;
+        }
+
+        .message {
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            border-radius: 8px;
+
+            text-align: center;
+
+            font-size: 14px;
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #b00020;
+        }
+
+        .back {
+            display: block;
+
+            text-align: center;
+
+            margin-top: 20px;
+
+            text-decoration: none;
+
+            color: #8e3b9d;
+        }
+
+        .register-link {
+            text-align: center;
+
+            margin-top: 20px;
+
+            color: #666;
+        }
+
+        .register-link a {
+            color: #8e3b9d;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <div class="login-container">
+
+        <h1>EmpowerHer</h1>
+
+        <p class="subtitle">
+            Welcome back, entrepreneur!
+        </p>
+
+
+        <form id="loginForm">
+
+            <label for="username">
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                required
+            >
+
+
+            <label for="password">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+            >
+
+
+            <button type="submit">
+                Login
+            </button>
+
+        </form>
+
+
+        <div id="message" class="message"></div>
+
+
+        <div class="register-link">
+
+            Don't have an account?
+
+            <a href="{% url 'register-page' %}">
+                Register
+            </a>
+
+        </div>
+
+
+        <a href="{% url 'home' %}" class="back">
+            ← Back to Home
+        </a>
+
+    </div>
+
+
+<script>
+
+document.getElementById("loginForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+
+    const message = document.getElementById("message");
+
+    message.style.display = "none";
+
+
+    try {
+
+        const response = await fetch("/api/users/login/", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+                username: username,
+                password: password
+
+            })
+
+        });
+
+
+        const data = await response.json();
+
+
+        if (response.ok) {
+
+            /*
+             * Save authentication token.
+             * The dashboard can use this token to
+             * access protected APIs.
+             */
+
+            localStorage.setItem("empowerher_token", data.token);
+
+            localStorage.setItem(
+                "empowerher_user",
+                JSON.stringify(data.user)
+            );
+
+
+            /*
+             * Redirect to dashboard
+             */
+
+            window.location.href = "/dashboard/";
+
+        }
+
+        else {
+
+            message.className = "message error";
+
+            message.textContent =
+                data.error ||
+                data.detail ||
+                "Invalid username or password.";
+
+            message.style.display = "block";
+
+        }
+
+    }
+
+    catch (error) {
+
+        message.className = "message error";
+
+        message.textContent =
+            "Unable to connect to the server.";
+
+        message.style.display = "block";
+
+        console.error(error);
+
+    }
+
+});
+
+</script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,834 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Idea Validation | EmpowerHer</title>
+
+    <style>
+        :root {
+            --purple: #6d3bb5;
+            --purple-dark: #4d267f;
+            --purple-light: #f2ebff;
+            --background: #f7f5fb;
+            --text: #292238;
+            --muted: #706a7d;
+            --border: #e7e0ef;
+            --white: #ffffff;
+            --green: #177245;
+            --red: #a52d3b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            font-size: 23px;
+            font-weight: 800;
+            color: var(--purple);
+        }
+
+        header a {
+            color: var(--purple-dark);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 18px 50px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #6d3bb5, #9164d5);
+            color: white;
+            padding: 30px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: clamp(25px, 4vw, 35px);
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 760px;
+        }
+
+        .panel {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 24px;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .field.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d7cfe2;
+            border-radius: 9px;
+            font: inherit;
+            color: var(--text);
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: 2px solid #c6adf0;
+            border-color: var(--purple);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        button {
+            border: 0;
+            border-radius: 9px;
+            padding: 12px 20px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .primary {
+            color: white;
+            background: var(--purple);
+        }
+
+        .primary:hover {
+            background: var(--purple-dark);
+        }
+
+        .secondary {
+            color: var(--purple-dark);
+            background: var(--purple-light);
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: wait;
+        }
+
+        .message {
+            display: none;
+            padding: 12px;
+            margin-bottom: 18px;
+            border-radius: 9px;
+            overflow-wrap: anywhere;
+        }
+
+        .message.error {
+            display: block;
+            color: var(--red);
+            background: #fff0f1;
+        }
+
+        .message.success {
+            display: block;
+            color: var(--green);
+            background: #eaf8f0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin: 18px 0;
+        }
+
+        .metric {
+            background: var(--purple-light);
+            padding: 17px;
+            border-radius: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .metric span {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 6px;
+            font-size: 20px;
+        }
+
+        .report-section {
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+            margin-top: 18px;
+        }
+
+        .report-section h3 {
+            margin: 0 0 10px;
+        }
+
+        .report-section ul {
+            padding-left: 22px;
+        }
+
+        .report-section li {
+            margin: 8px 0;
+            overflow-wrap: anywhere;
+        }
+
+        .note {
+            background: #faf8fd;
+            border-left: 4px solid var(--purple);
+            padding: 12px 15px;
+            border-radius: 4px;
+            color: var(--muted);
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .history-item {
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .history-item p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .history-item button {
+            flex-shrink: 0;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        @media (max-width: 680px) {
+            .form-grid, .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+
+            .hero {
+                padding: 23px;
+            }
+
+            .history-item {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <div class="brand">EmpowerHer</div>
+    <nav>
+        <a href="/dashboard/">Dashboard</a>
+        &nbsp; | &nbsp;
+        <a href="/about/">About</a>
+    </nav>
+</header>
+
+<main>
+    <section class="hero">
+        <h1>Business Idea Validation</h1>
+        <p>
+            Explore your business idea, review your financial assumptions,
+            identify risks and receive practical AI-powered recommendations.
+        </p>
+    </section>
+
+    <section class="panel">
+        <h2>Tell us about your business</h2>
+
+        <div id="formMessage" class="message" role="alert"></div>
+
+        <form id="businessForm">
+            <div class="form-grid">
+                <div class="field">
+                    <label for="business_name">Business name *</label>
+                    <input id="business_name" name="business_name"
+                           maxlength="150" required>
+                </div>
+
+                <div class="field">
+                    <label for="category">Business category *</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="food">Food and Beverages</option>
+                        <option value="clothing">Clothing and Fashion</option>
+                        <option value="beauty">Beauty and Personal Care</option>
+                        <option value="handicrafts">Handicrafts</option>
+                        <option value="agriculture">Agriculture</option>
+                        <option value="education">Education</option>
+                        <option value="technology">Technology</option>
+                        <option value="retail">Retail</option>
+                        <option value="services">Professional or Local Services</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="field full">
+                    <label for="description">Describe your business idea *</label>
+                    <textarea id="description" name="description"
+                              maxlength="3000" required
+                              placeholder="What will you sell or provide? What makes your idea useful or different?"></textarea>
+                    <span class="hint">Maximum 3,000 characters. Avoid entering confidential trade secrets.</span>
+                </div>
+
+                <div class="field">
+                    <label for="state">State or Union Territory *</label>
+                    <input id="state" name="state" maxlength="100"
+                           placeholder="e.g. Telangana" required>
+                </div>
+
+                <div class="field">
+                    <label for="location">City or district *</label>
+                    <input id="location" name="location" maxlength="150"
+                           placeholder="e.g. Hyderabad" required>
+                </div>
+
+                <div class="field full">
+                    <label for="target_customers">Target customers *</label>
+                    <textarea id="target_customers" name="target_customers"
+                              maxlength="500" required
+                              placeholder="Who are your customers, what do they need, and how will you reach them?"></textarea>
+                </div>
+
+                <div class="field">
+                    <label for="investment">Initial investment (₹) *</label>
+                    <input id="investment" name="investment"
+                           type="number" min="0" max="9999999999.99"
+                           step="0.01" required>
+                </div>
+
+                <div class="field">
+                    <label for="selling_price">Selling price per unit (₹) *</label>
+                    <input id="selling_price" name="selling_price"
+                           type="number" min="0" max="9999999999.99"
+                           step="0.01" required>
+                </div>
+
+                <div class="field">
+                    <label for="expected_monthly_sales">
+                        Expected monthly units sold *
+                    </label>
+                    <input id="expected_monthly_sales"
+                           name="expected_monthly_sales"
+                           type="number" min="0" max="100000000"
+                           step="1" required>
+                </div>
+
+                <div class="field">
+                    <label for="estimated_monthly_expenses">
+                        Estimated monthly expenses (₹) *
+                    </label>
+                    <input id="estimated_monthly_expenses"
+                           name="estimated_monthly_expenses"
+                           type="number" min="0" max="9999999999.99"
+                           step="0.01" required>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="primary" id="submitButton" type="submit">
+                    Analyze My Business Idea
+                </button>
+                <button class="secondary" type="reset">
+                    Clear Form
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <section id="reportPanel" class="panel hidden" aria-live="polite">
+        <h2>Your Business Assessment</h2>
+        <div id="reportContent"></div>
+    </section>
+
+    <section class="panel">
+        <h2>Previous Assessments</h2>
+        <p class="muted">
+            Your saved business assessments are visible only to your account.
+        </p>
+        <div id="historyMessage" class="message" role="status"></div>
+        <div id="historyList"></div>
+    </section>
+
+    <p class="note">
+        This tool provides planning guidance, not a guarantee of business
+        success, financial advice, verified market demand or loan approval.
+        AI output may be inaccurate. Verify important facts before making
+        financial decisions.
+    </p>
+</main>
+
+<script>
+"use strict";
+
+const token = localStorage.getItem("empowerher_token");
+
+const form = document.getElementById("businessForm");
+const submitButton = document.getElementById("submitButton");
+const formMessage = document.getElementById("formMessage");
+const reportPanel = document.getElementById("reportPanel");
+const reportContent = document.getElementById("reportContent");
+const historyList = document.getElementById("historyList");
+const historyMessage = document.getElementById("historyMessage");
+
+if (!token) {
+    window.location.href = "/login/";
+}
+
+function setMessage(element, message, type) {
+    element.textContent = message;
+    element.className = "message " + type;
+}
+
+function clearMessage(element) {
+    element.textContent = "";
+    element.className = "message";
+}
+
+function makeElement(tag, className, text) {
+    const element = document.createElement(tag);
+
+    if (className) {
+        element.className = className;
+    }
+
+    if (text !== undefined && text !== null) {
+        element.textContent = String(text);
+    }
+
+    return element;
+}
+
+function formatMoney(value) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+        return "Not available";
+    }
+
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2
+    }).format(number);
+}
+
+function addMetric(container, label, value) {
+    const metric = makeElement("div", "metric");
+    metric.appendChild(makeElement("span", "", label));
+    metric.appendChild(makeElement("strong", "", value));
+    container.appendChild(metric);
+}
+
+function addListSection(container, title, items) {
+    const section = makeElement("div", "report-section");
+    section.appendChild(makeElement("h3", "", title));
+
+    if (!Array.isArray(items) || items.length === 0) {
+        section.appendChild(
+            makeElement("p", "muted", "No items to display.")
+        );
+    } else {
+        const list = document.createElement("ul");
+
+        items.forEach(function (item) {
+            list.appendChild(makeElement("li", "", item));
+        });
+
+        section.appendChild(list);
+    }
+
+    container.appendChild(section);
+}
+
+function renderReport(report) {
+    reportContent.replaceChildren();
+
+    const summary = report.business_summary || {};
+    const financial = report.financial_estimate || {};
+    const ai = report.ai_recommendations || {};
+
+    reportContent.appendChild(
+        makeElement("h3", "", report.assessment || "Assessment complete")
+    );
+
+    reportContent.appendChild(
+        makeElement(
+            "p",
+            "",
+            (summary.name || "Business idea") +
+            " — " + (summary.category || "Category not available") +
+            " — " + (summary.location || "Location not available")
+        )
+    );
+
+    reportContent.appendChild(
+        makeElement(
+            "p",
+            "",
+            "Form completeness: " +
+            (report.completeness_score ?? 0) + "%"
+        )
+    );
+
+    reportContent.appendChild(
+        makeElement("p", "muted", report.score_note || "")
+    );
+
+    const metrics = makeElement("div", "metrics");
+
+    addMetric(
+        metrics,
+        "Expected monthly revenue",
+        formatMoney(financial.expected_monthly_revenue)
+    );
+
+    addMetric(
+        metrics,
+        "Estimated monthly expenses",
+        formatMoney(financial.estimated_monthly_expenses)
+    );
+
+    addMetric(
+        metrics,
+        "Estimated monthly profit",
+        formatMoney(financial.estimated_monthly_profit)
+    );
+
+    addMetric(
+        metrics,
+        "Initial investment",
+        formatMoney(financial.initial_investment)
+    );
+
+    addMetric(
+        metrics,
+        "Profit margin",
+        Number.isFinite(Number(financial.estimated_profit_margin_percent))
+            ? financial.estimated_profit_margin_percent + "%"
+            : "Not available"
+    );
+
+    addMetric(
+        metrics,
+        "Expected monthly units",
+        financial.expected_monthly_sales ?? "Not available"
+    );
+
+    reportContent.appendChild(metrics);
+
+    if (financial.note) {
+        reportContent.appendChild(
+            makeElement("p", "note", financial.note)
+        );
+    }
+
+    addListSection(reportContent, "Strengths", report.strengths);
+    addListSection(reportContent, "Risks to consider", report.risks);
+    addListSection(
+        reportContent,
+        "Practical suggestions",
+        report.suggestions
+    );
+
+    const market = report.market_research || {};
+    const marketSection = makeElement("div", "report-section");
+
+    marketSection.appendChild(
+        makeElement("h3", "", "Market research")
+    );
+
+    marketSection.appendChild(
+        makeElement("p", "", market.status || "Not connected")
+    );
+
+    marketSection.appendChild(
+        makeElement(
+            "p",
+            "muted",
+            market.note || "No verified market statistics are available."
+        )
+    );
+
+    reportContent.appendChild(marketSection);
+
+    const aiSection = makeElement("div", "report-section");
+    aiSection.appendChild(
+        makeElement("h3", "", "AI Business Recommendations")
+    );
+    aiSection.appendChild(
+        makeElement("p", "muted", ai.status || "Status unavailable")
+    );
+
+    const recommendations = ai.recommendations || [];
+
+    recommendations.forEach(function (recommendation) {
+        // Render model output as text, never as executable HTML.
+        aiSection.appendChild(
+            makeElement("p", "", recommendation)
+        );
+    });
+
+    reportContent.appendChild(aiSection);
+    reportPanel.classList.remove("hidden");
+    reportPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+form.addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    clearMessage(formMessage);
+    submitButton.disabled = true;
+    submitButton.textContent = "Analyzing...";
+
+    const payload = {
+        business_name: form.elements.business_name.value.trim(),
+        category: form.elements.category.value,
+        description: form.elements.description.value.trim(),
+        state: form.elements.state.value.trim(),
+        location: form.elements.location.value.trim(),
+        target_customers: form.elements.target_customers.value.trim(),
+        investment: form.elements.investment.value,
+        selling_price: form.elements.selling_price.value,
+        expected_monthly_sales:
+            form.elements.expected_monthly_sales.value,
+        estimated_monthly_expenses:
+            form.elements.estimated_monthly_expenses.value
+    };
+
+    try {
+        const response = await fetch("/api/business/validate/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Token " + token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("empowerher_token");
+            window.location.href = "/login/";
+            return;
+        }
+
+        if (!response.ok) {
+            const details = data.fields
+                ? data.fields.join(", ")
+                : "";
+
+            throw new Error(
+                (data.error || data.detail || "Assessment failed.") +
+                (details ? " Fields: " + details : "")
+            );
+        }
+
+        renderReport(data.report);
+        setMessage(
+            formMessage,
+            "Your assessment has been generated and saved.",
+            "success"
+        );
+
+        await loadHistory();
+
+    } catch (error) {
+        setMessage(
+            formMessage,
+            error.message || "Could not connect to the server.",
+            "error"
+        );
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Analyze My Business Idea";
+    }
+});
+
+form.addEventListener("reset", function () {
+    clearMessage(formMessage);
+});
+
+async function loadHistory() {
+    clearMessage(historyMessage);
+    historyList.replaceChildren();
+
+    try {
+        const response = await fetch("/api/business/history/", {
+            headers: {
+                "Authorization": "Token " + token
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.status === 401 || response.status === 403) {
+            localStorage.removeItem("empowerher_token");
+            window.location.href = "/login/";
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.detail || "Unable to load assessment history."
+            );
+        }
+
+        const ideas = data.ideas || [];
+
+        if (ideas.length === 0) {
+            historyList.appendChild(
+                makeElement(
+                    "p",
+                    "muted",
+                    "No saved assessments yet. Submit your first business idea above."
+                )
+            );
+            return;
+        }
+
+        ideas.forEach(function (idea) {
+            const item = makeElement("div", "history-item");
+            const details = makeElement("div");
+
+            details.appendChild(
+                makeElement("strong", "", idea.business_name)
+            );
+
+            details.appendChild(
+                makeElement(
+                    "p",
+                    "",
+                    (idea.category || "") + " — " +
+                    (idea.location || "") + ", " +
+                    (idea.state || "")
+                )
+            );
+
+            details.appendChild(
+                makeElement(
+                    "p",
+                    "",
+                    idea.created_at
+                        ? new Date(idea.created_at).toLocaleString()
+                        : ""
+                )
+            );
+
+            const button = makeElement(
+                "button",
+                "secondary",
+                "View Report"
+            );
+
+            button.type = "button";
+
+            button.addEventListener("click", function () {
+                renderReport(idea.report || {});
+            });
+
+            item.appendChild(details);
+            item.appendChild(button);
+            historyList.appendChild(item);
+        });
+
+    } catch (error) {
+        setMessage(
+            historyMessage,
+            error.message || "Unable to load history.",
+            "error"
+        );
+    }
+}
+
+if (token) {
+    loadHistory();
+}
+</script>
+</body>
+</html>

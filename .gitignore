@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Local data and secrets
+.env
+*.sqlite3
+empowerher/backend/media/
+empowerher/backend/staticfiles/
+
+# Original hand-off files
+*.zip
+*.pdf
+
+.DS_Store

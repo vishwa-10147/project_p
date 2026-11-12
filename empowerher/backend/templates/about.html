@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>About - EmpowerHer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+
+            margin: 0;
+
+            min-height: 100vh;
+
+            background: linear-gradient(135deg, #fff0f6, #eee7ff);
+
+            color: #3b3040;
+        }
+
+        nav {
+
+            height: 75px;
+
+            background: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 60px;
+
+            box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+        }
+
+        .logo {
+
+            font-size: 27px;
+
+            font-weight: bold;
+
+            color: #8e3b9d;
+        }
+
+        nav a {
+
+            text-decoration: none;
+
+            color: #8e3b9d;
+
+            font-weight: bold;
+        }
+
+        .container {
+
+            max-width: 900px;
+
+            margin: 70px auto;
+
+            padding: 45px;
+
+            background: white;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+
+            text-align: center;
+
+            color: #8e3b9d;
+
+            font-size: 42px;
+
+            margin-bottom: 20px;
+        }
+
+        h2 {
+
+            color: #8e3b9d;
+
+            margin-top: 30px;
+        }
+
+        p {
+
+            font-size: 17px;
+
+            line-height: 1.8;
+
+            color: #625766;
+        }
+
+        .home-button {
+
+            display: block;
+
+            width: 180px;
+
+            text-align: center;
+
+            margin: 35px auto 0;
+
+            padding: 13px;
+
+            border-radius: 25px;
+
+            background: #8e3b9d;
+
+            color: white;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+        .home-button:hover {
+
+            background: #6d2879;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <nav>
+
+        <div class="logo">
+            EmpowerHer
+        </div>
+
+        <a href="{% url 'home' %}">
+            Home
+        </a>
+
+    </nav>
+
+
+    <div class="container">
+
+        <h1>About EmpowerHer</h1>
+
+        <p>
+            EmpowerHer is a privacy-preserving AI framework designed
+            to support women entrepreneurs throughout their
+            entrepreneurial journey.
+        </p>
+
+
+        <h2>Our Vision</h2>
+
+        <p>
+            To create a secure and intelligent digital platform
+            where women can confidently develop business ideas,
+            access opportunities and make informed entrepreneurial
+            decisions.
+        </p>
+
+
+        <h2>What EmpowerHer Provides</h2>
+
+        <p>
+            EmpowerHer combines artificial intelligence with
+            privacy-preserving technologies to provide business
+            idea validation, government scheme recommendations,
+            funding assistance, local market insights,
+            document verification and intelligent guidance.
+        </p>
+
+
+        <h2>Privacy First</h2>
+
+        <p>
+            Sensitive entrepreneur information is protected using
+            privacy-preserving approaches such as Homomorphic
+            Encryption and Zero-Knowledge Proofs, helping users
+            share necessary information without unnecessarily
+            exposing confidential data.
+        </p>
+
+
+        <a href="{% url 'home' %}" class="home-button">
+            Back to Home
+        </a>
+
+    </div>
+
+</body>
+
+</html>
