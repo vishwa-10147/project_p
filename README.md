@@ -43,7 +43,7 @@ Run the tests:
 | Module | Page | API | What it does |
 | --- | --- | --- | --- |
 | Users | `/register/`, `/login/`, `/profile/` | `/api/users/` | Token auth; profile (state, city, stage, language) personalises other modules |
-| Business validation | `/business/validation/` | `/api/business/` | Financial estimate, strengths/risks, census market indicators, matching schemes, optional AI advice |
+| Business validation | `/business/validation/` | `/api/business/` | Financial estimate, strengths/risks, census market indicators, matching schemes, optional AI advice; optional 🔒 Confidential mode |
 | Schemes | `/schemes/` | `/api/schemes/` | 25 curated central/state schemes; rule + TF-IDF recommender with reasons |
 | Funding | `/funding/` | `/api/funding/` | EMI + amortisation, affordability, PMEGP subsidy, loan routes |
 | Private check (HE) | `/funding/` | `/api/privacy/financial-check/` | Paillier homomorphic loan-affordability check; server never sees the figures |
@@ -57,11 +57,12 @@ Run the tests:
 
 ### Which data is encrypted, and how the split is decided
 
-There is no automatic "sensitive or not" detection. **The module the user chooses decides how data is stored.** Each module is designed for one kind of data:
+There is no automatic "sensitive or not" detection. **The user decides**, either by choosing a module or by ticking the **Confidential** option on the Business Validation form. Each module is designed for one kind of data:
 
 | Data | Where it is entered | How it is stored | Why |
 | --- | --- | --- | --- |
-| Business idea for validation (name, description, location, figures, report) | Business Idea Validation | **Plain text** in `business_businessidea` | The server needs readable figures to calculate the report, match schemes and market data, show history and (if enabled) send it to the AI |
+| Business idea for validation, **normal** | Business Idea Validation | **Plain text** in `business_businessidea` | The server needs readable data to calculate the report, match schemes and market data, show history and (if enabled) send it to the AI |
+| Business idea for validation, **🔒 Confidential ticked** | Business Idea Validation | Description and target customers **encrypted** (Fernet, in `encrypted_details`); name, category, location and figures stay plain | The figures, place and category are enough for the report, schemes and market data; the free text is the part that reveals the idea |
 | Confidential idea | Idea Vault | **Encrypted** (Fernet) + commitments | Meant for ideas the user wants to protect; readable only through the owner's account |
 | Uploaded document file and its full OCR text | Documents | **Encrypted** (Fernet, separate key) | Identity and financial documents |
 | Fields read from documents | Documents | Plain, but **masked**: PAN `ABXXX1234F`, Aadhaar `XXXX XXXX 1234` | Lets the page show what was found without keeping full ID numbers |
@@ -70,11 +71,11 @@ There is no automatic "sensitive or not" detection. **The module the user choose
 | Profile (name, phone, city, state, stage, language) | Register / Profile | Plain text | Used to personalise schemes, market and assistant |
 
 **Rule of thumb for users:**
-- Use **Business Validation** for a general description and the numbers.
-- Put the part that must stay secret (recipe, process, design, unique approach) in the **Idea Vault**.
-- Do not paste confidential details into the validation form. That form is stored readable, and it is sent to OpenAI when `OPENAI_API_KEY` is set.
+- **Normal validation:** use it for ideas you are happy to have stored readable.
+- **🔒 Confidential validation:** use it when the description or target customers reveal your idea. You still get the full report, but that text is encrypted and is not sent to the AI.
+- **Idea Vault:** use it for an idea that must stay fully secret, or that you want to prove is yours later (zero-knowledge proof). The Vault encrypts everything except the title.
 
-### Fernet encryption at rest (Idea Vault and Documents)
+### Fernet encryption at rest (Idea Vault, confidential ideas, Documents)
 
 [Fernet](https://cryptography.io/en/latest/fernet/) from the `cryptography` library is authenticated symmetric encryption:
 - AES-128 in CBC mode with a random 128-bit IV for every message;
@@ -82,7 +83,9 @@ There is no automatic "sensitive or not" detection. **The module the user choose
 - a timestamp.
 
 Keys:
-- **Two separate keys:** `IDEA_VAULT_ENCRYPTION_KEY` and `DOCUMENT_ENCRYPTION_KEY`, both read from `backend/.env` (see `idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
+- **Two separate keys**, both read from `backend/.env` (see `idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
+  - `IDEA_VAULT_ENCRYPTION_KEY` protects ideas: the Idea Vault and confidential business-validation ideas.
+  - `DOCUMENT_ENCRYPTION_KEY` protects uploaded documents.
 - **Keys are never stored in the database and never generated automatically.** A new key would make existing data unreadable, so the server refuses to start encryption without one.
 - **Even the admin panel cannot show ciphertext:** the encrypted fields are excluded there.
 
@@ -96,6 +99,16 @@ Keys:
 4. **Hand over the witness once.** It is returned to the owner a single time and **never stored**.
 5. **Viewing.** Only the owner's account can request decryption (`GET /api/ideas/<id>/`). The list endpoint never returns ciphertext or plaintext.
 6. **Proving ownership.** The owner submits the witness. The server checks it against the stored commitment, then produces a zero-knowledge proof (described below).
+
+#### Confidential business validation: what happens on submit (`business/views.py`)
+
+1. **Build the report in memory.** The idea is built in memory with the plain text, and the report is calculated: completeness, finances, market data and TF-IDF scheme matching.
+2. **Keep the text out of the report.** Target customers in the report are replaced with "Confidential (encrypted)". The description is never copied into the report.
+3. **Seal the free text.** `BusinessIdea.seal_confidential_fields()` encrypts the description and target customers together as one Fernet token (`encrypted_details`) and blanks the plain columns. Only then is the row saved.
+4. **AI sees only the safe fields.** If OpenAI is configured, it receives the name, category, location, figures, market indicators and scheme names, but **never** the description or target customers.
+5. **Owner access.** `BusinessIdea.confidential_details()` can decrypt the text for its owner.
+
+Tests in `business/tests.py` check the database row, the saved report and the exact OpenAI request (mocked).
 
 #### Documents: what happens on upload (`documents/views.py`)
 
@@ -120,7 +133,8 @@ Keys:
 - Anyone can verify the proof at `/vault/verify/`. They learn that the prover registered the idea at the time shown and knows it, and nothing about its contents.
 
 ### What is *not* protected yet
-- **Business-validation ideas are plain text.** They are also sent to OpenAI when an API key is configured.
+- **Normal business-validation ideas are plain text.** They are sent to OpenAI when an API key is configured. Tick **Confidential** to avoid both.
+- **Some fields of confidential ideas stay readable.** The business name, category, location and figures are stored readable, because the report needs them.
 - **Profile details are plain text.**
 - **The server can decrypt vault ideas and documents**, because it holds the Fernet keys. The protection is against database leaks and against verifiers (investors, mentors), not against the server operator. True end-to-end protection would need the encryption to happen in the browser.
 - **Login tokens are stored plainly**, in the database and in the browser's `localStorage`.

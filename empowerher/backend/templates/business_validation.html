@@ -252,6 +252,25 @@
             overflow-wrap: anywhere;
         }
 
+        .confidential-option {
+            background: var(--purple-light);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            width: auto;
+            margin: 0;
+            transform: scale(1.2);
+        }
+
         .history-item {
             border: 1px solid var(--border);
             padding: 15px;
@@ -372,6 +391,21 @@
                     <textarea id="target_customers" name="target_customers"
                               maxlength="500" required
                               placeholder="Who are your customers, what do they need, and how will you reach them?"></textarea>
+                </div>
+
+                <div class="field full confidential-option">
+                    <label for="is_confidential" class="checkbox-label">
+                        <input id="is_confidential" name="is_confidential"
+                               type="checkbox">
+                        🔒 Keep my description and target customers confidential
+                    </label>
+                    <span class="hint">
+                        They will be stored encrypted and will not be sent
+                        to the AI service. Your category, location and
+                        figures stay readable so the report, schemes and
+                        market data still work. For a fully secret idea,
+                        use the <a href="/vault/">Idea Vault</a>.
+                    </span>
                 </div>
 
                 <div class="field">
@@ -535,6 +569,12 @@ function renderReport(report) {
     reportContent.appendChild(
         makeElement("h3", "", report.assessment || "Assessment complete")
     );
+
+    if (report.confidentiality && report.confidentiality.is_confidential) {
+        reportContent.appendChild(
+            makeElement("p", "note", "🔒 " + report.confidentiality.note)
+        );
+    }
 
     reportContent.appendChild(
         makeElement(
@@ -730,6 +770,7 @@ form.addEventListener("submit", async function (event) {
         state: form.elements.state.value.trim(),
         location: form.elements.location.value.trim(),
         target_customers: form.elements.target_customers.value.trim(),
+        is_confidential: form.elements.is_confidential.checked,
         investment: form.elements.investment.value,
         selling_price: form.elements.selling_price.value,
         expected_monthly_sales:
@@ -835,7 +876,11 @@ async function loadHistory() {
             const details = makeElement("div");
 
             details.appendChild(
-                makeElement("strong", "", idea.business_name)
+                makeElement(
+                    "strong",
+                    "",
+                    (idea.is_confidential ? "🔒 " : "") + idea.business_name
+                )
             );
 
             details.appendChild(

@@ -70,10 +70,8 @@ def generate_ai_recommendations(idea, report):
         business_data = {
             "business_name": idea.business_name,
             "category": idea.get_category_display(),
-            "description": idea.description,
             "state": idea.state,
             "district_or_city": idea.location,
-            "target_customers": idea.target_customers,
             "initial_investment_inr": str(idea.investment),
             "selling_price_per_unit_inr": str(idea.selling_price),
             "expected_monthly_units": idea.expected_monthly_sales,
@@ -97,6 +95,17 @@ def generate_ai_recommendations(idea, report):
                 "suggestions": report.get("suggestions", []),
             },
         }
+
+        # Confidential ideas: the description and target customers never
+        # leave the server; the AI sees only category, place and figures.
+        if idea.is_confidential:
+            business_data["note"] = (
+                "The owner marked the idea description as confidential. "
+                "Advise using only the category, location and figures."
+            )
+        else:
+            business_data["description"] = idea.description
+            business_data["target_customers"] = idea.target_customers
 
         response = client.responses.create(
             model=os.environ.get(
@@ -133,7 +142,11 @@ def generate_ai_recommendations(idea, report):
             raise ValueError("The AI response was empty.")
 
         return {
-            "status": "AI recommendations generated",
+            "status": (
+                "AI recommendations generated (description not shared)"
+                if idea.is_confidential else
+                "AI recommendations generated"
+            ),
             "recommendations": [text],
             "market_data_used": bool(
                 report.get("market_research", {}).get("demand_index")

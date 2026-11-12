@@ -12,6 +12,7 @@ class BusinessIdeaAdmin(admin.ModelAdmin):
         "location",
         "state",
         "user",
+        "is_confidential",
         "created_at",
     )
 
@@ -29,7 +30,10 @@ class BusinessIdeaAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "is_confidential")
+
+    # Never show ciphertext in the admin.
+    exclude = ("encrypted_details",)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user")

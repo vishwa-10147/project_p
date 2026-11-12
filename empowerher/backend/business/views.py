@@ -300,6 +300,9 @@ def validate_business_data(data):
         }
 
     cleaned.update({
+        "is_confidential": str(
+            data.get("is_confidential", "")
+        ).strip().lower() in ("true", "1", "on", "yes"),
         "category": data["category"],
         "investment": investment,
         "selling_price": selling_price,
@@ -324,16 +327,28 @@ class BusinessIdeaValidationView(APIView):
             )
 
         with transaction.atomic():
-            idea = BusinessIdea.objects.create(
-                user=request.user,
-                **cleaned,
-            )
-
+            # Build the report while the text is still in memory.
+            idea = BusinessIdea(user=request.user, **cleaned)
             report = generate_report(idea)
+
+            if idea.is_confidential:
+                report["business_summary"]["target_customers"] = (
+                    "Confidential (encrypted)"
+                )
+                report["confidentiality"] = {
+                    "is_confidential": True,
+                    "note": (
+                        "Your description and target customers are stored "
+                        "encrypted and were not sent to the AI service. "
+                        "Category, location and figures are stored readable "
+                        "so the report, schemes and market data work."
+                    ),
+                }
+                idea.seal_confidential_fields()
 
             # Save the baseline report before calling the external AI API.
             idea.report = report
-            idea.save(update_fields=["report"])
+            idea.save()
 
         # AI failures are handled by the recommendation service.
         ai_result = generate_ai_recommendations(idea, report)
@@ -367,6 +382,7 @@ class BusinessIdeaHistoryView(APIView):
                     "category": idea.get_category_display(),
                     "location": idea.location,
                     "state": idea.state,
+                    "is_confidential": idea.is_confidential,
                     "created_at": idea.created_at.isoformat(),
                     "report": idea.report,
                 }
