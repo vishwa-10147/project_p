@@ -108,7 +108,8 @@ def _right(c, x, y, text, font, size):
     c.drawRightString(x, y, str(text))
 
 
-def toc_page(sections, results_page, conclusion_page, references_page):
+def toc_page(sections, results_page, conclusion_page, conclusion_sections,
+             references_page):
     buffer, c = _new_canvas()
     c.setFont(BOLD, 14)
     c.drawCentredString(ROMAN_CENTER_X, 772, "TABLE OF CONTENTS")
@@ -137,9 +138,8 @@ def toc_page(sections, results_page, conclusion_page, references_page):
     for number, title, page, subs in CHAPTERS_BEFORE:
         chapter(number, title, page, subs)
     chapter("4.", "RESULTS", results_page, sections)
-    chapter("5.", "CONCLUSION AND FUTURE SCOPE", conclusion_page, [
-        ("5.1", "CONCLUSION", conclusion_page),
-        ("5.2", "FUTURE SCOPE", conclusion_page)])
+    chapter("5.", "CONCLUSION AND FUTURE SCOPE", conclusion_page,
+            conclusion_sections)
     c.setFont(BOLD, 10.5)
     c.drawString(72, y, "REFERENCES")
     _right(c, right, y, references_page, BOLD, 10.5)
@@ -209,11 +209,11 @@ def _object_text(obj, textpage):
     return bytes(buffer).decode("utf-16-le").rstrip("\x00")
 
 
-def clean_tail_pages(original_pdf, conclusion_index, conclusion_page):
+def clean_tail_pages(original_pdf, conclusion_index, references_page):
     """
-    Remove (not just cover) the old page numbers and the "4." chapter
-    prefixes from the Conclusion and References pages, and return the
-    cleaned PDF bytes plus what to draw in their place.
+    Remove (not just cover) the old page numbers from the References
+    pages (which follow the original Conclusion page) and return the
+    cleaned PDF bytes plus the new numbers to draw in their place.
     """
     import pypdfium2.raw as raw
 
@@ -221,11 +221,11 @@ def clean_tail_pages(original_pdf, conclusion_index, conclusion_page):
     replacements = {}
     renames = {"4.": "5.", "4.1 ": "5.1 ", "4.2 ": "5.2 "}
 
-    for index in range(conclusion_index, len(pdf)):
+    for index in range(conclusion_index + 1, len(pdf)):
         page = pdf[index]
         textpage = page.get_textpage()
         old_number = str(19 + index - conclusion_index)
-        new_number = str(conclusion_page + index - conclusion_index)
+        new_number = str(references_page + index - conclusion_index - 1)
         drawn, remove = [], []
         for obj in page.get_objects():
             if obj.type != raw.FPDF_PAGEOBJ_TEXT:
@@ -240,7 +240,7 @@ def clean_tail_pages(original_pdf, conclusion_index, conclusion_page):
             elif index == conclusion_index and text in renames:
                 remove.append(obj)
                 drawn.append((renames[text], x, y, size, BOLD))
-        expected = 4 if index == conclusion_index else 1
+        expected = 1
         if len(remove) != expected:
             raise ValueError(
                 f"Page {index + 1}: expected {expected} items to renumber, "
@@ -263,18 +263,22 @@ def _draw_replacements(c, items):
         c.drawString(x, y, text)
 
 
-def assemble_report(original_pdf, chapter_pdf, out_path, content,
-                    conclusion_index, first_page):
+def assemble_report(original_pdf, chapter_pdf, conclusion_pdf, out_path,
+                    content, conclusion_content, conclusion_index,
+                    first_page):
     sections, figures, tables, chapter_pages = locate(
         chapter_pdf, content, first_page)
     conclusion_page = first_page + chapter_pages
-    references_page = conclusion_page + 1
+    conclusion_sections, _, _, conclusion_pages = locate(
+        conclusion_pdf, conclusion_content, conclusion_page)
+    references_page = conclusion_page + conclusion_pages
 
     cleaned, replacements = clean_tail_pages(
-        original_pdf, conclusion_index, conclusion_page)
+        original_pdf, conclusion_index, references_page)
     original = PdfReader(cleaned)
 
-    toc = toc_page(sections, first_page, conclusion_page, references_page)
+    toc = toc_page(sections, first_page, conclusion_page,
+                   conclusion_sections, references_page)
     lof = list_page("LIST OF FIGURES", "Figure",
                     ORIGINAL_FIGURES + figures, "v")
     lot = list_page("LIST OF TABLES", "Table",
@@ -288,10 +292,14 @@ def assemble_report(original_pdf, chapter_pdf, out_path, content,
             writer.add_page(lof)
         elif i == 6:
             writer.add_page(lot)
+        elif i == conclusion_index:
+            # Results chapter, then the rewritten Conclusion, which
+            # replaces the original Stage-1 Conclusion page.
+            for new_page in PdfReader(str(chapter_pdf)).pages:
+                writer.add_page(new_page)
+            for new_page in PdfReader(str(conclusion_pdf)).pages:
+                writer.add_page(new_page)
         else:
-            if i == conclusion_index:
-                for chapter_page in PdfReader(str(chapter_pdf)).pages:
-                    writer.add_page(chapter_page)
             added = writer.add_page(page)
             if i in replacements:
                 _overlay(added, lambda c, items=replacements[i]:
@@ -299,8 +307,9 @@ def assemble_report(original_pdf, chapter_pdf, out_path, content,
 
     with open(out_path, "wb") as handle:
         writer.write(handle)
-    last = conclusion_page + len(original.pages) - conclusion_index - 1
+    last = references_page + len(original.pages) - conclusion_index - 2
     print(f"saved {Path(out_path).name}: {len(writer.pages)} pages; "
           f"Results {first_page}-{conclusion_page - 1}, Conclusion "
-          f"{conclusion_page}, References {references_page}-{last}")
+          f"{conclusion_page}-{references_page - 1}, References "
+          f"{references_page}-{last}")
     return sections, figures, tables

@@ -24,3 +24,4 @@ empowerher/backend/staticfiles/
 .tools-venv/
 staticfiles/
 .cache/
+!report/source/*.pdf

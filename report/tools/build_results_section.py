@@ -29,7 +29,8 @@ REPORT = ROOT / "report"
 RESULTS = REPORT / "results"
 SHOTS = RESULTS / "screenshots"
 CHARTS = RESULTS / "charts"
-ORIGINAL_PDF = ROOT / "final_project-report (1).pdf"
+# Copy of the original Stage-1 report that the chapters are inserted into.
+ORIGINAL_PDF = REPORT / "source" / "final_project-report-original.pdf"
 CONCLUSION_PAGE_INDEX = 27  # zero-based page index of "4. CONCLUSION"
 
 B = json.loads((RESULTS / "benchmarks.json").read_text())
@@ -388,10 +389,84 @@ CONTENT = [
 
 
 # ---------------------------------------------------------------------
+# Chapter 5: Conclusion and Future Scope (replaces the Stage-1 text,
+# which described the modules as still under development)
+# ---------------------------------------------------------------------
+
+CONCLUSION = [
+    ("h1", "5. CONCLUSION AND FUTURE SCOPE"),
+    ("h2", "5.1 CONCLUSION"),
+    ("p", "Empower-Her has been implemented as a privacy-preserving AI "
+          "framework that supports women entrepreneurs from the idea stage "
+          "to running a business. All the modules proposed in the "
+          "methodology have been built into a single Django and Django REST "
+          "Framework web application: business idea validation with "
+          "census-based market indicators and scheme matching, "
+          "recommendation of 25 central and state government schemes, "
+          "funding tools for EMI, loan affordability and PMEGP subsidy, "
+          "local market demand analysis for all 640 Indian districts, "
+          "OCR-based document verification, a multilingual assistant in "
+          "English, Telugu and Hindi with voice input and output, and women "
+          "safety resources."),
+    ("p", "The project shows that privacy-preserving techniques can be "
+          "applied in a practical, interactive system. Paillier homomorphic "
+          "encryption allowed loan affordability to be computed on "
+          "encrypted income and expense figures that the server never sees. "
+          "Pedersen commitments with a Schnorr-style zero-knowledge proof "
+          "allow an entrepreneur to prove ownership of a registered idea to "
+          "an investor or mentor without revealing it. Confidential ideas "
+          "and identity documents are encrypted at rest, identity numbers "
+          "are masked, and confidential text is never sent to external AI "
+          "services. Users can export or permanently delete their data, and "
+          "logins expire and are rate limited."),
+    ("p", f"All {TEST_COUNT} automated tests pass. Everyday operations such as "
+          "scheme recommendation and market analysis complete in under 5 "
+          "milliseconds, and the cryptographic operations take between 30 "
+          "and 500 milliseconds, so the complete private affordability "
+          "check finishes in about 1.2 seconds in the browser. Empower-Her "
+          "therefore meets its objectives: it brings validation, "
+          "opportunities, market insight and guidance together in one "
+          "accessible platform, while protecting the confidential "
+          "information that women entrepreneurs need to share."),
+    ("p", "The evaluation was carried out on a single machine with synthetic "
+          "data. The market indicators are based on Census 2011, and scheme "
+          "details must be confirmed on the official websites linked from "
+          "the platform."),
+    ("h2", "5.2 FUTURE SCOPE"),
+    ("p", "Empower-Her can be extended in the following directions:"),
+    ("bullets", [
+        "<b>Pilot deployment:</b> deploy the platform on a public server with "
+        "PostgreSQL and evaluate it with women entrepreneurs, Self-Help "
+        "Groups and incubators such as WE Hub, using their feedback to "
+        "improve usability.",
+        "<b>End-to-end encryption:</b> encrypt ideas and documents in the "
+        "browser so that even the server operator cannot read them.",
+        "<b>Richer private computation:</b> use fully homomorphic schemes "
+        "such as CKKS or BFV for encrypted credit scoring, and zero-knowledge "
+        "range proofs to prove eligibility conditions (for example, income "
+        "below a scheme limit) without revealing the actual values.",
+        "<b>Official document verification:</b> verify documents with the "
+        "issuing authorities through DigiLocker or authorised APIs, instead "
+        "of format and checksum checks only.",
+        "<b>Live data:</b> update scheme information automatically from "
+        "official sources, and replace Census 2011 indicators with the next "
+        "census and current Udyam registration data.",
+        "<b>Wider reach:</b> add more Indian languages and a lightweight "
+        "mobile app that works on low-bandwidth connections for rural "
+        "users.",
+        "<b>Learning from outcomes:</b> train machine-learning models on "
+        "real business outcomes to improve idea validation, and connect "
+        "entrepreneurs with mentors and investors on the platform.",
+    ]),
+]
+
+
+# ---------------------------------------------------------------------
 # DOCX renderer
 # ---------------------------------------------------------------------
 
-def build_docx(path):
+def build_docx(path, content=None):
+    content = CONTENT if content is None else content
     from docx import Document
     from docx.enum.table import WD_TABLE_ALIGNMENT
     from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -416,7 +491,7 @@ def build_docx(path):
         run.font.size = Pt(size)
         run.bold = bold
 
-    for block in CONTENT:
+    for block in content:
         kind = block[0]
         if kind in ("h1", "h2"):
             para = doc.add_paragraph()
@@ -430,10 +505,14 @@ def build_docx(path):
             para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         elif kind == "bullets":
             for item in block[1]:
-                para = doc.add_paragraph(item, style="List Bullet")
+                para = doc.add_paragraph(style="List Bullet")
                 para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                for run in para.runs:
-                    run_font(run, 12)
+                # "<b>Lead-in:</b> rest" -> bold lead-in, normal rest
+                match = re.match(r"<b>(.*?)</b>(.*)", item)
+                parts = ([(match.group(1), True), (match.group(2), False)]
+                         if match else [(item, False)])
+                for text, bold in parts:
+                    run_font(para.add_run(text), 12, bold)
         elif kind == "fig":
             _, image, caption, width = block
             para = doc.add_paragraph()
@@ -488,7 +567,9 @@ PAGE_NUMBER_CENTER_X = 305.5     # matches the report's page-number position
 PAGE_NUMBER_BASELINE = 33.0
 
 
-def build_pdf(path):
+def build_pdf(path, content=None, first_page=FIRST_RESULTS_PAGE,
+              title="Empower-Her: Results"):
+    content = CONTENT if content is None else content
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
     from reportlab.lib.pagesizes import A4
@@ -505,6 +586,9 @@ def build_pdf(path):
     try:
         pdfmetrics.registerFont(TTFont("TNR", font_dir / "Times New Roman.ttf"))
         pdfmetrics.registerFont(TTFont("TNR-Bold", font_dir / "Times New Roman Bold.ttf"))
+        # Lets <b>...</b> inside paragraphs use the bold face.
+        pdfmetrics.registerFontFamily("TNR", normal="TNR", bold="TNR-Bold",
+                                      italic="TNR", boldItalic="TNR-Bold")
         regular, bold = "TNR", "TNR-Bold"
     except Exception:
         regular, bold = "Times-Roman", "Times-Bold"
@@ -522,7 +606,7 @@ def build_pdf(path):
 
     story = []
     frame_width = A4[0] - 2 * inch
-    for block in CONTENT:
+    for block in content:
         kind = block[0]
         if kind == "h1":
             story.append(Paragraph(block[1], h1))
@@ -563,32 +647,43 @@ def build_pdf(path):
         canvas.setFont(regular, 11)
         canvas.drawCentredString(
             PAGE_NUMBER_CENTER_X, PAGE_NUMBER_BASELINE,
-            str(FIRST_RESULTS_PAGE + doc.page - 1),
+            str(first_page + doc.page - 1),
         )
 
     SimpleDocTemplate(
         str(path), pagesize=A4, leftMargin=inch, rightMargin=inch,
-        topMargin=inch, bottomMargin=inch, title="Empower-Her: Results",
+        topMargin=inch, bottomMargin=inch, title=title,
     ).build(story, onFirstPage=number_page, onLaterPages=number_page)
     print("saved", path.relative_to(ROOT))
 
 
-def assemble(chapter_pdf, out_path):
+def assemble(chapter_pdf, conclusion_pdf, out_path):
     """
-    Insert the chapter before Conclusion and repair the pagination:
-    regenerated Table of Contents, List of Figures and List of Tables,
-    Conclusion renumbered to Chapter 5, and continued page numbers.
+    Insert the Results chapter and the rewritten Conclusion, and repair
+    pagination: regenerated Table of Contents, List of Figures and List of
+    Tables, and continued page numbers through the References.
     """
     from report_pagination import assemble_report
 
-    assemble_report(ORIGINAL_PDF, chapter_pdf, out_path, CONTENT,
-                    CONCLUSION_PAGE_INDEX, FIRST_RESULTS_PAGE)
+    assemble_report(ORIGINAL_PDF, chapter_pdf, conclusion_pdf, out_path,
+                    CONTENT, CONCLUSION, CONCLUSION_PAGE_INDEX,
+                    FIRST_RESULTS_PAGE)
 
 
 def main():
+    from pypdf import PdfReader
+
     build_docx(REPORT / "results_chapter.docx")
     build_pdf(REPORT / "results_chapter.pdf")
+    results_pages = len(PdfReader(str(REPORT / "results_chapter.pdf")).pages)
+
+    build_docx(REPORT / "conclusion_chapter.docx", CONCLUSION)
+    build_pdf(REPORT / "conclusion_chapter.pdf", CONCLUSION,
+              first_page=FIRST_RESULTS_PAGE + results_pages,
+              title="Empower-Her: Conclusion and Future Scope")
+
     assemble(REPORT / "results_chapter.pdf",
+             REPORT / "conclusion_chapter.pdf",
              REPORT / "final_project-report_with_results.pdf")
 
 
