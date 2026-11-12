@@ -292,7 +292,7 @@ CONTENT = [
     fig(SHOTS / "14_assistant_multilingual.png", "Assistant answering in Telugu and Hindi", 5.6),
     ("p", "Figure 4.18 shows the Women Safety module with a prominent "
           "emergency call button (112), national helplines and the "
-          "Hyderabad SHE Teams number for Telangana users, reporting "
+          "Telangana SHE Teams route (Dial 100) for Telangana users, reporting "
           "portals and practical safety guides. Figure 4.19 shows the "
           "funding page on a mobile phone, demonstrating the responsive "
           "layout."),

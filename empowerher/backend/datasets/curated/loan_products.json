@@ -70,7 +70,10 @@
       "max_tenure_months": 84,
       "collateral": "Not required up to Rs 10 lakh; CGTMSE cover above",
       "suits": "New manufacturing or service units that qualify for the 25–35% subsidy.",
-      "subsidy_percent_women": {"urban": 25, "rural": 35}
+      "subsidy_percent_women": {
+        "urban": 25,
+        "rural": 35
+      }
     },
     {
       "id": "cgtmse-msme-loan",
@@ -78,7 +81,7 @@
       "scheme_id": "cgtmse",
       "lender_type": "Banks, NBFCs",
       "min_amount_inr": 0,
-      "max_amount_inr": 50000000,
+      "max_amount_inr": 100000000,
       "indicative_rate_min": 9.5,
       "indicative_rate_max": 14.0,
       "max_tenure_months": 120,

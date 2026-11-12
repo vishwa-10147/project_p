@@ -11,7 +11,8 @@
       "benefit_type": "loan | subsidy | grant | guarantee | training | incubation | market_access",
       "social_groups": "extra target groups: sc_st, obc, minority, rural, shg, artisan, street_vendor; empty = open to all women",
       "max_amount_inr": "upper limit of financial support where one exists (null when not applicable)"
-    }
+    },
+    "review_note": "Amounts and eligibility were checked against official portals and published sources in November 2026. Where sources disagreed, the more recent official figure was used."
   },
   "schemes": [
     {
@@ -36,7 +37,7 @@
       "women_specific": true,
       "min_amount_inr": 1000000,
       "max_amount_inr": 10000000,
-      "summary": "Bank loans between Rs 10 lakh and Rs 1 crore for women (and SC/ST) entrepreneurs setting up a new (greenfield) enterprise in manufacturing, services, trading or agri-allied activities.",
+      "summary": "Composite bank loans (term loan and working capital) between Rs 10 lakh and Rs 1 crore for women (and SC/ST) entrepreneurs setting up a new (greenfield) enterprise in manufacturing, services, trading or agri-allied activities, repayable within 7 years with a moratorium of up to 18 months.",
       "eligibility": [
         "Woman entrepreneur aged 18 or above",
         "Greenfield (first-time) enterprise",
@@ -136,8 +137,8 @@
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
-      "max_amount_inr": 50000000,
-      "summary": "Guarantee cover that lets banks lend to micro and small enterprises without collateral or third-party guarantee. Women entrepreneurs receive higher guarantee coverage (85% for eligible loans) and a concession on the guarantee fee.",
+      "max_amount_inr": 100000000,
+      "summary": "Guarantee cover that lets banks lend to micro and small enterprises without collateral or third-party guarantee. The guarantee ceiling was raised from Rs 5 crore to Rs 10 crore per borrower from 1 April 2025, and annual guarantee fees were reduced. Women-owned units get higher guarantee cover and an additional discount on the guarantee fee.",
       "eligibility": [
         "Micro or small enterprise (manufacturing, services or retail trade)",
         "Loan from a member lending institution",
@@ -175,7 +176,7 @@
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": 1000000,
-      "summary": "35% credit-linked capital subsidy (up to Rs 10 lakh) for micro food-processing units, plus seed capital of up to Rs 40,000 per SHG member, training, branding and marketing support.",
+      "summary": "35% credit-linked capital subsidy on eligible project cost (up to Rs 10 lakh per unit) for micro food-processing units, plus seed capital of Rs 40,000 per SHG member working in food processing, training, branding and marketing support.",
       "eligibility": [
         "Individual micro food-processing unit, SHG, FPO or cooperative",
         "Applicant aged 18 or above with at least Class 8 education (individuals)",
@@ -357,8 +358,8 @@
       ],
       "women_specific": true,
       "min_amount_inr": null,
-      "max_amount_inr": 140000,
-      "summary": "Micro-finance for women from backward classes through State Channelising Agencies at concessional interest.",
+      "max_amount_inr": 125000,
+      "summary": "Micro-finance for women from backward classes through Self-Help Groups (up to 20 women per group) via State Channelising Agencies, at 4% interest to the beneficiary, with up to Rs 1.25 lakh per woman and Rs 15 lakh per group.",
       "eligibility": [
         "Woman from a notified backward class",
         "Annual family income within the limit notified by NBCFDC"
@@ -391,8 +392,8 @@
       ],
       "women_specific": true,
       "min_amount_inr": null,
-      "max_amount_inr": 140000,
-      "summary": "Concessional micro-credit for women from Scheduled Castes to start small income-generating activities.",
+      "max_amount_inr": 125000,
+      "summary": "Concessional micro-credit for women from Scheduled Castes: NSFDC funds up to 90% of the project cost, up to Rs 1.25 lakh, at 6% interest to the beneficiary, repayable within 3 years.",
       "eligibility": [
         "Woman from a Scheduled Caste",
         "Family income within the NSFDC limit"
@@ -426,8 +427,8 @@
       ],
       "women_specific": true,
       "min_amount_inr": null,
-      "max_amount_inr": 100000,
-      "summary": "Skill training followed by micro-credit for women from notified minority communities, routed through SHGs.",
+      "max_amount_inr": 150000,
+      "summary": "Micro-finance through SHGs for women from notified minority communities: up to Rs 1 lakh per member under Credit Line 1, or up to Rs 1.5 lakh under Credit Line 2 with a 2% interest concession for women.",
       "eligibility": [
         "Woman from a notified minority community",
         "Member of an SHG"
@@ -726,12 +727,13 @@
       ],
       "social_groups": [],
       "women_specific": true,
-      "min_amount_inr": null,
+      "min_amount_inr": 50000,
       "max_amount_inr": 300000,
-      "summary": "Bank loans of up to Rs 3 lakh for women to start small businesses, with a subsidy component that is higher for SC/ST women.",
+      "summary": "Bank loans of Rs 50,000 to Rs 3 lakh for women to start small businesses, with a subsidy from the Karnataka State Women's Development Corporation: 30% for general and special-category women and 50% for SC/ST women.",
       "eligibility": [
         "Woman aged 18 to 55 in Karnataka",
-        "Family income within the notified limit"
+        "Annual family income up to Rs 1.5 lakh (Rs 2 lakh for SC/ST); limit waived for widows and women with disabilities",
+        "Entrepreneurship training as required by the scheme"
       ],
       "how_to_apply": "Apply at the district office of the Karnataka State Women's Development Corporation.",
       "keywords": "karnataka small business loan subsidy women development corporation",
@@ -831,11 +833,12 @@
       "max_amount_inr": 2500000,
       "summary": "Financial assistance of Rs 1 lakh to Rs 25 lakh for early-stage women-led startups registered in Maharashtra.",
       "eligibility": [
-        "DPIIT-recognised startup registered in Maharashtra",
-        "At least 50% shareholding held by women founders",
-        "Annual turnover within the scheme limit"
+        "DPIIT-recognised startup registered in Maharashtra and operating for at least one year",
+        "At least 51% shareholding held by women founders",
+        "Annual turnover between Rs 10 lakh and Rs 1 crore",
+        "Not previously funded under another Maharashtra government grant"
       ],
-      "how_to_apply": "Apply when the call for applications opens on the MSInS website.",
+      "how_to_apply": "Apply online on the MSInS portal when a call for applications is open (applications run in rounds).",
       "keywords": "maharashtra women startup grant msins innovation",
       "source_url": "https://msins.in/"
     },

@@ -5,19 +5,77 @@
     "disclaimer": "In an emergency call 112. Check state-specific numbers with your local police."
   },
   "helplines": [
-    {"name": "Emergency Response Support System", "number": "112", "scope": "All India", "use_for": "Any emergency: police, fire, ambulance. Also available through the 112 India app with an SOS button.", "url": "https://112.gov.in/"},
-    {"name": "Women Helpline", "number": "181", "scope": "All India", "use_for": "Women in distress; connects to One Stop Centres (Sakhi) for police, medical, legal and counselling help.", "url": "https://wcd.gov.in/"},
-    {"name": "Cyber Crime Helpline", "number": "1930", "scope": "All India", "use_for": "Report online financial fraud immediately (UPI, card, loan-app fraud) so money can be frozen.", "url": "https://cybercrime.gov.in/"},
-    {"name": "National Commission for Women helpline", "number": "7827170170", "scope": "All India", "use_for": "Complaints of violence, harassment or rights violations against women.", "url": "https://ncw.gov.in/"},
-    {"name": "Police", "number": "100", "scope": "All India", "use_for": "Police assistance (also reachable via 112).", "url": null},
-    {"name": "National Consumer Helpline", "number": "1915", "scope": "All India", "use_for": "Disputes with suppliers, sellers or service providers.", "url": "https://consumerhelpline.gov.in/"},
-    {"name": "Hyderabad SHE Teams (WhatsApp)", "number": "9490616555", "scope": "Telangana (Hyderabad)", "use_for": "Reporting eve-teasing, stalking and harassment to the women-safety wing of Hyderabad Police.", "url": null}
+    {
+      "name": "Emergency Response Support System",
+      "number": "112",
+      "scope": "All India",
+      "use_for": "Any emergency: police, fire, ambulance. Also available through the 112 India app with an SOS button.",
+      "url": "https://112.gov.in/"
+    },
+    {
+      "name": "Women Helpline",
+      "number": "181",
+      "scope": "All India",
+      "use_for": "Women in distress; connects to One Stop Centres (Sakhi) for police, medical, legal and counselling help.",
+      "url": "https://wcd.gov.in/"
+    },
+    {
+      "name": "Cyber Crime Helpline",
+      "number": "1930",
+      "scope": "All India",
+      "use_for": "Report online financial fraud immediately (UPI, card, loan-app fraud) so money can be frozen.",
+      "url": "https://cybercrime.gov.in/"
+    },
+    {
+      "name": "National Commission for Women helpline",
+      "number": "7827170170",
+      "scope": "All India",
+      "use_for": "Complaints of violence, harassment or rights violations against women.",
+      "url": "https://ncw.gov.in/"
+    },
+    {
+      "name": "Police",
+      "number": "100",
+      "scope": "All India",
+      "use_for": "Police assistance (also reachable via 112).",
+      "url": null
+    },
+    {
+      "name": "National Consumer Helpline",
+      "number": "1915",
+      "scope": "All India",
+      "use_for": "Disputes with suppliers, sellers or service providers.",
+      "url": "https://consumerhelpline.gov.in/"
+    },
+    {
+      "name": "Telangana SHE Teams (via Dial 100)",
+      "number": "100",
+      "scope": "Telangana",
+      "use_for": "Report eve-teasing, stalking and harassment to the Telangana Police women-safety wing by dialling 100 or through the official Hawk Eye app. (Direct WhatsApp numbers differ by commissionerate and change, so use 100 or the app.)",
+      "url": null
+    }
   ],
   "reporting_portals": [
-    {"name": "National Cyber Crime Reporting Portal", "url": "https://cybercrime.gov.in/", "use_for": "Online harassment, cyber stalking, morphed images, financial fraud."},
-    {"name": "SHe-Box", "url": "https://shebox.wcd.gov.in/", "use_for": "Complaints of sexual harassment at the workplace (POSH Act), including the private sector."},
-    {"name": "RBI Sachet", "url": "https://sachet.rbi.org.in/", "use_for": "Check whether a lender is registered; report illegal deposit schemes and unauthorised lenders."},
-    {"name": "RBI Complaint Management System", "url": "https://cms.rbi.org.in/", "use_for": "Complaints against banks, NBFCs and payment apps (Integrated Ombudsman)."}
+    {
+      "name": "National Cyber Crime Reporting Portal",
+      "url": "https://cybercrime.gov.in/",
+      "use_for": "Online harassment, cyber stalking, morphed images, financial fraud."
+    },
+    {
+      "name": "SHe-Box",
+      "url": "https://shebox.wcd.gov.in/",
+      "use_for": "Complaints of sexual harassment at the workplace (POSH Act), including the private sector."
+    },
+    {
+      "name": "RBI Sachet",
+      "url": "https://sachet.rbi.org.in/",
+      "use_for": "Check whether a lender is registered; report illegal deposit schemes and unauthorised lenders."
+    },
+    {
+      "name": "RBI Complaint Management System",
+      "url": "https://cms.rbi.org.in/",
+      "use_for": "Complaints against banks, NBFCs and payment apps (Integrated Ombudsman)."
+    }
   ],
   "guides": [
     {

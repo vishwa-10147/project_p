@@ -165,7 +165,7 @@ The browser and server compute loan affordability **on encrypted numbers** using
 
 ### 3.10 Safety (`safety/`)
 - **Emergency:** a large "Call 112" button.
-- **Helplines:** national numbers (112, 181, 1930, NCW), plus the Hyderabad SHE Teams number for users in Telangana.
+- **Helplines:** national numbers (112, 181, 1930, NCW), plus Telangana SHE Teams (via Dial 100 or the Hawk Eye app) for users in Telangana.
 - **Reporting portals:** cybercrime.gov.in, SHe-Box, RBI Sachet and the RBI complaint system.
 - **Guides:** digital payments, fake loan apps, online presence, meeting customers, POSH rights, protecting ideas.
 
