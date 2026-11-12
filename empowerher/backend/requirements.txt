@@ -7,6 +7,11 @@ djangorestframework==3.18.3
 django-cors-headers==4.9.0
 python-dotenv==1.2.4
 
+# Production serving (gunicorn runs on Linux/macOS; on Windows use runserver
+# for local use or deploy on Linux)
+whitenoise==6.11.0
+gunicorn==23.0.0; sys_platform != "win32"
+
 # Encryption (Fernet for ideas and documents)
 cryptography==50.0.2
 

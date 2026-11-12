@@ -1,12 +1,15 @@
 
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from config.authentication import (
+    ExpiringTokenAuthentication as TokenAuthentication,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
 
 from . import zkp
 from .encryption import (
@@ -230,6 +233,8 @@ class VerifyProofView(APIView):
 
     authentication_classes = []
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "public"
 
     def post(self, request):
         proof = request.data.get("proof", request.data)

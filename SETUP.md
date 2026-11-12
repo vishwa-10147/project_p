@@ -45,7 +45,7 @@ Later runs use the same command and start in a few seconds. Existing packages, k
 
 | Option | Effect |
 | --- | --- |
-| `--test` | Run the automated tests (49 tests) before starting |
+| `--test` | Run the automated tests (56 tests) before starting |
 | `--no-run` | Set up only; don't start the server |
 | `--no-demo` | Don't create or reset the demo account |
 | `PORT=8080 ./setup.sh` (macOS/Linux) or `set PORT=8080` then `setup.bat` (Windows) | Use a different port |
@@ -99,7 +99,35 @@ Then restart the server.
 - **Never commit it or share it.** It is already excluded from git.
 - **Each computer gets its own keys** when it runs the setup, so copying `db.sqlite3` to another machine also requires copying `.env`.
 
-## 7. Troubleshooting
+## 7. Production deployment (Linux server)
+
+The steps above run EmpowerHer in development mode. To run it for real users:
+
+1. **Install on a Linux server** (or macOS) with Python 3.11–3.13, then run `./setup.sh --no-run --no-demo`.
+2. **Configure production.** In `empowerher/backend/.env`, set the values from `empowerher/backend/.env.production.example`:
+   - `DJANGO_DEBUG=False`
+   - a new long `DJANGO_SECRET_KEY`
+   - your domain in `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` and `DJANGO_CORS_ALLOWED_ORIGINS`
+   - `DJANGO_BEHIND_PROXY=True`
+
+   **Keep the existing encryption keys.**
+3. **Start the app:**
+   ```bash
+   ./run_production.sh
+   ```
+   It checks the configuration (`check --deploy`), applies migrations, collects static files, and starts **gunicorn** on port 8000 (`PORT` and `WORKERS` can be changed).
+4. **Put HTTPS in front.** Use a reverse proxy (nginx, Caddy, or your hosting provider's) to terminate HTTPS and forward to port 8000.
+
+What production mode turns on:
+- HTTPS redirect, HSTS, secure cookies and `X-Frame-Options: DENY`;
+- compressed, cache-busting static files (WhiteNoise);
+- a JSON-only API, and CORS limited to your domain;
+- refusal to start without a real secret key;
+- login rate limits shared across all workers.
+
+SQLite is fine for a small deployment. For many concurrent users, move to PostgreSQL, which is not set up in this project yet. Back up `db.sqlite3` and `.env` together.
+
+## 8. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |

@@ -17,6 +17,7 @@ report/results/charts/ (make_charts.py).
 """
 
 import json
+import re
 from pathlib import Path
 
 from PIL import Image
@@ -30,6 +31,12 @@ ORIGINAL_PDF = ROOT / "final_project-report (1).pdf"
 CONCLUSION_PAGE_INDEX = 27  # zero-based page index of "4. CONCLUSION"
 
 B = json.loads((RESULTS / "benchmarks.json").read_text())
+
+
+TEST_COUNT = sum(
+    path.read_text().count("    def test_")
+    for path in (ROOT / "empowerher" / "backend").glob("*/tests.py")
+)
 
 
 def ms(value):
@@ -67,7 +74,7 @@ CONTENT = [
     ("h1", "4. RESULTS"),
     ("p", "This chapter presents the results of implementing and testing "
           "Empower-Her. The complete system described in Chapter 3 was built "
-          "as a Django and Django REST Framework web application with ten "
+          "as a Django and Django REST Framework web application with eleven "
           "modules. Each module was tested with automated tests and "
           "manually through the web interface. Section 4.1 summarises what "
           "was implemented, Section 4.2 describes the test setup, Sections "
@@ -85,7 +92,8 @@ CONTENT = [
         "Implemented modules of Empower-Her",
         ["Module", "Technique / data used", "Status"],
         [
-            ["User registration & profile", "Django auth, token authentication, PBKDF2 password hashing", "Implemented"],
+            ["User registration & profile", "Django auth, expiring tokens, rate-limited login, PBKDF2 password hashing", "Implemented"],
+            ["Account security & data control", "Password change, data export (JSON), account deletion", "Implemented"],
             ["Business idea validation", "Financial model, rule-based analysis, optional OpenAI LLM, confidential mode", "Implemented"],
             ["Government scheme recommendation", "25 curated schemes; eligibility rules + TF-IDF similarity (scikit-learn)", "Implemented"],
             ["Funding & loan EMI", "EMI, amortisation, affordability (FOIR), PMEGP subsidy", "Implemented"],
@@ -268,7 +276,7 @@ CONTENT = [
           "rejected."),
     fig(SHOTS / "13_proof_verified.png", "Successful verification of an ownership proof", 5.6),
 
-    ("h2", "4.10 Multilingual Assistant and Safety"),
+    ("h2", "4.10 Multilingual Assistant, Safety and Account Controls"),
     ("p", "Figure 4.17 shows the assistant answering in Telugu and Hindi. "
           "Asked in Telugu for the EMI of a Rs 5 lakh loan at 10% for 3 "
           "years, it replied with an EMI of Rs 16,134 and a total interest "
@@ -287,10 +295,19 @@ CONTENT = [
           "layout."),
     fig(SHOTS / "15_safety.png", "Women Safety module"),
     fig(SHOTS / "16_mobile_funding.png", "Funding page on a mobile phone", 2.6),
+    ("p", "Figure 4.20 shows the account controls on the profile page. "
+          "Users can change their password (which logs out other "
+          "sessions), download all their data as a JSON file with their "
+          "confidential and Idea Vault ideas decrypted for them, and "
+          "permanently delete their account and all associated data after "
+          "confirming their password. Login sessions expire after seven "
+          "days, and login attempts are limited to ten per minute to "
+          "slow down password guessing."),
+    fig(SHOTS / "17_account_controls.png", "Password change, data export and account deletion", 5.6),
 
     ("h2", "4.11 Performance Results"),
     ("p", "The performance of each operation was measured with the "
-          "run_benchmarks command; Table 4.3 and Figure 4.20 report the "
+          "run_benchmarks command; Table 4.3 and Figure 4.21 report the "
           "median time over repeated runs. Everyday operations such as "
           "Fernet encryption, EMI calculation, scheme recommendation and "
           "market analysis complete in under 5 milliseconds. The "
@@ -325,14 +342,15 @@ CONTENT = [
     fig(CHARTS / "chart_operation_times.png", "Median time per operation (logarithmic scale)", 5.6),
 
     ("h2", "4.12 Testing Results"),
-    ("p", "The system has 49 automated tests covering every module, and all "
-          "49 pass (Figure 4.21). The tests check correctness, such as EMI "
+    ("p", f"The system has {TEST_COUNT} automated tests covering every module, "
+          f"and all {TEST_COUNT} pass (Figure 4.22). The tests check correctness, such as EMI "
           "values, Paillier homomorphic results, ZKP verification, OCR "
           "field extraction and Aadhaar and GSTIN checksums. They also check "
           "security: owner-only access to ideas and documents, rejection of "
           "tampered proofs and fake file types, masking of identity "
-          "numbers, and that confidential ideas are never sent to the AI "
-          "service. In addition, the setup script was tested on a fresh "
+          "numbers, that confidential ideas are never sent to the AI "
+          "service, expiry of login sessions, rate limiting of logins, and "
+          "complete removal of data when an account is deleted. In addition, the setup script was tested on a fresh "
           "copy of the project: it installed everything, rebuilt the "
           "datasets from the raw downloads, ran all tests and started the "
           "server in about one minute."),
@@ -361,7 +379,8 @@ CONTENT = [
         "documents. This protects against database leaks and against "
         "verifiers, but not against the server operator.",
         "Performance was measured on a single laptop with synthetic data, "
-        "not under multi-user load.",
+        "not under multi-user load, and the system has not yet been "
+        "deployed on a public server.",
     ]),
 ]
 

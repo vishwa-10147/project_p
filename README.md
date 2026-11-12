@@ -23,6 +23,10 @@ Environment variables in `empowerher/backend/.env`:
 | `DOCUMENT_ENCRYPTION_KEY` | Encrypts uploaded documents and their OCR text (Fernet) |
 | `OPENAI_API_KEY` | Optional. Enables AI recommendations and AI assistant answers |
 | `OPENAI_MODEL` | Optional, default `gpt-4.1-mini` |
+| `DJANGO_TOKEN_TTL_HOURS` | Optional, login session lifetime (default 168 = 7 days) |
+| `DJANGO_AUTH_RATE` | Optional, login/registration rate limit (default `10/minute`) |
+
+For production variables (`DJANGO_DEBUG=False`, domain, HTTPS), see `empowerher/backend/.env.production.example` and the production section of [SETUP.md](SETUP.md); `./run_production.sh` starts gunicorn.
 
 Losing an encryption key makes the data encrypted with it unreadable. Back keys up separately from the database.
 
@@ -30,7 +34,7 @@ Useful commands (run from `empowerher/backend` with the virtual environment's Py
 
 | Command | Purpose |
 | --- | --- |
-| `python manage.py test` | Run the 49 automated tests |
+| `python manage.py test` | Run the 56 automated tests |
 | `python manage.py seed_demo` | Create or reset the demo account |
 | `python manage.py run_benchmarks` | Measure performance (results in `report/results/benchmarks.json`) |
 | `python datasets/build_datasets.py` | Rebuild the processed datasets from the raw downloads |
@@ -39,7 +43,7 @@ Useful commands (run from `empowerher/backend` with the virtual environment's Py
 
 | Module | Page | API | What it does |
 | --- | --- | --- | --- |
-| Users | `/register/`, `/login/`, `/profile/` | `/api/users/` | Token auth; profile (state, city, stage, language) personalises other modules |
+| Users | `/register/`, `/login/`, `/profile/` | `/api/users/` | Expiring token auth, rate-limited login; profile (state, city, stage, language) personalises other modules; password change, **data export**, **account deletion** |
 | Business validation | `/business/validation/` | `/api/business/` | Financial estimate, strengths/risks, census market indicators, matching schemes, optional AI advice; optional 🔒 Confidential mode |
 | Schemes | `/schemes/` | `/api/schemes/` | 25 curated central/state schemes; rule + TF-IDF recommender with reasons |
 | Funding | `/funding/` | `/api/funding/` | EMI + amortisation, affordability, PMEGP subsidy, loan routes |
@@ -65,6 +69,7 @@ There is no automatic "sensitive or not" detection. **The user decides**, either
 | Fields read from documents | Documents | Plain, but **masked**: PAN `ABXXX1234F`, Aadhaar `XXXX XXXX 1234` | Lets the page show what was found without keeping full ID numbers |
 | Income, expenses, EMIs in the private check | Funding → Private check | **Never stored**; the server only sees Paillier ciphertexts | Computed under homomorphic encryption |
 | Password | Register / Login | **Hashed** (Django PBKDF2-SHA256 with salt), not encrypted | Cannot be reversed |
+| Login token | Login | Random token; **expires after 7 days**; replaced at every login and password change | Limits the damage of a stolen token |
 | Profile (name, phone, city, state, stage, language) | Register / Profile | Plain text | Used to personalise schemes, market and assistant |
 
 **Rule of thumb for users:**
@@ -129,12 +134,26 @@ Tests in `business/tests.py` check the database row, the saved report and the ex
 - The owner can later create a Fiat–Shamir Okamoto proof of knowledge of `(m, r)`, bound to a context string (who the proof is for).
 - Anyone can verify the proof at `/vault/verify/`. They learn that the prover registered the idea at the time shown and knows it, and nothing about its contents.
 
+### Users' control over their data
+
+From the **Profile** page, users can:
+- **Download all their data** as JSON (`GET /api/users/export/`). Confidential and Idea Vault ideas are decrypted for the owner. Witness secrets are never stored, so they are not included.
+- **Permanently delete their account** after confirming their password (`POST /api/users/delete-account/`). This removes the profile, assessments, vault entries and documents.
+- **Change their password** (`POST /api/users/change-password/`), which logs out other sessions.
+
+From the **Business Validation** history, users can view their own confidential details (decrypted) and delete individual assessments (`/api/business/<id>/`).
+
+### Login protection
+- **Tokens expire** after `DJANGO_TOKEN_TTL_HOURS` (default 7 days) and are replaced at every login.
+- **Rate limits:** login, registration, password change and account deletion are limited per IP (`DJANGO_AUTH_RATE`, default 10/minute). Public proof verification is limited to 60/minute.
+- **Shared counters in production:** rate-limit counters use a file-based cache, so they apply across all gunicorn workers.
+
 ### What is *not* protected yet
 - **Normal business-validation ideas are plain text.** They are sent to OpenAI when an API key is configured. Tick **Confidential** to avoid both.
 - **Some fields of confidential ideas stay readable.** The business name, category, location and figures are stored readable, because the report needs them.
 - **Profile details are plain text.**
 - **The server can decrypt vault ideas and documents**, because it holds the Fernet keys. The protection is against database leaks and against verifiers (investors, mentors), not against the server operator. True end-to-end protection would need the encryption to happen in the browser.
-- **Login tokens are stored plainly**, in the database and in the browser's `localStorage`.
+- **Login tokens are stored plainly**, in the database and in the browser's `localStorage`. They expire, but anyone who copies a valid token can use it until then.
 - **The SQLite file itself is not encrypted.** Use disk encryption, or PostgreSQL with encryption at rest, in production.
 
 ## Datasets (`empowerher/backend/datasets/`)
@@ -153,4 +172,4 @@ Tests in `business/tests.py` check the database row, the saved report and the ex
 - **Scheme data can go stale.** Scheme limits, rates and eligibility change. Each scheme links to its official source, and the dataset records its review date. Re-check before relying on it.
 - **Document checks are format checks.** They confirm number formats and checksums only, not authenticity with the issuing authority (that needs DigiLocker or an authorised API).
 - **Privacy has limits.** See "What is not protected yet" above.
-- **Not ready for deployment yet.** Before deploying: set `DJANGO_DEBUG=False`, restrict `CORS_ALLOW_ALL_ORIGINS`, use PostgreSQL, and serve static files with `collectstatic`.
+- **Not deployed yet.** The production configuration is ready and passes `check --deploy`, but it has not been run on a public server. It uses SQLite; for many concurrent users, add PostgreSQL.

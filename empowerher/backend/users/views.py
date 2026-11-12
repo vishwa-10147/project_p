@@ -1,5 +1,9 @@
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 from rest_framework import status
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -13,12 +17,20 @@ from .serializers import (
 )
 
 
+def new_token(user):
+    """Replace the user's token (logs out other sessions)."""
+    Token.objects.filter(user=user).delete()
+    return Token.objects.create(user=user)
+
+
 class RegisterView(APIView):
     """
     Register a new EmpowerHer entrepreneur.
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
 
     def post(self, request):
 
@@ -55,6 +67,8 @@ class LoginView(APIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
 
     def post(self, request):
 
@@ -84,9 +98,8 @@ class LoginView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        token, created = Token.objects.get_or_create(
-            user=user
-        )
+        # Issue a fresh token on every login so the expiry period restarts.
+        token = new_token(user)
 
         return Response(
             {
@@ -172,3 +185,132 @@ class LogoutView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class ChangePasswordView(APIView):
+    """Change the password; other sessions are logged out."""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        user = request.user
+        current = request.data.get("current_password") or ""
+        new = request.data.get("new_password") or ""
+
+        if not user.check_password(current):
+            return Response(
+                {"error": "Your current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            validate_password(new, user)
+        except ValidationError as error:
+            return Response(
+                {"error": " ".join(error.messages)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(new)
+        user.save()
+        token = new_token(user)
+
+        return Response({
+            "message": "Password changed. Other sessions were logged out.",
+            "token": token.key,
+        })
+
+
+class DataExportView(APIView):
+    """
+    Download everything EmpowerHer stores about the user, with encrypted
+    items decrypted for their owner (documents: details only; each file
+    can be downloaded from the Documents page).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from documents.views import serialise as serialise_document
+        from idea_vault.encryption import decrypt_idea
+
+        user = request.user
+
+        ideas = []
+        for idea in user.business_ideas.all():
+            details = idea.confidential_details()
+            ideas.append({
+                "business_name": idea.business_name,
+                "category": idea.get_category_display(),
+                "state": idea.state,
+                "location": idea.location,
+                "description": details["description"],
+                "target_customers": details["target_customers"],
+                "investment": str(idea.investment),
+                "selling_price": str(idea.selling_price),
+                "expected_monthly_sales": idea.expected_monthly_sales,
+                "estimated_monthly_expenses": str(
+                    idea.estimated_monthly_expenses
+                ),
+                "is_confidential": idea.is_confidential,
+                "report": idea.report,
+                "created_at": idea.created_at.isoformat(),
+            })
+
+        vault = []
+        for item in user.confidential_ideas.all():
+            try:
+                text = decrypt_idea(item.encrypted_idea)
+            except ValueError:
+                text = None
+            vault.append({
+                "title": item.title,
+                "idea": text,
+                "commitment": item.commitment,
+                "pedersen_commitment": item.pedersen_commitment,
+                "created_at": item.created_at.isoformat(),
+            })
+
+        data = {
+            "exported_at": timezone.now().isoformat(),
+            "account": UserSerializer(user).data,
+            "business_ideas": ideas,
+            "idea_vault": vault,
+            "documents": [
+                serialise_document(d) for d in user.documents.all()
+            ],
+            "note": (
+                "Idea Vault witness secrets are never stored, so they are "
+                "not included. Download document files from the "
+                "Documents page."
+            ),
+        }
+        response = Response(data)
+        response["Content-Disposition"] = (
+            'attachment; filename="empowerher-my-data.json"'
+        )
+        response["Cache-Control"] = "no-store"
+        return response
+
+
+class DeleteAccountView(APIView):
+    """Permanently delete the account and all its data."""
+
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        if not request.user.check_password(
+            request.data.get("password") or ""
+        ):
+            return Response(
+                {"error": "Password is incorrect. Nothing was deleted."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Cascades to profile, ideas, vault entries, documents and token.
+        request.user.delete()
+        return Response({
+            "message": "Your account and all its data were deleted."
+        })

@@ -112,7 +112,7 @@ def main():
         # 3. Business validation report (confidential idea from history)
         page.goto(BASE + "/business/validation/")
         page.wait_for_selector(".history-item")
-        page.locator(".history-item", has_text="Ragi").locator("button").click()
+        page.locator(".history-item", has_text="Ragi").get_by_role("button", name="View Report").click()
         page.wait_for_selector("#reportPanel:not(.hidden)")
         shot_range("03_validation_report", "#reportPanel",
                    "#reportContent .report-section", 0, 0)
@@ -207,7 +207,13 @@ def main():
         page.wait_for_selector("#helplines .card")
         shot("15_safety", full_page=False)
 
-        # 11. Mobile view
+        # 11. Account security and data controls
+        page.goto(BASE + "/profile/")
+        page.wait_for_selector("#exportButton")
+        shot_range("17_account_controls", "section.panel:has(#passwordForm)",
+                   "section.panel:has(#deleteForm)")
+
+        # 12. Mobile view
         mobile = browser.new_context(
             viewport={"width": 390, "height": 844}, device_scale_factor=2,
             is_mobile=True,

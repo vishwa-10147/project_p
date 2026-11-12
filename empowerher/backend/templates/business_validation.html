@@ -288,6 +288,12 @@
             font-size: 13px;
         }
 
+        .history-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
         .history-item button {
             flex-shrink: 0;
         }
@@ -371,7 +377,7 @@
                     <textarea id="description" name="description"
                               maxlength="3000" required
                               placeholder="What will you sell or provide? What makes your idea useful or different?"></textarea>
-                    <span class="hint">Maximum 3,000 characters. Avoid entering confidential trade secrets.</span>
+                    <span class="hint">Maximum 3,000 characters. To protect trade secrets, tick the Confidential option below.</span>
                 </div>
 
                 <div class="field">
@@ -557,6 +563,45 @@ function addListSection(container, title, items) {
     }
 
     container.appendChild(section);
+}
+
+async function showIdeaDetails(id, container, button) {
+    try {
+        const response = await fetch("/api/business/" + id + "/", {
+            headers: { "Authorization": "Token " + token }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to load details.");
+        }
+        container.appendChild(
+            makeElement("p", "", "Description: " + data.description)
+        );
+        container.appendChild(
+            makeElement("p", "", "Target customers: " + data.target_customers)
+        );
+        button.disabled = true;
+    } catch (error) {
+        setMessage(historyMessage, error.message, "error");
+    }
+}
+
+async function deleteIdea(id, name) {
+    if (!confirm("Delete the assessment for " + name + "? This cannot be undone.")) {
+        return;
+    }
+    try {
+        const response = await fetch("/api/business/" + id + "/", {
+            method: "DELETE",
+            headers: { "Authorization": "Token " + token }
+        });
+        if (!response.ok) {
+            throw new Error("Unable to delete the assessment.");
+        }
+        loadHistory();
+    } catch (error) {
+        setMessage(historyMessage, error.message, "error");
+    }
 }
 
 function renderReport(report) {
@@ -915,8 +960,29 @@ async function loadHistory() {
                 renderReport(idea.report || {});
             });
 
+            const actions = makeElement("div", "history-actions");
+            actions.appendChild(button);
+
+            const detailsButton = makeElement(
+                "button",
+                "secondary",
+                idea.is_confidential ? "Show my details 🔒" : "Show details"
+            );
+            detailsButton.type = "button";
+            detailsButton.addEventListener("click", function () {
+                showIdeaDetails(idea.id, details, detailsButton);
+            });
+            actions.appendChild(detailsButton);
+
+            const deleteButton = makeElement("button", "secondary", "Delete");
+            deleteButton.type = "button";
+            deleteButton.addEventListener("click", function () {
+                deleteIdea(idea.id, idea.business_name);
+            });
+            actions.appendChild(deleteButton);
+
             item.appendChild(details);
-            item.appendChild(button);
+            item.appendChild(actions);
             historyList.appendChild(item);
         });
 

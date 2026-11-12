@@ -4,6 +4,7 @@ from django.urls import path
 from .views import (
     BusinessIdeaValidationView,
     BusinessIdeaHistoryView,
+    BusinessIdeaDetailView,
 )
 
 urlpatterns = [
@@ -16,5 +17,10 @@ urlpatterns = [
         "history/",
         BusinessIdeaHistoryView.as_view(),
         name="business-history",
+    ),
+    path(
+        "<int:pk>/",
+        BusinessIdeaDetailView.as_view(),
+        name="business-detail",
     ),
 ]

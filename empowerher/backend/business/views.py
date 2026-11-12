@@ -2,8 +2,11 @@
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from config.authentication import (
+    ExpiringTokenAuthentication as TokenAuthentication,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -389,3 +392,38 @@ class BusinessIdeaHistoryView(APIView):
                 for idea in ideas
             ]
         })
+
+
+class BusinessIdeaDetailView(APIView):
+    """Owner-only view (decrypts confidential details) and deletion."""
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        idea = get_object_or_404(BusinessIdea, pk=pk, user=request.user)
+        try:
+            details = idea.confidential_details()
+        except ValueError:
+            return Response(
+                {"error": "Unable to decrypt this idea. "
+                          "Check the configured encryption key."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        return Response({
+            "id": idea.id,
+            "business_name": idea.business_name,
+            "category": idea.get_category_display(),
+            "state": idea.state,
+            "location": idea.location,
+            "is_confidential": idea.is_confidential,
+            "description": details["description"],
+            "target_customers": details["target_customers"],
+            "created_at": idea.created_at.isoformat(),
+            "report": idea.report,
+        })
+
+    def delete(self, request, pk):
+        idea = get_object_or_404(BusinessIdea, pk=pk, user=request.user)
+        idea.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

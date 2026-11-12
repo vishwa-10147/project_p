@@ -18,18 +18,36 @@ load_dotenv(BASE_DIR / ".env")
 
 # Security: use environment variables for deployment.
 # Rotate the previously exposed development SECRET_KEY before deployment.
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-local-development-only-change-before-deployment",
-)
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get(
-        "DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1"
-    ).split(",")
-    if host.strip()
-]
+from django.core.exceptions import ImproperlyConfigured  # noqa: E402
+
+DEV_SECRET_KEY = "django-insecure-local-development-only-change-before-deployment"
+
+
+def env_bool(name, default):
+    return os.environ.get(name, str(default)).strip().lower() in (
+        "1", "true", "yes", "on"
+    )
+
+
+def env_list(name, default=""):
+    return [
+        item.strip()
+        for item in os.environ.get(name, default).split(",")
+        if item.strip()
+    ]
+
+
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or DEV_SECRET_KEY
+DEBUG = env_bool("DJANGO_DEBUG", True)
+
+if not DEBUG and SECRET_KEY == DEV_SECRET_KEY:
+    raise ImproperlyConfigured(
+        "Set DJANGO_SECRET_KEY before running with DJANGO_DEBUG=False."
+    )
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+
+# Needed for HTTPS deployments, e.g. "https://empowerher.example.org".
+CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
     # Django defaults
@@ -62,6 +80,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Serves static files efficiently in production.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -134,21 +154,40 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        # Compressed, cache-busting file names in production
+        # (requires `manage.py collectstatic`).
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG else
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
+    },
+}
+
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 TEMPLATES_DIR = BASE_DIR / "templates"
 
-# Development only. Restrict allowed origins before deployment.
-CORS_ALLOW_ALL_ORIGINS = True
+# Any origin in development; only the listed origins in production.
+CORS_ALLOW_ALL_ORIGINS = DEBUG
+CORS_ALLOWED_ORIGINS = env_list("DJANGO_CORS_ALLOWED_ORIGINS")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "config.authentication.ExpiringTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
+    # Rate limits for login/registration and public endpoints.
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": os.environ.get("DJANGO_AUTH_RATE", "10/minute"),
+        "public": os.environ.get("DJANGO_PUBLIC_RATE", "60/minute"),
+    },
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -163,3 +202,52 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 # Curated datasets (schemes, loans, safety resources, market data).
 DATASETS_DIR = BASE_DIR / "datasets"
+
+# Login sessions (API tokens) expire after this many hours.
+TOKEN_TTL_HOURS = int(os.environ.get("DJANGO_TOKEN_TTL_HOURS", "168"))
+
+# ---------------------------------------------------------------------
+# Production security (applied when DJANGO_DEBUG=False)
+# ---------------------------------------------------------------------
+if not DEBUG:
+    SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
+    SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", True)
+    CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", True)
+    SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_HSTS_SUBDOMAINS", True)
+    # Preloading is a long-term commitment to HTTPS for the whole domain,
+    # so it is opt-in (DJANGO_HSTS_PRELOAD=True) and its warning is silenced.
+    SECURE_HSTS_PRELOAD = env_bool("DJANGO_HSTS_PRELOAD", False)
+    if not SECURE_HSTS_PRELOAD:
+        SILENCED_SYSTEM_CHECKS = ["security.W021"]
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+    # Behind a reverse proxy (nginx, Render, Railway...) that terminates TLS.
+    if env_bool("DJANGO_BEHIND_PROXY", False):
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+    ]
+
+# Rate-limit counters must be shared by all gunicorn workers, so production
+# uses a file-based cache (no extra server needed); development uses memory.
+CACHES = {
+    "default": (
+        {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+        if DEBUG else
+        {
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": os.environ.get(
+                "DJANGO_CACHE_DIR", str(BASE_DIR / ".cache")
+            ),
+        }
+    )
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
+}

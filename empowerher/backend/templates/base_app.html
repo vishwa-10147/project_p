@@ -303,8 +303,10 @@
         async function api(path, options) {
             options = options || {};
             const headers = Object.assign({}, options.headers || {});
-            if (token) {
-                headers["Authorization"] = "Token " + token;
+            // Read the token on every call: it changes after a password change.
+            const currentToken = localStorage.getItem("empowerher_token");
+            if (currentToken) {
+                headers["Authorization"] = "Token " + currentToken;
             }
             let body = options.body;
             if (body && !(body instanceof FormData) && typeof body !== "string") {

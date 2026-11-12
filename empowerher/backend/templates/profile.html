@@ -52,6 +52,50 @@
     <div id="message" class="hidden" role="status"></div>
     <p class="muted" id="account"></p>
 </section>
+
+<section class="panel">
+    <h2>Change password</h2>
+    <form id="passwordForm" class="form-grid">
+        <div class="field">
+            <label for="current_password">Current password</label>
+            <input id="current_password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="field">
+            <label for="new_password">New password</label>
+            <input id="new_password" type="password" autocomplete="new-password" minlength="8" required>
+        </div>
+        <div class="actions field full"><button type="submit">Change password</button></div>
+    </form>
+    <div id="passwordMessage" class="hidden" role="status"></div>
+</section>
+
+<section class="panel">
+    <h2>Your data</h2>
+    <p>
+        Download everything EmpowerHer stores about you as a JSON file,
+        including your confidential and Idea Vault ideas decrypted for you.
+    </p>
+    <div class="actions">
+        <button type="button" class="secondary" id="exportButton">Download my data</button>
+    </div>
+    <div id="exportMessage" class="hidden" role="status"></div>
+</section>
+
+<section class="panel" style="border-color: var(--red-light)">
+    <h2>Delete account</h2>
+    <p>
+        Permanently deletes your account, profile, business assessments,
+        Idea Vault entries and uploaded documents. This cannot be undone.
+    </p>
+    <form id="deleteForm" class="form-grid">
+        <div class="field">
+            <label for="delete_password">Confirm with your password</label>
+            <input id="delete_password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="actions field full"><button type="submit" class="danger">Delete my account</button></div>
+    </form>
+    <div id="deleteMessage" class="hidden" role="status"></div>
+</section>
 {% endblock %}
 
 {% block scripts %}
@@ -101,6 +145,65 @@ document.getElementById("profileForm").addEventListener("submit", async function
         showMessage(message, error.message, "error");
     } finally {
         button.disabled = false;
+    }
+});
+
+document.getElementById("passwordForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const box = document.getElementById("passwordMessage");
+    const button = this.querySelector("button");
+    button.disabled = true;
+    clearMessage(box);
+    try {
+        const data = await api("/api/users/change-password/", {
+            method: "POST",
+            body: {
+                current_password: document.getElementById("current_password").value,
+                new_password: document.getElementById("new_password").value
+            }
+        });
+        localStorage.setItem("empowerher_token", data.token);
+        this.reset();
+        showMessage(box, data.message, "success");
+    } catch (error) {
+        showMessage(box, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("exportButton").addEventListener("click", async function () {
+    const box = document.getElementById("exportMessage");
+    try {
+        const data = await api("/api/users/export/");
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const link = el("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "empowerher-my-data.json";
+        link.click();
+        setTimeout(function () { URL.revokeObjectURL(link.href); }, 1000);
+        showMessage(box, "Your data was downloaded. Keep the file private.", "success");
+    } catch (error) {
+        showMessage(box, error.message, "error");
+    }
+});
+
+document.getElementById("deleteForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const box = document.getElementById("deleteMessage");
+    if (!confirm("Delete your account and ALL your data permanently? This cannot be undone.")) {
+        return;
+    }
+    try {
+        await api("/api/users/delete-account/", {
+            method: "POST",
+            body: { password: document.getElementById("delete_password").value }
+        });
+        localStorage.removeItem("empowerher_token");
+        localStorage.removeItem("empowerher_user");
+        window.location.href = "/";
+    } catch (error) {
+        showMessage(box, error.message, "error");
     }
 });
 

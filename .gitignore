@@ -22,3 +22,5 @@ empowerher/backend/staticfiles/
 # Report outputs (Results chapter and preview)
 !report/*.pdf
 .tools-venv/
+staticfiles/
+.cache/

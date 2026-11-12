@@ -92,6 +92,22 @@ def hbar(labels, values, title, xlabel, path, fmt, log=False, ref=None):
     print("saved", path.name)
 
 
+TEST_MODULES = {
+    "documents": "Documents (OCR, validation)", "idea_vault": "Idea Vault (ZKP)",
+    "funding": "Funding", "schemes": "Schemes", "assistant": "Assistant",
+    "business": "Business validation", "privacy": "Privacy (HE)",
+    "market": "Market", "users": "Users & account security", "safety": "Safety",
+}
+
+
+def count_tests():
+    backend = ROOT / "empowerher" / "backend"
+    return [
+        (label, (backend / app / "tests.py").read_text().count("    def test_"))
+        for app, label in TEST_MODULES.items()
+    ]
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     b = json.loads((RESULTS / "benchmarks.json").read_text())
@@ -130,13 +146,11 @@ def main():
          OUT / "chart_warangal_demand.png", lambda v: f"{v:.1f}",
          ref=(50, "national middle (50)"))
 
-    tests = [("Documents (OCR, validation)", 7), ("Idea Vault (ZKP)", 7),
-             ("Funding", 8), ("Schemes", 7), ("Assistant", 5),
-             ("Business validation", 4), ("Privacy (HE)", 4),
-             ("Market", 4), ("Users", 2), ("Safety", 1)]
+    tests = count_tests()
+    total = sum(n for _, n in tests)
     tests.sort(key=lambda t: -t[1])
     hbar([t[0] for t in tests], [t[1] for t in tests],
-         "Automated tests per module (49 total, all passing)",
+         f"Automated tests per module ({total} total, all passing)",
          "number of tests", OUT / "chart_tests_per_module.png",
          lambda v: f"{v:.0f}")
 

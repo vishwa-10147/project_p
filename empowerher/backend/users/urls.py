@@ -5,6 +5,9 @@ from .views import (
     LoginView,
     ProfileView,
     LogoutView,
+    ChangePasswordView,
+    DataExportView,
+    DeleteAccountView,
 )
 
 
@@ -26,6 +29,24 @@ urlpatterns = [
         "profile/",
         ProfileView.as_view(),
         name="profile"
+    ),
+
+    path(
+        "change-password/",
+        ChangePasswordView.as_view(),
+        name="change-password"
+    ),
+
+    path(
+        "export/",
+        DataExportView.as_view(),
+        name="data-export"
+    ),
+
+    path(
+        "delete-account/",
+        DeleteAccountView.as_view(),
+        name="delete-account"
     ),
 
     path(
