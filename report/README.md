@@ -2,46 +2,43 @@
 
 | File | What it is |
 | --- | --- |
-| `results_chapter.docx` | Editable **Chapter 4: Results**. Paste it into the Word source of the report, before "Conclusion and Future Scope" |
-| `results_chapter.pdf` | The same chapter as a PDF |
-| `conclusion_chapter.docx` / `.pdf` | **Rewritten Chapter 5: Conclusion and Future Scope**, describing the finished system (replaces the Stage-1 text) |
-| `source/final_project-report-original.pdf` | Copy of the original Stage-1 report that the chapters are inserted into |
-| `final_project-report_with_results.pdf` | **Complete report (51 pages)** with the chapter inserted, correct page numbers, and regenerated Table of Contents, List of Figures and List of Tables |
-| `results/screenshots/` | 19 application screenshots (2× resolution) |
-| `results/charts/` | 3 charts: operation times, Warangal demand by category, tests per module |
+| `final_project-report_with_results.pdf` | **The complete, corrected report (50 pages)**: submit this |
+| `updated_sections.docx` | Corrected **Abstract**, **List of Abbreviations** and **Chapter 3 sections 3.1–3.2**, for the Word source |
+| `results_chapter.docx` | **Chapter 4: Results**, for the Word source |
+| `conclusion_chapter.docx` | Rewritten **Chapter 5: Conclusion and Future Scope**, for the Word source |
+| `chapter3_sections.pdf`, `results_chapter.pdf`, `conclusion_chapter.pdf` | Building blocks of the complete PDF (do not submit separately) |
+| `source/final_project-report-original.pdf` | The original Stage-1 report the corrections are applied to |
+| `results/screenshots/`, `results/charts/` | 19 screenshots and 3 charts used in Chapter 4 |
 | `results/benchmarks.json` | Raw performance measurements |
+| `tools/` | Scripts that regenerate and verify everything; the corrected wording is in `tools/report_text.py` |
 
-## Pagination (checked automatically)
-
-`final_project-report_with_results.pdf` has been checked page by page with a script:
+## What was corrected (verified by `tools/verify_report.py`)
 
 | Item | Result |
 | --- | --- |
-| Printed page numbers | i–viii, then 1–42 continuous, with none missing or duplicated |
-| Results chapter | pages 19–38 |
-| Conclusion | **Chapter 5**, rewritten (5.1 page 39, 5.2 page 39), pages 39–40 |
-| References | pages 41–42 |
-| Table of Contents | 29 entries, each one on the page it states |
+| Page numbering | i–viii, then 1–41 continuous, none missing or duplicated |
+| Table of Contents | 29 entries, all on the stated page |
 | List of Figures | 23 entries (3.1, 4.1–4.22), all correct |
 | List of Tables | 4 entries (2.1, 4.1–4.3), all correct |
+| Chapter 3 (pages 15–18) | Sections 3.1 and 3.2 rewritten for the implemented system: Django templates instead of React, RapidOCR instead of Tesseract, Web Speech API instead of Whisper, and the actual HE/ZKP methods |
+| Chapter 4 Results | pages 19–37 |
+| Chapter 5 Conclusion and Future Scope | rewritten, pages 38–39 |
+| References | pages 40–41 |
+| Abstract | Homomorphic Encryption is now described accurately: it computes on financial figures, while documents are encrypted at rest. ZKP proves idea ownership |
+| Section 1.5 | "Python 3.9 or later" changed to "Python 3.11 to 3.13" |
+| List of Abbreviations | 12 → 34 entries, covering every abbreviation used in Chapters 3–5 |
+| Original errors | Figure 3.1's missing page number added (15); Table 2.1 corrected from page 10 to 12; "List of Tables" title added |
+| Page layout | Regenerated pages use the original margins (text from x = 99.2 to 525.5 pt), Times New Roman 12 pt and 20.7 pt line spacing |
 
-**Errors fixed from the original report:**
-1. **List of Figures:** Figure 3.1 had no page number. It is on page **15**.
-2. **List of Tables:** Table 2.1 was listed on page **10**. It is actually on page **12**.
-3. **List of Tables:** the page had no "LIST OF TABLES" title.
+**Not changed (your decision):** the cover page still says "Project Stage – 1 Report (CS753PC)".
 
 ## If you edit the Word source instead
 
-Make the same changes there:
-1. **Paste** `results_chapter.docx` before Conclusion.
-2. **Replace the old Conclusion** with `conclusion_chapter.docx` (Chapter 5, sections 5.1 and 5.2).
-3. **Update the Table of Contents** and the lists of figures and tables using the pages above, including the three fixes.
-4. **Update the Python requirement:** change "Python 3.9 or later" in section 1.5 to **Python 3.11–3.13**.
-
-## Content to review (not page numbering)
-
-The Conclusion and Future Scope have been rewritten to match the finished system. One older passage still uses Stage-1 wording:
-- **Chapter 3 (Methodology):** describes the features as "proposed" and names React as the frontend. The finished system uses Django-rendered pages with the same REST APIs.
+1. **Replace** the Abstract, List of Abbreviations and sections 3.1–3.2 with `updated_sections.docx`.
+2. **In section 1.5,** change "Python 3.9 or later" to "Python 3.11 to 3.13".
+3. **Paste** `results_chapter.docx` as Chapter 4.
+4. **Replace** the old Conclusion with `conclusion_chapter.docx` (Chapter 5).
+5. **Update** the Table of Contents and the lists of figures and tables using the page numbers above.
 
 ## Regenerating everything
 

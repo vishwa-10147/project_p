@@ -31,7 +31,6 @@ SHOTS = RESULTS / "screenshots"
 CHARTS = RESULTS / "charts"
 # Copy of the original Stage-1 report that the chapters are inserted into.
 ORIGINAL_PDF = REPORT / "source" / "final_project-report-original.pdf"
-CONCLUSION_PAGE_INDEX = 27  # zero-based page index of "4. CONCLUSION"
 
 B = json.loads((RESULTS / "benchmarks.json").read_text())
 
@@ -72,6 +71,22 @@ def table(caption, header, rows, widths):
 
 P = B["paillier"]
 Z = B["zkp"]
+
+# Timing ranges quoted in the text, derived from the measurements so the
+# wording stays true when the benchmarks are re-run.
+import math  # noqa: E402
+
+FAST_MAX_MS = math.ceil(max(
+    B["fernet"]["encrypt"]["median_ms"], B["emi"]["time"]["median_ms"],
+    B["recommender"]["time"]["median_ms"], B["market"]["time"]["median_ms"],
+) + 0.5)
+_CRYPTO = [P[k]["median_ms"] for k in ("keygen", "encrypt_one_value",
+           "server_affordability_computation", "decrypt_one_value")]
+_CRYPTO += [Z[k]["median_ms"] for k in ("commit", "prove", "verify")]
+CRYPTO_MIN_MS = int(min(_CRYPTO) // 10 * 10)
+CRYPTO_MAX_MS = int(math.ceil(max(_CRYPTO) / 100) * 100)
+if CRYPTO_MAX_MS - max(_CRYPTO) < 10:
+    CRYPTO_MAX_MS += 100
 
 CONTENT = [
     ("h1", "4. RESULTS"),
@@ -313,9 +328,10 @@ CONTENT = [
           "run_benchmarks command; Table 4.3 and Figure 4.21 report the "
           "median time over repeated runs. Everyday operations such as "
           "Fernet encryption, EMI calculation, scheme recommendation and "
-          "market analysis complete in under 5 milliseconds. The "
-          "cryptographic operations (Paillier and ZKP) take between 30 and "
-          "500 milliseconds because they use 2048-bit numbers. This is "
+          f"market analysis complete in under {FAST_MAX_MS} milliseconds. "
+          f"The cryptographic operations (Paillier and ZKP) take between "
+          f"{CRYPTO_MIN_MS} and {CRYPTO_MAX_MS} milliseconds because they "
+          "use 2048-bit numbers. This is "
           "acceptable for interactive use: the complete private "
           "affordability check, including key generation in the browser, "
           "finished in about 1.2 seconds."),
@@ -420,9 +436,10 @@ CONCLUSION = [
           "services. Users can export or permanently delete their data, and "
           "logins expire and are rate limited."),
     ("p", f"All {TEST_COUNT} automated tests pass. Everyday operations such as "
-          "scheme recommendation and market analysis complete in under 5 "
-          "milliseconds, and the cryptographic operations take between 30 "
-          "and 500 milliseconds, so the complete private affordability "
+          "scheme recommendation and market analysis complete in under "
+          f"{FAST_MAX_MS} milliseconds, and the cryptographic operations take "
+          f"between {CRYPTO_MIN_MS} and {CRYPTO_MAX_MS} milliseconds, so the "
+          "complete private affordability "
           "check finishes in about 1.2 seconds in the browser. Empower-Her "
           "therefore meets its objectives: it brings validation, "
           "opportunities, market insight and guidance together in one "
@@ -465,7 +482,7 @@ CONCLUSION = [
 # DOCX renderer
 # ---------------------------------------------------------------------
 
-def build_docx(path, content=None):
+def build_docx(path, content=None, doc=None, save=True):
     content = CONTENT if content is None else content
     from docx import Document
     from docx.enum.table import WD_TABLE_ALIGNMENT
@@ -473,18 +490,21 @@ def build_docx(path, content=None):
     from docx.oxml.ns import qn
     from docx.shared import Inches, Pt
 
-    doc = Document()
-    section = doc.sections[0]
-    section.page_width, section.page_height = Inches(8.27), Inches(11.69)
-    for side in ("left_margin", "right_margin", "top_margin", "bottom_margin"):
-        setattr(section, side, Inches(1))
+    if doc is None:
+        doc = Document()
+        section = doc.sections[0]
+        section.page_width, section.page_height = Inches(8.27), Inches(11.69)
+        section.left_margin = Inches(LEFT_MARGIN / 72)
+        section.right_margin = Inches(RIGHT_MARGIN / 72)
+        section.top_margin = Inches(TOP_MARGIN / 72)
+        section.bottom_margin = Inches(BOTTOM_MARGIN / 72)
 
-    normal = doc.styles["Normal"]
-    normal.font.name = "Times New Roman"
-    normal.font.size = Pt(12)
-    normal.element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
-    normal.paragraph_format.line_spacing = 1.5
-    normal.paragraph_format.space_after = Pt(6)
+        normal = doc.styles["Normal"]
+        normal.font.name = "Times New Roman"
+        normal.font.size = Pt(12)
+        normal.element.rPr.rFonts.set(qn("w:eastAsia"), "Times New Roman")
+        normal.paragraph_format.line_spacing = Pt(BODY_LEADING)
+        normal.paragraph_format.space_after = Pt(3)
 
     def run_font(run, size, bold=False):
         run.font.name = "Times New Roman"
@@ -493,16 +513,22 @@ def build_docx(path, content=None):
 
     for block in content:
         kind = block[0]
-        if kind in ("h1", "h2"):
+        if kind in ("h1", "h2", "h3"):
             para = doc.add_paragraph()
-            run_font(para.add_run(block[1]), 16 if kind == "h1" else 14, True)
+            size = {"h1": 16, "h2": 14, "h3": 12}[kind]
+            run_font(para.add_run(block[1]), size, True)
             para.paragraph_format.space_before = Pt(12)
             para.paragraph_format.keep_with_next = True
             if kind == "h1":
                 para.alignment = WD_ALIGN_PARAGRAPH.CENTER
         elif kind == "p":
-            para = doc.add_paragraph(block[1])
+            para = doc.add_paragraph()
             para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            match = re.match(r"<b>(.*?)</b>(.*)", block[1])
+            parts = ([(match.group(1), True), (match.group(2), False)]
+                     if match else [(block[1], False)])
+            for text, is_bold in parts:
+                run_font(para.add_run(text), 12, is_bold)
         elif kind == "bullets":
             for item in block[1]:
                 para = doc.add_paragraph(style="List Bullet")
@@ -542,11 +568,13 @@ def build_docx(path, content=None):
                     run_font(cells[i].paragraphs[0].add_run(text), 10.5)
             for row in tbl.rows:
                 for i, fraction in enumerate(widths):
-                    row.cells[i].width = Inches(6.27 * fraction)
+                    row.cells[i].width = Inches((595.92 - LEFT_MARGIN - RIGHT_MARGIN) / 72 * fraction)
                     row.cells[i].paragraphs[0].paragraph_format.line_spacing = 1.0
             doc.add_paragraph()
-    doc.save(path)
-    print("saved", path.relative_to(ROOT))
+    if save:
+        doc.save(path)
+        print("saved", path.relative_to(ROOT))
+    return doc
 
 
 # ---------------------------------------------------------------------
@@ -562,12 +590,20 @@ def fitted_width(image, width_in):
     return min(width_in, MAX_FIG_HEIGHT_IN * w / h)
 
 
-FIRST_RESULTS_PAGE = 19          # printed number of the first Results page
+CHAPTER3_FIRST_PAGE = 16        # printed number of the regenerated 3.1 page
 PAGE_NUMBER_CENTER_X = 305.5     # matches the report's page-number position
 PAGE_NUMBER_BASELINE = 33.0
 
+# Text block and spacing measured from the original report pages
+# (A4, Times New Roman 12 pt, about 20.7 pt line spacing).
+LEFT_MARGIN = 99.2
+RIGHT_MARGIN = 595.92 - 525.5
+TOP_MARGIN = 62.0
+BOTTOM_MARGIN = 58.0
+BODY_LEADING = 20.7
 
-def build_pdf(path, content=None, first_page=FIRST_RESULTS_PAGE,
+
+def build_pdf(path, content=None, first_page=19,
               title="Empower-Her: Results"):
     content = CONTENT if content is None else content
     from reportlab.lib import colors
@@ -593,25 +629,31 @@ def build_pdf(path, content=None, first_page=FIRST_RESULTS_PAGE,
     except Exception:
         regular, bold = "Times-Roman", "Times-Bold"
 
-    body = ParagraphStyle("body", fontName=regular, fontSize=12, leading=18,
-                          alignment=TA_JUSTIFY, spaceAfter=6)
-    h1 = ParagraphStyle("h1", fontName=bold, fontSize=16, leading=22,
-                        alignment=TA_CENTER, spaceAfter=12)
-    h2 = ParagraphStyle("h2", fontName=bold, fontSize=14, leading=20,
-                        spaceBefore=12, spaceAfter=6, keepWithNext=1)
+    body = ParagraphStyle("body", fontName=regular, fontSize=12,
+                          leading=BODY_LEADING, alignment=TA_JUSTIFY,
+                          spaceAfter=3)
+    h1 = ParagraphStyle("h1", fontName=bold, fontSize=16.08, leading=22,
+                        alignment=TA_CENTER, spaceAfter=10)
+    h2 = ParagraphStyle("h2", fontName=bold, fontSize=13.92, leading=20,
+                        spaceBefore=8, spaceAfter=4, keepWithNext=1)
+    h3 = ParagraphStyle("h3", fontName=bold, fontSize=12,
+                        leading=BODY_LEADING, spaceBefore=4, spaceAfter=0,
+                        keepWithNext=1)
     caption = ParagraphStyle("caption", fontName=bold, fontSize=11, leading=14,
                              alignment=TA_CENTER, spaceBefore=4, spaceAfter=12)
     cell = ParagraphStyle("cell", fontName=regular, fontSize=10.5, leading=13)
     cell_bold = ParagraphStyle("cellb", parent=cell, fontName=bold)
 
     story = []
-    frame_width = A4[0] - 2 * inch
+    frame_width = A4[0] - LEFT_MARGIN - RIGHT_MARGIN
     for block in content:
         kind = block[0]
         if kind == "h1":
             story.append(Paragraph(block[1], h1))
         elif kind == "h2":
             story.append(Paragraph(block[1], h2))
+        elif kind == "h3":
+            story.append(Paragraph(block[1], h3))
         elif kind == "p":
             story.append(Paragraph(block[1], body))
         elif kind == "bullets":
@@ -621,7 +663,7 @@ def build_pdf(path, content=None, first_page=FIRST_RESULTS_PAGE,
         elif kind == "fig":
             _, image, text, width = block
             w, h = Image.open(image).size
-            draw_w = fitted_width(image, width) * inch
+            draw_w = min(fitted_width(image, width) * inch, frame_width)
             story.append(KeepTogether([
                 RLImage(str(image), width=draw_w, height=draw_w * h / w),
                 Paragraph(text, caption),
@@ -651,40 +693,59 @@ def build_pdf(path, content=None, first_page=FIRST_RESULTS_PAGE,
         )
 
     SimpleDocTemplate(
-        str(path), pagesize=A4, leftMargin=inch, rightMargin=inch,
-        topMargin=inch, bottomMargin=inch, title=title,
+        str(path), pagesize=A4, leftMargin=LEFT_MARGIN,
+        rightMargin=RIGHT_MARGIN, topMargin=TOP_MARGIN,
+        bottomMargin=BOTTOM_MARGIN, title=title,
     ).build(story, onFirstPage=number_page, onLaterPages=number_page)
     print("saved", path.relative_to(ROOT))
 
 
-def assemble(chapter_pdf, conclusion_pdf, out_path):
-    """
-    Insert the Results chapter and the rewritten Conclusion, and repair
-    pagination: regenerated Table of Contents, List of Figures and List of
-    Tables, and continued page numbers through the References.
-    """
-    from report_pagination import assemble_report
+def build_updated_sections_docx(path):
+    """Word file with the corrected Abstract, Abbreviations and Chapter 3."""
+    from report_text import ABBREVIATIONS, ABSTRACT, CHAPTER3, KEYWORDS
 
-    assemble_report(ORIGINAL_PDF, chapter_pdf, conclusion_pdf, out_path,
-                    CONTENT, CONCLUSION, CONCLUSION_PAGE_INDEX,
-                    FIRST_RESULTS_PAGE)
+    blocks = [("h1", "ABSTRACT")]
+    blocks += [("p", paragraph) for paragraph in ABSTRACT]
+    blocks += [("p", f"<b>Keywords:</b> {KEYWORDS}")]
+    blocks += [("h1", "LIST OF ABBREVIATIONS"),
+               ("table", "Abbreviations", ["Abbreviation", "Full form"],
+                [[a, b] for a, b in ABBREVIATIONS], [0.25, 0.75])]
+    blocks += [("h1", "3. METHODOLOGY OF EMPOWER-HER (sections 3.1 and 3.2)")]
+    blocks += CHAPTER3
+    build_docx(path, blocks)
 
 
 def main():
     from pypdf import PdfReader
 
-    build_docx(REPORT / "results_chapter.docx")
-    build_pdf(REPORT / "results_chapter.pdf")
-    results_pages = len(PdfReader(str(REPORT / "results_chapter.pdf")).pages)
+    from report_pagination import assemble_report
+    from report_text import CHAPTER3
 
-    build_docx(REPORT / "conclusion_chapter.docx", CONCLUSION)
-    build_pdf(REPORT / "conclusion_chapter.pdf", CONCLUSION,
-              first_page=FIRST_RESULTS_PAGE + results_pages,
+    def pages(pdf):
+        return len(PdfReader(str(pdf)).pages)
+
+    ch3_pdf = REPORT / "chapter3_sections.pdf"
+    build_pdf(ch3_pdf, CHAPTER3, first_page=CHAPTER3_FIRST_PAGE,
+              title="Empower-Her: Methodology (3.1-3.2)")
+    results_first = CHAPTER3_FIRST_PAGE + pages(ch3_pdf)
+
+    results_pdf = REPORT / "results_chapter.pdf"
+    build_pdf(results_pdf, CONTENT, first_page=results_first)
+    conclusion_first = results_first + pages(results_pdf)
+
+    conclusion_pdf = REPORT / "conclusion_chapter.pdf"
+    build_pdf(conclusion_pdf, CONCLUSION, first_page=conclusion_first,
               title="Empower-Her: Conclusion and Future Scope")
 
-    assemble(REPORT / "results_chapter.pdf",
-             REPORT / "conclusion_chapter.pdf",
-             REPORT / "final_project-report_with_results.pdf")
+    build_docx(REPORT / "results_chapter.docx")
+    build_docx(REPORT / "conclusion_chapter.docx", CONCLUSION)
+    build_updated_sections_docx(REPORT / "updated_sections.docx")
+
+    assemble_report(ORIGINAL_PDF, REPORT / "final_project-report_with_results.pdf", {
+        "chapter3": (ch3_pdf, CHAPTER3, CHAPTER3_FIRST_PAGE),
+        "results": (results_pdf, CONTENT, results_first),
+        "conclusion": (conclusion_pdf, CONCLUSION, conclusion_first),
+    })
 
 
 if __name__ == "__main__":

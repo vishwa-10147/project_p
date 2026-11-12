@@ -20,25 +20,25 @@
   },
   "paillier": {
     "key_bits": 2048,
-    "ciphertext_bits": 4095,
+    "ciphertext_bits": 4094,
     "keygen": {
-      "median_ms": 494.02,
-      "min_ms": 364.054,
+      "median_ms": 499.22,
+      "min_ms": 399.639,
       "runs": 5
     },
     "encrypt_one_value": {
-      "median_ms": 65.622,
-      "min_ms": 65.175,
+      "median_ms": 64.15,
+      "min_ms": 63.268,
       "runs": 20
     },
     "server_affordability_computation": {
-      "median_ms": 68.349,
-      "min_ms": 67.624,
+      "median_ms": 66.587,
+      "min_ms": 65.569,
       "runs": 20
     },
     "decrypt_one_value": {
-      "median_ms": 65.691,
-      "min_ms": 64.882,
+      "median_ms": 63.862,
+      "min_ms": 63.021,
       "runs": 20
     },
     "check": {
@@ -50,18 +50,18 @@
     "group_bits": 2048,
     "proof_size_bytes": 2128,
     "commit": {
-      "median_ms": 31.168,
-      "min_ms": 30.942,
+      "median_ms": 30.577,
+      "min_ms": 30.099,
       "runs": 20
     },
     "prove": {
-      "median_ms": 62.663,
-      "min_ms": 62.021,
+      "median_ms": 60.975,
+      "min_ms": 60.456,
       "runs": 20
     },
     "verify": {
-      "median_ms": 82.733,
-      "min_ms": 82.103,
+      "median_ms": 80.615,
+      "min_ms": 79.75,
       "runs": 20
     },
     "valid_proof_accepted": true,
@@ -71,8 +71,8 @@
   "ocr": {
     "image": "synthetic PAN card, 1000x560 px",
     "time": {
-      "median_ms": 232.261,
-      "min_ms": 225.25,
+      "median_ms": 231.1,
+      "min_ms": 224.899,
       "runs": 5
     },
     "confidence": 0.9911,
@@ -83,14 +83,14 @@
   "recommender": {
     "schemes_in_dataset": 25,
     "time": {
-      "median_ms": 0.327,
-      "min_ms": 0.319,
+      "median_ms": 0.332,
+      "min_ms": 0.322,
       "runs": 50
     },
     "top_3": [
       {
         "id": "pmfme",
-        "score": 64.6
+        "score": 64.2
       },
       {
         "id": "telangana-stree-nidhi",
@@ -105,8 +105,8 @@
   "market": {
     "districts_in_dataset": 640,
     "time": {
-      "median_ms": 4.605,
-      "min_ms": 4.418,
+      "median_ms": 4.585,
+      "min_ms": 4.442,
       "runs": 20
     },
     "example": {
