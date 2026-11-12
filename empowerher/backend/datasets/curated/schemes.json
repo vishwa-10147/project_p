@@ -19,10 +19,19 @@
       "name": "Stand-Up India",
       "authority": "Department of Financial Services / SIDBI",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["loan"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": 1000000,
@@ -43,10 +52,21 @@
       "name": "Pradhan Mantri MUDRA Yojana (PMMY)",
       "authority": "MUDRA / Department of Financial Services",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing", "expansion"],
-      "benefit_type": ["loan"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
@@ -66,10 +86,20 @@
       "name": "Prime Minister's Employment Generation Programme (PMEGP)",
       "authority": "Ministry of MSME / KVIC",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["subsidy", "loan"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "subsidy",
+        "loan"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
@@ -89,10 +119,20 @@
       "name": "Credit Guarantee Scheme for Micro and Small Enterprises (CGTMSE)",
       "authority": "CGTMSE (Ministry of MSME and SIDBI)",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["startup", "existing", "expansion"],
-      "benefit_type": ["guarantee"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "guarantee"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
@@ -112,11 +152,26 @@
       "name": "PM Formalisation of Micro Food Processing Enterprises (PM FME)",
       "authority": "Ministry of Food Processing Industries",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["food", "agriculture"],
-      "stages": ["startup", "existing", "expansion"],
-      "benefit_type": ["subsidy", "training"],
-      "social_groups": ["shg"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "food",
+        "agriculture"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "subsidy",
+        "training"
+      ],
+      "social_groups": [
+        "shg"
+      ],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": 1000000,
@@ -135,11 +190,26 @@
       "name": "PM Vishwakarma",
       "authority": "Ministry of MSME",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["handicrafts", "clothing", "services"],
-      "stages": ["existing", "expansion"],
-      "benefit_type": ["loan", "training", "grant"],
-      "social_groups": ["artisan"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "handicrafts",
+        "clothing",
+        "services"
+      ],
+      "stages": [
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "loan",
+        "training",
+        "grant"
+      ],
+      "social_groups": [
+        "artisan"
+      ],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": 300000,
@@ -158,11 +228,24 @@
       "name": "PM SVANidhi (Street Vendor's AtmaNirbhar Nidhi)",
       "authority": "Ministry of Housing and Urban Affairs",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["food", "retail", "clothing", "other"],
-      "stages": ["existing"],
-      "benefit_type": ["loan"],
-      "social_groups": ["street_vendor"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "food",
+        "retail",
+        "clothing",
+        "other"
+      ],
+      "stages": [
+        "existing"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
+      "social_groups": [
+        "street_vendor"
+      ],
       "women_specific": false,
       "min_amount_inr": 10000,
       "max_amount_inr": 50000,
@@ -180,10 +263,25 @@
       "name": "Startup India Seed Fund Scheme (SISFS)",
       "authority": "DPIIT",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["technology", "education", "agriculture", "services", "other"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["grant", "loan", "incubation"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "technology",
+        "education",
+        "agriculture",
+        "services",
+        "other"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "grant",
+        "loan",
+        "incubation"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
@@ -203,11 +301,26 @@
       "name": "Deendayal Antyodaya Yojana – National Rural Livelihoods Mission (DAY-NRLM)",
       "authority": "Ministry of Rural Development",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan", "training", "market_access"],
-      "social_groups": ["shg", "rural"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan",
+        "training",
+        "market_access"
+      ],
+      "social_groups": [
+        "shg",
+        "rural"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
@@ -225,11 +338,23 @@
       "name": "Mahila Samriddhi Yojana (NBCFDC)",
       "authority": "National Backward Classes Finance and Development Corporation",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan"],
-      "social_groups": ["obc"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
+      "social_groups": [
+        "obc"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": 140000,
@@ -247,11 +372,23 @@
       "name": "NSFDC Mahila Samriddhi Yojana",
       "authority": "National Scheduled Castes Finance and Development Corporation",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan"],
-      "social_groups": ["sc_st"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
+      "social_groups": [
+        "sc_st"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": 140000,
@@ -269,11 +406,24 @@
       "name": "NMDFC Micro Finance for Women (Mahila Samridhi)",
       "authority": "National Minorities Development and Finance Corporation",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan", "training"],
-      "social_groups": ["minority"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan",
+        "training"
+      ],
+      "social_groups": [
+        "minority"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": 100000,
@@ -291,10 +441,20 @@
       "name": "MSME Champions & Udyam Registration (Udyam Assist for informal enterprises)",
       "authority": "Ministry of MSME",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["startup", "existing", "expansion"],
-      "benefit_type": ["market_access"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "market_access"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
@@ -313,11 +473,28 @@
       "name": "GeM Womaniya",
       "authority": "Government e-Marketplace",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["handicrafts", "clothing", "food", "beauty", "retail", "services", "other"],
-      "stages": ["existing", "expansion"],
-      "benefit_type": ["market_access"],
-      "social_groups": ["shg"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "handicrafts",
+        "clothing",
+        "food",
+        "beauty",
+        "retail",
+        "services",
+        "other"
+      ],
+      "stages": [
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "market_access"
+      ],
+      "social_groups": [
+        "shg"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
@@ -335,16 +512,31 @@
       "name": "Women Entrepreneurship Platform (WEP)",
       "authority": "NITI Aayog",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing", "expansion"],
-      "benefit_type": ["training", "incubation", "market_access"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "training",
+        "incubation",
+        "market_access"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Aggregator platform for women entrepreneurs: mentorship, incubation and acceleration programmes, funding connections, compliance help and community.",
-      "eligibility": ["Any aspiring or existing woman entrepreneur"],
+      "eligibility": [
+        "Any aspiring or existing woman entrepreneur"
+      ],
       "how_to_apply": "Sign up on the WEP portal.",
       "keywords": "mentorship network incubation accelerator community guidance",
       "source_url": "https://wep.gov.in/"
@@ -354,16 +546,29 @@
       "name": "SAMARTH – Scheme for Capacity Building in Textile Sector",
       "authority": "Ministry of Textiles",
       "level": "central",
-      "states": ["ALL"],
-      "categories": ["clothing", "handicrafts"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["training"],
+      "states": [
+        "ALL"
+      ],
+      "categories": [
+        "clothing",
+        "handicrafts"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "training"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Free demand-driven, placement-oriented skill training in garmenting, handloom, handicrafts and allied textile trades. A large share of trainees are women.",
-      "eligibility": ["Aged 18 or above", "Interest in textile or apparel work"],
+      "eligibility": [
+        "Aged 18 or above",
+        "Interest in textile or apparel work"
+      ],
       "how_to_apply": "Enrol through a SAMARTH implementing partner listed on the portal.",
       "keywords": "tailoring stitching garment apparel embroidery handloom skill training",
       "source_url": "https://samarth-textiles.gov.in/"
@@ -373,16 +578,32 @@
       "name": "WE Hub – Telangana State Women Entrepreneurs Hub",
       "authority": "Government of Telangana",
       "level": "state",
-      "states": ["Telangana"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing", "expansion"],
-      "benefit_type": ["incubation", "training", "market_access"],
+      "states": [
+        "Telangana"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "incubation",
+        "training",
+        "market_access"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "India's first state-led incubator exclusively for women entrepreneurs. Runs incubation, acceleration and rural programmes, and connects founders with investors, mentors and government departments.",
-      "eligibility": ["Woman-founded or woman-led business or idea", "Programme-specific criteria apply"],
+      "eligibility": [
+        "Woman-founded or woman-led business or idea",
+        "Programme-specific criteria apply"
+      ],
       "how_to_apply": "Apply to an open programme on the WE Hub website.",
       "keywords": "hyderabad incubator accelerator women founders mentorship investors rural",
       "source_url": "https://wehub.telangana.gov.in/"
@@ -392,16 +613,30 @@
       "name": "Stree Nidhi Credit Cooperative Federation",
       "authority": "Government of Telangana / SERP",
       "level": "state",
-      "states": ["Telangana"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan"],
-      "social_groups": ["shg"],
+      "states": [
+        "Telangana"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan"
+      ],
+      "social_groups": [
+        "shg"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Quick, low-documentation credit for members of women SHGs for livelihood and income-generating activities, delivered through village organisations.",
-      "eligibility": ["Member of an SHG in Telangana"],
+      "eligibility": [
+        "Member of an SHG in Telangana"
+      ],
       "how_to_apply": "Apply through your SHG and village organisation.",
       "keywords": "shg village organisation quick credit rural telangana livelihood",
       "source_url": "https://www.streenidhi.telangana.gov.in/"
@@ -411,16 +646,30 @@
       "name": "T-PRIDE (Telangana State Program for Rapid Incubation of Dalit Entrepreneurs)",
       "authority": "Government of Telangana, Industries Department",
       "level": "state",
-      "states": ["Telangana"],
-      "categories": ["any"],
-      "stages": ["startup", "existing", "expansion"],
-      "benefit_type": ["subsidy"],
-      "social_groups": ["sc_st"],
+      "states": [
+        "Telangana"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "subsidy"
+      ],
+      "social_groups": [
+        "sc_st"
+      ],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Capital investment subsidy, interest subsidy and other incentives for SC/ST entrepreneurs, with additional subsidy percentages for women.",
-      "eligibility": ["SC/ST entrepreneur setting up an enterprise in Telangana"],
+      "eligibility": [
+        "SC/ST entrepreneur setting up an enterprise in Telangana"
+      ],
       "how_to_apply": "Apply through the TS-iPASS portal of the Industries Department.",
       "keywords": "scheduled caste tribe dalit capital subsidy interest subsidy telangana industries",
       "source_url": "https://ipass.telangana.gov.in/"
@@ -430,16 +679,28 @@
       "name": "Andhra Pradesh MSME incentives for women entrepreneurs",
       "authority": "Government of Andhra Pradesh, Industries Department",
       "level": "state",
-      "states": ["Andhra Pradesh"],
-      "categories": ["any"],
-      "stages": ["startup", "existing", "expansion"],
-      "benefit_type": ["subsidy"],
+      "states": [
+        "Andhra Pradesh"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "startup",
+        "existing",
+        "expansion"
+      ],
+      "benefit_type": [
+        "subsidy"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "The state industrial policy provides additional investment subsidy, power-cost reimbursement and stamp-duty concessions for MSMEs owned by women.",
-      "eligibility": ["Woman-owned MSME in Andhra Pradesh"],
+      "eligibility": [
+        "Woman-owned MSME in Andhra Pradesh"
+      ],
       "how_to_apply": "Apply through the AP Single Desk portal.",
       "keywords": "andhra pradesh industrial policy investment subsidy power reimbursement stamp duty",
       "source_url": "https://apindustries.gov.in/"
@@ -449,16 +710,29 @@
       "name": "Udyogini",
       "authority": "Karnataka State Women's Development Corporation",
       "level": "state",
-      "states": ["Karnataka"],
-      "categories": ["any"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["loan", "subsidy"],
+      "states": [
+        "Karnataka"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "loan",
+        "subsidy"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": 300000,
       "summary": "Bank loans of up to Rs 3 lakh for women to start small businesses, with a subsidy component that is higher for SC/ST women.",
-      "eligibility": ["Woman aged 18 to 55 in Karnataka", "Family income within the notified limit"],
+      "eligibility": [
+        "Woman aged 18 to 55 in Karnataka",
+        "Family income within the notified limit"
+      ],
       "how_to_apply": "Apply at the district office of the Karnataka State Women's Development Corporation.",
       "keywords": "karnataka small business loan subsidy women development corporation",
       "source_url": "https://kswdc.karnataka.gov.in/"
@@ -468,16 +742,29 @@
       "name": "NEEDS – New Entrepreneur-cum-Enterprise Development Scheme",
       "authority": "Government of Tamil Nadu, MSME Department",
       "level": "state",
-      "states": ["Tamil Nadu"],
-      "categories": ["any"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["subsidy", "training"],
+      "states": [
+        "Tamil Nadu"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "subsidy",
+        "training"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Entrepreneurship training plus capital subsidy and interest subvention for first-generation entrepreneurs, with a higher share reserved for women.",
-      "eligibility": ["First-generation entrepreneur in Tamil Nadu", "Graduate, diploma or ITI qualification"],
+      "eligibility": [
+        "First-generation entrepreneur in Tamil Nadu",
+        "Graduate, diploma or ITI qualification"
+      ],
       "how_to_apply": "Apply online through the MSME Tamil Nadu portal.",
       "keywords": "first generation entrepreneur capital subsidy tamil nadu",
       "source_url": "https://www.msmeonline.tn.gov.in/needs/"
@@ -487,16 +774,32 @@
       "name": "Kudumbashree Micro Enterprises",
       "authority": "Kudumbashree State Poverty Eradication Mission, Kerala",
       "level": "state",
-      "states": ["Kerala"],
-      "categories": ["any"],
-      "stages": ["idea", "startup", "existing"],
-      "benefit_type": ["loan", "training", "market_access"],
-      "social_groups": ["shg"],
+      "states": [
+        "Kerala"
+      ],
+      "categories": [
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup",
+        "existing"
+      ],
+      "benefit_type": [
+        "loan",
+        "training",
+        "market_access"
+      ],
+      "social_groups": [
+        "shg"
+      ],
       "women_specific": true,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Support for women's neighbourhood-group enterprises: start-up funds, revolving funds, training, branding and markets such as Kudumbashree bazaars and cafes.",
-      "eligibility": ["Member of a Kudumbashree neighbourhood group in Kerala"],
+      "eligibility": [
+        "Member of a Kudumbashree neighbourhood group in Kerala"
+      ],
       "how_to_apply": "Contact the local Community Development Society (CDS).",
       "keywords": "kerala neighbourhood group cafe catering bazaar micro enterprise",
       "source_url": "https://www.kudumbashree.org/"
@@ -506,10 +809,22 @@
       "name": "Punyashlok Ahilyadevi Holkar Women Startup Scheme",
       "authority": "Maharashtra State Innovation Society",
       "level": "state",
-      "states": ["Maharashtra"],
-      "categories": ["technology", "services", "education", "other", "any"],
-      "stages": ["startup"],
-      "benefit_type": ["grant"],
+      "states": [
+        "Maharashtra"
+      ],
+      "categories": [
+        "technology",
+        "services",
+        "education",
+        "other",
+        "any"
+      ],
+      "stages": [
+        "startup"
+      ],
+      "benefit_type": [
+        "grant"
+      ],
       "social_groups": [],
       "women_specific": true,
       "min_amount_inr": 100000,
@@ -529,16 +844,33 @@
       "name": "Kerala Startup Mission – Women Startup Support",
       "authority": "Kerala Startup Mission",
       "level": "state",
-      "states": ["Kerala"],
-      "categories": ["technology", "services", "education", "other", "any"],
-      "stages": ["idea", "startup"],
-      "benefit_type": ["grant", "incubation"],
+      "states": [
+        "Kerala"
+      ],
+      "categories": [
+        "technology",
+        "services",
+        "education",
+        "other",
+        "any"
+      ],
+      "stages": [
+        "idea",
+        "startup"
+      ],
+      "benefit_type": [
+        "grant",
+        "incubation"
+      ],
       "social_groups": [],
       "women_specific": false,
       "min_amount_inr": null,
       "max_amount_inr": null,
       "summary": "Innovation grants, incubation and special support (including soft loans against government purchase orders) for women-led startups in Kerala.",
-      "eligibility": ["Startup registered with Kerala Startup Mission", "Woman founder or co-founder"],
+      "eligibility": [
+        "Startup registered with Kerala Startup Mission",
+        "Woman founder or co-founder"
+      ],
       "how_to_apply": "Apply through the KSUM portal.",
       "keywords": "kerala startup innovation grant incubation ksum",
       "source_url": "https://startupmission.kerala.gov.in/"

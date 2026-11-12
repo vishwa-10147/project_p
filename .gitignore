@@ -15,3 +15,6 @@ empowerher/backend/staticfiles/
 *.pdf
 
 .DS_Store
+
+# Keep the downloaded source PDF used to build the datasets.
+!empowerher/backend/datasets/raw/*.pdf

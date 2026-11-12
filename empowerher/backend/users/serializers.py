@@ -23,7 +23,8 @@ class EntrepreneurProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
 
     profile = EntrepreneurProfileSerializer(
-        source="entrepreneur_profile"
+        source="entrepreneur_profile",
+        read_only=True,
     )
 
     class Meta:

@@ -5,7 +5,9 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import EntrepreneurProfile
 from .serializers import (
+    EntrepreneurProfileSerializer,
     RegisterSerializer,
     UserSerializer,
 )
@@ -111,6 +113,41 @@ class ProfileView(APIView):
 
         return Response(
             serializer.data,
+            status=status.HTTP_200_OK
+        )
+
+    def patch(self, request):
+        """Update name, email and entrepreneur profile fields."""
+
+        user = request.user
+        profile, _ = EntrepreneurProfile.objects.get_or_create(user=user)
+
+        profile_serializer = EntrepreneurProfileSerializer(
+            profile,
+            data=request.data,
+            partial=True,
+        )
+        if not profile_serializer.is_valid():
+            return Response(
+                profile_serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        for field, limit in (("first_name", 150), ("last_name", 150)):
+            if field in request.data:
+                value = str(request.data[field]).strip()
+                if len(value) > limit:
+                    return Response(
+                        {field: f"Must be {limit} characters or fewer."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                setattr(user, field, value)
+
+        user.save()
+        profile_serializer.save()
+
+        return Response(
+            UserSerializer(user).data,
             status=status.HTTP_200_OK
         )
 

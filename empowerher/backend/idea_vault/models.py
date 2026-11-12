@@ -18,6 +18,9 @@ class ConfidentialIdea(models.Model):
     # Public, salted cryptographic commitment to the original idea.
     commitment = models.CharField(max_length=64, unique=True)
 
+    # Pedersen commitment (hex) used for zero-knowledge ownership proofs.
+    pedersen_commitment = models.TextField(blank=True, db_index=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
