@@ -53,7 +53,56 @@ Run the tests:
 | Assistant | `/assistant/` | `/api/assistant/chat/` | English/Telugu/Hindi, text or voice (Web Speech API); knowledge-base answers, optional OpenAI |
 | Safety | `/safety/` | `/api/safety/resources/` | Helplines, reporting portals, safety guides |
 
-## Privacy technologies
+## Data protection
+
+### Which data is encrypted, and how the split is decided
+
+There is no automatic "sensitive or not" detection. **The module the user chooses decides how data is stored.** Each module is designed for one kind of data:
+
+| Data | Where it is entered | How it is stored | Why |
+| --- | --- | --- | --- |
+| Business idea for validation (name, description, location, figures, report) | Business Idea Validation | **Plain text** in `business_businessidea` | The server needs readable figures to calculate the report, match schemes and market data, show history and (if enabled) send it to the AI |
+| Confidential idea | Idea Vault | **Encrypted** (Fernet) + commitments | Meant for ideas the user wants to protect; readable only through the owner's account |
+| Uploaded document file and its full OCR text | Documents | **Encrypted** (Fernet, separate key) | Identity and financial documents |
+| Fields read from documents | Documents | Plain, but **masked**: PAN `ABXXX1234F`, Aadhaar `XXXX XXXX 1234` | Lets the page show what was found without keeping full ID numbers |
+| Income, expenses, EMIs in the private check | Funding → Private check | **Never stored**; the server only sees Paillier ciphertexts | Computed under homomorphic encryption |
+| Password | Register / Login | **Hashed** (Django PBKDF2-SHA256 with salt), not encrypted | Cannot be reversed |
+| Profile (name, phone, city, state, stage, language) | Register / Profile | Plain text | Used to personalise schemes, market and assistant |
+
+**Rule of thumb for users:**
+- Use **Business Validation** for a general description and the numbers.
+- Put the part that must stay secret (recipe, process, design, unique approach) in the **Idea Vault**.
+- Do not paste confidential details into the validation form. That form is stored readable, and it is sent to OpenAI when `OPENAI_API_KEY` is set.
+
+### Fernet encryption at rest (Idea Vault and Documents)
+
+[Fernet](https://cryptography.io/en/latest/fernet/) from the `cryptography` library is authenticated symmetric encryption:
+- AES-128 in CBC mode with a random 128-bit IV for every message;
+- an HMAC-SHA256 tag, so any change to the ciphertext is detected and decryption fails;
+- a timestamp.
+
+Keys:
+- **Two separate keys:** `IDEA_VAULT_ENCRYPTION_KEY` and `DOCUMENT_ENCRYPTION_KEY`, both read from `backend/.env` (see `idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
+- **Keys are never stored in the database and never generated automatically.** A new key would make existing data unreadable, so the server refuses to start encryption without one.
+- **Even the admin panel cannot show ciphertext:** the encrypted fields are excluded there.
+
+#### Idea Vault: what happens when an idea is registered (`idea_vault/views.py`)
+
+1. **Encrypt.** The idea text is encrypted with the vault key, and only the ciphertext is saved (`encrypted_idea`). The title stays plain so it can be listed.
+2. **Create a witness.** A random 32-byte **witness secret** is generated.
+3. **Store two commitments.** Both are fingerprints of the idea that reveal nothing about it:
+   - `commitment` = SHA-256(`"EmpowerHer-Idea-Commitment-v1:"` + witness + idea);
+   - `pedersen_commitment` = `g^m · h^r mod p`, where `m` = hash(idea) and `r` is derived from the witness. This one supports zero-knowledge proofs.
+4. **Hand over the witness once.** It is returned to the owner a single time and **never stored**.
+5. **Viewing.** Only the owner's account can request decryption (`GET /api/ideas/<id>/`). The list endpoint never returns ciphertext or plaintext.
+6. **Proving ownership.** The owner submits the witness. The server checks it against the stored commitment, then produces a zero-knowledge proof (described below).
+
+#### Documents: what happens on upload (`documents/views.py`)
+
+1. **Check the file.** Its size (≤ 8 MB) and its real file signature are checked, not just the extension.
+2. **OCR in memory.** Text is extracted in memory, and the ID numbers are validated and masked.
+3. **Encrypt and save.** The original file and the full OCR text are encrypted with the document key, and only the ciphertext is saved. Masked fields and check results are saved in plain form.
+4. **Download.** Decryption happens only when the owner downloads the file. The response is marked `no-store`.
 
 ### Homomorphic encryption (Paillier)
 - **Server:** `privacy/paillier.py`. **Browser:** `static/js/paillier.js`.
@@ -70,10 +119,12 @@ Run the tests:
 - The owner can later create a Fiat–Shamir Okamoto proof of knowledge of `(m, r)`, bound to a context string (who the proof is for).
 - Anyone can verify the proof at `/vault/verify/`. They learn that the prover registered the idea at the time shown and knows it, and nothing about its contents.
 
-### At-rest encryption
-- Ideas, uploaded files and OCR text are encrypted with Fernet (AES-128-CBC + HMAC).
-- Aadhaar numbers are never stored. Only `XXXX XXXX 1234` is kept, as UIDAI rules require.
-- PANs are partially masked.
+### What is *not* protected yet
+- **Business-validation ideas are plain text.** They are also sent to OpenAI when an API key is configured.
+- **Profile details are plain text.**
+- **The server can decrypt vault ideas and documents**, because it holds the Fernet keys. The protection is against database leaks and against verifiers (investors, mentors), not against the server operator. True end-to-end protection would need the encryption to happen in the browser.
+- **Login tokens are stored plainly**, in the database and in the browser's `localStorage`.
+- **The SQLite file itself is not encrypted.** Use disk encryption, or PostgreSQL with encryption at rest, in production.
 
 ## Datasets (`empowerher/backend/datasets/`)
 
@@ -90,5 +141,5 @@ Run the tests:
 - **Market data is old.** Census indicators are from 2011, the latest district-level census, and districts created since then appear under their parent district. The demand index ranks districts against each other; it does not forecast sales.
 - **Scheme data can go stale.** Scheme limits, rates and eligibility change. Each scheme links to its official source, and the dataset records its review date. Re-check before relying on it.
 - **Document checks are format checks.** They confirm number formats and checksums only, not authenticity with the issuing authority (that needs DigiLocker or an authorised API).
-- **The server can decrypt vault ideas.** It holds the Fernet key so it can show ideas to their owners and generate proofs. The ZKP protects the idea from verifiers (investors, mentors), not from the server operator.
+- **Privacy has limits.** See "What is not protected yet" above.
 - **Not ready for deployment yet.** Before deploying: set `DJANGO_DEBUG=False`, restrict `CORS_ALLOW_ALL_ORIGINS`, use PostgreSQL, and serve static files with `collectstatic`.
