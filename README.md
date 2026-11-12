@@ -1,6 +1,8 @@
 # EmpowerHer
 
 **A privacy-preserving AI framework for women entrepreneurship.**
+
+New here? Read [EXPLAIN.md](EXPLAIN.md) for how the project works and why it is secure, and [SETUP.md](SETUP.md) to run it.
 Django + Django REST Framework backend with server-rendered pages.
 
 ## Quick start
