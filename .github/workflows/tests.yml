@@ -1,0 +1,94 @@
+name: Tests
+
+# Runs the automated tests on every push and pull request, against both
+# SQLite (the default) and PostgreSQL (recommended for production).
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests (${{ matrix.database }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, postgres]
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: empowerher
+          POSTGRES_PASSWORD: empowerher
+          POSTGRES_DB: empowerher
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U empowerher"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    defaults:
+      run:
+        working-directory: empowerher/backend
+
+    env:
+      DJANGO_DEBUG: "True"
+      DATABASE_URL: ${{ matrix.database == 'postgres' && 'postgres://empowerher:empowerher@localhost:5432/empowerher' || '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: empowerher/backend/requirements.txt
+
+      - name: Install system libraries for OCR
+        working-directory: .
+        run: sudo apt-get update -q && sudo apt-get install -y -q libgl1 libglib2.0-0
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: python manage.py test -v 2
+
+  deploy-check:
+    name: Production settings check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: empowerher/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: empowerher/backend/requirements.txt
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Django deployment checks (debug off)
+        env:
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: ci-only-${{ github.run_id }}-not-a-real-secret-key-0123456789abcdefghijklmnopqrstuvwxyz
+          DJANGO_ALLOWED_HOSTS: example.org
+        run: python manage.py check --deploy --fail-level WARNING
