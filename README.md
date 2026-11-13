@@ -1,5 +1,7 @@
 # EmpowerHer
 
+[![Tests](https://github.com/vishwa-10147/project_p/actions/workflows/tests.yml/badge.svg)](https://github.com/vishwa-10147/project_p/actions/workflows/tests.yml)
+
 **A privacy-preserving AI framework for women entrepreneurship.**
 
 New here? Read [EXPLAIN.md](EXPLAIN.md) for how the project works and why it is secure, [SETUP.md](SETUP.md) to run it, and [empowerher/backend/README.md](empowerher/backend/README.md) for the code layout. The frontend is in `empowerher/backend/frontend/` (Django templates + JavaScript, no React); the backend is in `empowerher/backend/apps/`.
@@ -27,6 +29,10 @@ Environment variables in `empowerher/backend/.env`:
 | `OPENAI_MODEL` | Optional, default `gpt-4.1-mini` |
 | `DJANGO_TOKEN_TTL_HOURS` | Optional, login session lifetime (default 168 = 7 days) |
 | `DJANGO_AUTH_RATE` | Optional, login/registration rate limit (default `10/minute`) |
+| `DJANGO_AI_RATE` | Optional, AI assistant and idea validation limit per user (default `20/minute`) |
+| `DJANGO_UPLOAD_RATE` | Optional, document upload (OCR) limit per user (default `10/minute`) |
+| `DATABASE_URL` | Optional, e.g. `postgres://user:pass@host:5432/empowerher`; SQLite when unset |
+| `DJANGO_DEBUG` | `True` for local development (setup writes this). **Off by default** |
 
 For production variables (`DJANGO_DEBUG=False`, domain, HTTPS), see `empowerher/backend/.env.production.example` and the production section of [SETUP.md](SETUP.md); `./run_production.sh` starts gunicorn.
 
@@ -36,7 +42,7 @@ Useful commands (run from `empowerher/backend` with the virtual environment's Py
 
 | Command | Purpose |
 | --- | --- |
-| `python manage.py test` | Run the 56 automated tests |
+| `python manage.py test` | Run the 74 automated tests (also run by GitHub Actions on every push) |
 | `python manage.py seed_demo` | Create or reset the demo account |
 | `python manage.py run_benchmarks` | Measure performance (results in `report/results/benchmarks.json`) |
 | `python datasets/build_datasets.py` | Rebuild the processed datasets from the raw downloads |
@@ -147,7 +153,7 @@ From the **Business Validation** history, users can view their own confidential 
 
 ### Login protection
 - **Tokens expire** after `DJANGO_TOKEN_TTL_HOURS` (default 7 days) and are replaced at every login.
-- **Rate limits:** login, registration, password change and account deletion are limited per IP (`DJANGO_AUTH_RATE`, default 10/minute). Public proof verification is limited to 60/minute.
+- **Rate limits:** login, registration, password change and account deletion are limited per IP (`DJANGO_AUTH_RATE`, default 10/minute). Public proof verification is limited to 60/minute. The AI assistant and idea validation are limited per user (`DJANGO_AI_RATE`, default 20/minute), document uploads too (`DJANGO_UPLOAD_RATE`, default 10/minute), and every endpoint has an overall limit (120/minute per visitor IP, 600/minute per logged-in user).
 - **Shared counters in production:** rate-limit counters use a file-based cache, so they apply across all gunicorn workers.
 
 ### What is *not* protected yet
@@ -174,4 +180,8 @@ From the **Business Validation** history, users can view their own confidential 
 - **Scheme data can go stale.** Scheme limits, rates and eligibility change. Each scheme links to its official source, and the dataset records its review date. Re-check before relying on it.
 - **Document checks are format checks.** They confirm number formats and checksums only, not authenticity with the issuing authority (that needs DigiLocker or an authorised API).
 - **Privacy has limits.** See "What is not protected yet" above.
-- **Not deployed yet.** The production configuration is ready and passes `check --deploy`, but it has not been run on a public server. It uses SQLite; for many concurrent users, add PostgreSQL.
+- **Not deployed yet.** The production configuration is ready and passes `check --deploy`, but it has not been run on a public server. It uses SQLite by default; set `DATABASE_URL` to use PostgreSQL for many concurrent users.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).

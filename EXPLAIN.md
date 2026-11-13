@@ -53,7 +53,7 @@ What makes the project different from an ordinary information portal is **privac
 - **One server.** The same Django server provides the pages (frontend) and the JSON API (backend). Each page loads, then fetches its data from the API with the user's login token.
 - **Code layout.** The **backend** is in `empowerher/backend/apps/`, one folder per feature, each with `views.py` (API), `urls.py`, and logic modules such as `recommender.py`, `analysis.py`, `paillier.py`, `zkp.py` and `ocr.py`. The **frontend** (HTML pages and JavaScript) is in `empowerher/backend/frontend/`. Section 8 has the full map.
 - **Data.** The database holds users and their records. Reference data (schemes, census and so on) is read from files in `datasets/` and never changed by users.
-- **Size.** About 6,000 lines of Python in 11 apps, 18 page templates, and 56 automated tests.
+- **Size.** About 6,000 lines of Python in 11 apps, 18 page templates, and 74 automated tests (run automatically on GitHub for every push).
 
 ### Technology stack
 
@@ -61,7 +61,7 @@ What makes the project different from an ordinary information portal is **privac
 | --- | --- |
 | Language / framework | Python 3.11–3.13, Django 5.2, Django REST Framework |
 | Frontend | Django templates, plain JavaScript, responsive CSS |
-| Database | SQLite (PostgreSQL recommended for large deployments) |
+| Database | SQLite by default; PostgreSQL via `DATABASE_URL` (recommended for large deployments) |
 | Encryption at rest | `cryptography` — Fernet (AES-128-CBC + HMAC-SHA256) |
 | Homomorphic encryption | Paillier, own implementation in Python (server) and JavaScript (browser) |
 | Zero-knowledge proof | Pedersen commitments + Okamoto/Schnorr proof, 2048-bit group (RFC 3526) |
@@ -229,7 +229,10 @@ Security is built in **layers**, so a failure in one layer is limited by the oth
   - **Logout** deletes the token.
 - **Rate limiting** (Django REST Framework throttling):
   - login, registration, password change and account deletion: 10 per minute per IP address;
-  - public proof verification: 60 per minute.
+  - public proof verification: 60 per minute;
+  - AI assistant and idea validation: 20 per minute per user (they may call the OpenAI API);
+  - document uploads: 10 per minute per user (OCR is CPU-heavy); listing documents is not limited;
+  - every other endpoint: 120 per minute per visitor IP, 600 per minute per logged-in user.
   - In production the counters are stored in a shared file cache, so the limit holds across all server workers. This was tested: with 3 workers, request 11 onwards is blocked.
 
 ### 5.3 Authorisation: what you may access
@@ -387,7 +390,7 @@ All of these properties are covered by automated tests.
 
 | Check | Where |
 | --- | --- |
-| 56 automated tests | `python manage.py test` |
+| 74 automated tests | `python manage.py test` (also GitHub Actions: `.github/workflows/tests.yml`) |
 | Owner isolation (ideas, documents, assessments) | `apps/idea_vault/tests.py`, `apps/documents/tests.py`, `apps/users/tests.py` |
 | Confidential text not stored plain, not in report, not sent to AI | `apps/business/tests.py` |
 | Paillier correctness and endpoint results | `apps/privacy/tests.py` |
