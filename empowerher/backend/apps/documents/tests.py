@@ -3,7 +3,7 @@ import io
 from django.test import TestCase
 from PIL import Image, ImageDraw, ImageFont
 
-from config.testing import make_client
+from config.testing import make_client, throttle_rates
 from apps.documents.models import Document
 from apps.documents.validators import (
     aadhaar_valid,
@@ -111,3 +111,16 @@ class UploadTests(TestCase):
         _, other = make_client(username="other")
         self.assertEqual(
             other.get(f"/api/documents/{document.id}/").status_code, 404)
+
+    def test_uploads_are_rate_limited_but_listing_is_not(self):
+        def upload():
+            fake = io.BytesIO(b"not really a pdf")
+            fake.name = "fake.pdf"
+            return self.client.post("/api/documents/", {"file": fake},
+                                    format="multipart").status_code
+
+        with throttle_rates(uploads="2/minute"):
+            codes = [upload() for _ in range(3)]
+            listing = self.client.get("/api/documents/").status_code
+        self.assertEqual(codes, [400, 400, 429])
+        self.assertEqual(listing, 200)

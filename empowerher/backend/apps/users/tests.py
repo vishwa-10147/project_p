@@ -1,16 +1,13 @@
 from datetime import timedelta
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from rest_framework.authtoken.models import Token
-from rest_framework.settings import api_settings
 from rest_framework.test import APIClient
-from rest_framework.throttling import SimpleRateThrottle
 
 from apps.business.models import BusinessIdea
-from config.testing import make_client
+from config.testing import make_client, throttle_rates
 from apps.documents.models import Document
 from apps.idea_vault.models import ConfidentialIdea
 
@@ -63,20 +60,9 @@ class SessionTests(TestCase):
         self.assertIn("expired", str(response.data))
         self.assertFalse(Token.objects.filter(user=user).exists())
 
-    @override_settings(REST_FRAMEWORK={
-        **settings.REST_FRAMEWORK,
-        "DEFAULT_THROTTLE_RATES": {"auth": "3/minute", "public": "60/minute"},
-    })
     def test_login_is_rate_limited(self):
-        # DRF reads throttle rates once at import; reload them for the test.
-        api_settings.reload()
-        SimpleRateThrottle.THROTTLE_RATES = api_settings.DEFAULT_THROTTLE_RATES
-        try:
+        with throttle_rates(auth="3/minute"):
             codes = [self.login("wrong").status_code for _ in range(5)]
-        finally:
-            api_settings.reload()
-            SimpleRateThrottle.THROTTLE_RATES = (
-                api_settings.DEFAULT_THROTTLE_RATES)
         self.assertEqual(codes[:3], [401, 401, 401])
         self.assertEqual(codes[3:], [429, 429])
 

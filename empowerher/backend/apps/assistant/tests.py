@@ -4,7 +4,7 @@ from unittest import mock
 from django.test import TestCase
 
 from apps.assistant.engine import answer, detect_intent, parse_emi_request
-from config.testing import make_client
+from config.testing import make_client, throttle_rates
 
 
 class AssistantTests(TestCase):
@@ -43,3 +43,42 @@ class AssistantTests(TestCase):
                                format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["language"], "hi")
+
+    def test_chat_needs_login(self):
+        from rest_framework.test import APIClient
+        response = APIClient().post("/api/assistant/chat/",
+                                    {"message": "hello"}, format="json")
+        self.assertEqual(response.status_code, 401)
+
+    def test_chat_rejects_empty_and_long_messages(self):
+        _, client = make_client()
+        for message in ("", "   ", None, 42):
+            with self.subTest(message=message):
+                response = client.post("/api/assistant/chat/",
+                                       {"message": message}, format="json")
+                self.assertEqual(response.status_code, 400)
+        too_long = client.post("/api/assistant/chat/",
+                               {"message": "a" * 1001}, format="json")
+        self.assertEqual(too_long.status_code, 400)
+
+    @mock.patch.dict(os.environ, {"OPENAI_API_KEY": ""})
+    def test_unknown_language_falls_back_to_english(self):
+        self.assertEqual(answer("hello", language="xx")["language"], "en")
+
+    @mock.patch.dict(os.environ, {"OPENAI_API_KEY": ""})
+    def test_chat_uses_profile_language_by_default(self):
+        user, client = make_client()
+        user.entrepreneur_profile.preferred_language = "te"
+        user.entrepreneur_profile.save()
+        response = client.post("/api/assistant/chat/",
+                               {"message": "hello"}, format="json")
+        self.assertEqual(response.data["language"], "te")
+
+    @mock.patch.dict(os.environ, {"OPENAI_API_KEY": ""})
+    def test_chat_is_rate_limited(self):
+        _, client = make_client()
+        with throttle_rates(ai="2/minute"):
+            codes = [client.post("/api/assistant/chat/", {"message": "hi"},
+                                 format="json").status_code
+                     for _ in range(3)]
+        self.assertEqual(codes, [200, 200, 429])
