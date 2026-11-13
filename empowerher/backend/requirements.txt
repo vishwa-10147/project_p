@@ -2,7 +2,7 @@
 # Requires Python 3.11 - 3.13.
 
 # Web framework and API
-Django==5.2.19
+Django==6.1.3
 djangorestframework==3.18.3
 django-cors-headers==4.9.0
 python-dotenv==1.2.4
