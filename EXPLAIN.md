@@ -16,7 +16,7 @@ EmpowerHer is a web application for women entrepreneurs in India. It brings toge
 | "Is there demand where I live?" | **Market analysis:** a 0–100 demand index for her district and business category, from Census 2011 data on all 640 districts, plus state-wise data on women-owned businesses |
 | "Are my documents in order?" | **Document verification:** OCR reads PAN, Aadhaar, GST and Udyam documents and checks the numbers |
 | "How do I protect my idea?" | **Idea Vault:** stores the idea encrypted and lets her prove she owns it **without revealing it** (zero-knowledge proof) |
-| "I prefer Telugu or Hindi" | **Assistant:** answers in English, Telugu or Hindi, typed or spoken |
+| "I prefer my own language" | **Assistant:** answers in English, Telugu, Hindi, Tamil, Kannada, Marathi or Bengali, typed or spoken |
 | "Am I safe?" | **Safety:** emergency numbers, reporting portals, safety guides |
 
 What makes the project different from an ordinary information portal is **privacy**. Sensitive figures can be processed while still encrypted (homomorphic encryption), ownership of an idea can be proven without disclosing it (zero-knowledge proof), and confidential text is encrypted at rest and kept away from external AI services.
@@ -53,7 +53,7 @@ What makes the project different from an ordinary information portal is **privac
 - **One server.** The same Django server provides the pages (frontend) and the JSON API (backend). Each page loads, then fetches its data from the API with the user's login token.
 - **Code layout.** The **backend** is in `empowerher/backend/apps/`, one folder per feature, each with `views.py` (API), `urls.py`, and logic modules such as `recommender.py`, `analysis.py`, `paillier.py`, `zkp.py` and `ocr.py`. The **frontend** (HTML pages and JavaScript) is in `empowerher/backend/frontend/`. Section 8 has the full map.
 - **Data.** The database holds users and their records. Reference data (schemes, census and so on) is read from files in `datasets/` and never changed by users.
-- **Size.** About 6,000 lines of Python in 11 apps, 18 page templates, and 74 automated tests (run automatically on GitHub for every push).
+- **Size.** About 6,000 lines of Python in 11 apps, 18 page templates, and 127 automated tests with 85% code coverage (run automatically on GitHub for every push, on SQLite and PostgreSQL).
 
 ### Technology stack
 
@@ -143,7 +143,7 @@ For every scheme in `datasets/curated/schemes.json`:
 6. **Storage:** see Section 5.5. The file is encrypted and only masked numbers are kept.
 
 ### 3.7 Idea Vault (`apps/idea_vault/`)
-- **Registering** an idea encrypts it and creates a timestamped commitment. The owner receives a one-time **witness secret**.
+- **Registering** an idea encrypts it **in the browser** with a key made from the owner's vault passphrase (end-to-end: the server stores only ciphertext) and creates a timestamped commitment. The witness secret is encrypted together with the idea, so the owner needs only her passphrase. Older ideas registered before end-to-end encryption are server-encrypted and use a one-time witness secret.
 - **Proving ownership.** The owner can later create a **zero-knowledge proof of ownership** for a named recipient.
 - **Verifying.** Anyone can check the proof at `/vault/verify/`. The proof shows the prover registered the idea at that time and knows it, without revealing the idea. Section 5.7 explains the mathematics.
 
@@ -151,7 +151,7 @@ For every scheme in `datasets/curated/schemes.json`:
 The browser and server compute loan affordability **on encrypted numbers** using Paillier homomorphic encryption. Section 5.6 explains how.
 
 ### 3.9 Assistant (`apps/assistant/engine.py`)
-1. **Detect the intent** (schemes, loan, EMI, safety, emergency, market, documents, privacy, validation, greeting) from English, Telugu and Hindi keywords.
+1. **Detect the intent** (schemes, loan, EMI, safety, emergency, market, documents, privacy, validation, greeting) from keywords in English, Telugu, Hindi, Tamil, Kannada, Marathi and Bengali.
 2. **Gather facts from EmpowerHer's own data:**
    - scheme recommendations for the user's profile;
    - loan routes;
@@ -390,7 +390,7 @@ All of these properties are covered by automated tests.
 
 | Check | Where |
 | --- | --- |
-| 74 automated tests | `python manage.py test` (also GitHub Actions: `.github/workflows/tests.yml`) |
+| 127 automated tests | `python manage.py test` (also GitHub Actions: `.github/workflows/tests.yml`) |
 | Owner isolation (ideas, documents, assessments) | `apps/idea_vault/tests.py`, `apps/documents/tests.py`, `apps/users/tests.py` |
 | Confidential text not stored plain, not in report, not sent to AI | `apps/business/tests.py` |
 | Paillier correctness and endpoint results | `apps/privacy/tests.py` |
@@ -406,13 +406,14 @@ All of these properties are covered by automated tests.
 
 Security is about knowing what is **not** covered as well as what is:
 
-1. **The server holds the Fernet keys.** Encrypted ideas and documents are safe if the database is stolen, and hidden from verifiers, but the server operator could decrypt them. True end-to-end protection would require encryption in the browser.
-2. **Some data is stored as plain text:** normal (non-confidential) validation ideas and profile details. A confidential idea's name, category, location and figures also stay readable, because the report needs them.
-3. **Login tokens live in `localStorage`.** A successful XSS attack could read them. XSS is defended against (Section 5.9), and tokens expire, but this is a known trade-off of token-based browser apps.
-4. **Document checks** confirm number formats and checksums, not authenticity with the issuing authority (that would need DigiLocker or an authorised API).
+1. **The server holds the Fernet keys** for documents, confidential validation ideas, profile phone/city and older vault ideas. These are safe if the database is stolen, but the server operator could decrypt them. **New Idea Vault entries are end-to-end encrypted** in the browser, so not even the operator can read them; if the owner forgets her vault passphrase, they cannot be recovered.
+2. **Some data is stored as plain text:** normal (non-confidential) validation ideas, and the profile's name, state, stage and language. A confidential idea's name, category, location and figures also stay readable, because the report needs them.
+3. **Login tokens are kept in an HttpOnly cookie**, which page scripts (even injected ones) cannot read, with CSRF protection on every change. In the database they are stored as issued, so someone with database access could use an unexpired one.
+4. **Document checks** confirm number formats and checksums. Confirmation by the issuing department is possible through **DigiLocker**, but only once EmpowerHer is registered as a DigiLocker partner; it is tested against a simulated DigiLocker.
 5. **Market data** comes from Census 2011, the latest district-level census. It shows relative demand, not current market size.
 6. **Scheme details change.** Every scheme links to its official source and must be re-checked before applying.
-7. **Not yet deployed** on a public server. SQLite suits small deployments; use PostgreSQL for many concurrent users.
+7. **Not yet deployed** on a public server. It runs in Docker with PostgreSQL (`docker compose up`); SQLite suits small single-machine setups.
+8. **Only the assistant is multilingual**; the rest of the interface is in English.
 8. **Homomorphic encryption covers addition and scaling** (Paillier). It cannot multiply two encrypted values; that would need a scheme such as CKKS or BFV.
 
 ---

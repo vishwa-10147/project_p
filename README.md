@@ -12,8 +12,10 @@ find government schemes and funding, and protect their ideas and documents with 
 [![Tests](https://github.com/vishwa-10147/project_p/actions/workflows/tests.yml/badge.svg)](https://github.com/vishwa-10147/project_p/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/python-3.11%20–%203.13-3776AB?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-5.2-0C4B33?logo=django&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-74-8e3b9d)
-![Languages](https://img.shields.io/badge/languages-English%20·%20తెలుగు%20·%20हिन्दी-8e3b9d)
+![Tests](https://img.shields.io/badge/tests-127-8e3b9d)
+![Coverage](https://img.shields.io/badge/coverage-85%25-8e3b9d)
+![Languages](https://img.shields.io/badge/languages-7%20Indian%20languages-8e3b9d)
+![Docker](https://img.shields.io/badge/docker-compose-2496ED?logo=docker&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [Features](#-features) · [Screenshots](#-screenshots) · [Quick start](#-quick-start) · [How privacy works](#-how-your-data-is-protected) · [Project docs](#-documentation)
@@ -27,15 +29,17 @@ find government schemes and funding, and protect their ideas and documents with 
 | | Module | What it does |
 | :---: | --- | --- |
 | 💡 | **Business idea validation** | Financial estimate, strengths and risks, census market indicators, matching schemes and optional AI advice. A 🔒 **Confidential** mode encrypts the idea's description. |
-| 🏛️ | **Government schemes** | 25 curated central and state schemes, with a rule-based + TF-IDF recommender that explains *why* each one fits. |
+| 🏛️ | **Government schemes** | 25 curated central and state schemes, with a rule-based + TF-IDF recommender that explains *why* each one fits. Schemes whose validity ended or is pending renewal are clearly flagged. |
+| 🔔 | **Scheme alerts** | Tells you when a new scheme matching your profile is added, or a matching scheme's deadline is under 30 days away. |
 | 💰 | **Funding tools** | EMI with full amortisation, loan affordability, PMEGP subsidy calculator and loan routes. |
 | 🧮 | **Private loan check** | Checks loan affordability using **Paillier homomorphic encryption**: the server computes on income figures it never sees. |
 | 📊 | **Market analysis** | District-level demand index for each business category (Census 2011) plus each state's women-MSME ecosystem. |
-| 📄 | **Document verification** | OCR for PAN, Aadhaar, GSTIN, Udyam and IFSC, with checksum validation, masked ID numbers and encrypted storage. |
-| 🔐 | **Idea Vault** | Encrypts ideas and stores Pedersen commitments, so the owner can prove an idea is theirs with a **zero-knowledge proof** without revealing it. |
-| 💬 | **Multilingual assistant** | English, Telugu and Hindi, by text or voice. Works offline from a knowledge base; OpenAI is optional. |
+| 📄 | **Document verification** | OCR for PAN, Aadhaar, GSTIN, Udyam and IFSC, with checksum validation, masked ID numbers and encrypted storage. **DigiLocker** confirmation for PAN, ready once the server is a registered DigiLocker partner. |
+| 🔐 | **Idea Vault** | **End-to-end encrypted in your browser** with your own passphrase: not even the server can read it. Pedersen commitments let you prove an idea is yours with a **zero-knowledge proof**, without revealing it. |
+| 💬 | **Multilingual assistant** | English, Telugu, Hindi, Tamil, Kannada, Marathi and Bengali, by text or voice. Works offline from a knowledge base; OpenAI is optional. |
 | 🛡️ | **Safety** | National and state helplines, reporting portals and safety guides, open to everyone without login. |
 | 👤 | **Your data, your control** | Download all your data as JSON, change your password, or permanently delete your account. |
+| 📱 | **Installable app** | Add EmpowerHer to your phone's home screen. Safety helplines and calculators keep working on a poor connection. |
 
 ## 📸 Screenshots
 
@@ -54,7 +58,7 @@ find government schemes and funding, and protect their ideas and documents with 
   </tr>
   <tr>
     <td><img src="report/results/screenshots/12_vault_proof.png" alt="Idea Vault proof"><br><sub><b>Idea Vault</b>: zero-knowledge proof of ownership</sub></td>
-    <td><img src="report/results/screenshots/14_assistant_multilingual.png" alt="Multilingual assistant"><br><sub><b>Assistant</b>: answers in English, Telugu and Hindi</sub></td>
+    <td><img src="report/results/screenshots/14_assistant_multilingual.png" alt="Multilingual assistant"><br><sub><b>Assistant</b>: answers in 7 Indian languages</sub></td>
   </tr>
 </table>
 
@@ -70,7 +74,15 @@ find government schemes and funding, and protect their ideas and documents with 
 
 ## 🚀 Quick start
 
-You need **Python 3.11 – 3.13**. One command sets everything up and starts the app:
+**Option 1: Docker** (app + PostgreSQL, nothing else to install besides Docker):
+
+```bash
+docker compose up --build
+```
+
+Open **http://localhost:8000** and log in as `demo_entrepreneur` / `EmpowerHer@Demo2026`. Encryption keys are generated on first start and kept in the `app-data` volume.
+
+**Option 2: Python 3.11 – 3.13** on your computer. One command sets everything up and starts the app:
 
 ```bash
 ./setup.sh          # macOS / Linux
@@ -91,8 +103,12 @@ Run these from `empowerher/backend` with the virtual environment's Python:
 
 | Command | Purpose |
 | --- | --- |
-| `python manage.py test` | Run the 74 automated tests (GitHub Actions also runs them on every push, on SQLite and PostgreSQL) |
+| `python manage.py test` | Run the 127 automated tests (GitHub Actions also runs them on every push, on SQLite and PostgreSQL) |
+| `coverage run manage.py test && coverage report` | Test coverage (needs `pip install -r requirements-dev.txt`) |
+| `ruff check .` | Lint: style problems, likely bugs and security issues |
 | `python manage.py seed_demo` | Create or reset the demo account |
+| `python manage.py send_scheme_alerts` | Check scheme alerts for everyone (run daily; Docker's `scheduler` service does this) |
+| `python3 scripts/smoke_test.py http://localhost:8000` | End-to-end check of a running server (from the project root) |
 | `python manage.py run_benchmarks` | Measure performance (results in `report/results/benchmarks.json`) |
 | `python datasets/build_datasets.py` | Rebuild the processed datasets from the raw downloads |
 
@@ -114,6 +130,7 @@ Run these from `empowerher/backend` with the virtual environment's Python:
 | `DJANGO_AUTH_RATE` | Optional, login/registration rate limit (default `10/minute`) |
 | `DJANGO_AI_RATE` | Optional, AI assistant and idea validation limit per user (default `20/minute`) |
 | `DJANGO_UPLOAD_RATE` | Optional, document upload (OCR) limit per user (default `10/minute`) |
+| `DIGILOCKER_CLIENT_ID`, `DIGILOCKER_CLIENT_SECRET`, `DIGILOCKER_REDIRECT_URI` | Optional. Switch on DigiLocker verification (needs DigiLocker partner registration; see SETUP.md) |
 
 For production (`DJANGO_DEBUG=False`, your domain, HTTPS), see `empowerher/backend/.env.production.example` and the production section of [SETUP.md](SETUP.md). `./run_production.sh` starts gunicorn.
 
@@ -129,9 +146,10 @@ For production (`DJANGO_DEBUG=False`, your domain, HTTPS), see `empowerher/backe
 | Backend | Django 5.2, Django REST Framework, gunicorn, WhiteNoise |
 | Frontend | Server-rendered Django templates + plain JavaScript (no build step) |
 | Database | SQLite by default; PostgreSQL via `DATABASE_URL` |
-| Encryption | `cryptography` (Fernet), Paillier homomorphic encryption, Pedersen commitments + Fiat–Shamir zero-knowledge proofs |
+| Encryption | `cryptography` (Fernet), WebCrypto (AES-256-GCM, PBKDF2) for the end-to-end vault, Paillier homomorphic encryption, Pedersen commitments + Fiat–Shamir zero-knowledge proofs |
+| App | Installable PWA: web manifest + service worker with offline pages |
 | AI & data | scikit-learn (TF-IDF), pandas, RapidOCR (ONNX), pypdf, optional OpenAI |
-| CI | GitHub Actions: tests on SQLite and PostgreSQL, plus Django's production checks |
+| CI | GitHub Actions: ruff lint, tests with coverage on SQLite and PostgreSQL, Docker build + smoke test, Django's production checks; Dependabot updates; CodeQL (once the repo is public) |
 
 <details>
 <summary><b>All modules: pages and API endpoints</b></summary>
@@ -140,14 +158,14 @@ For production (`DJANGO_DEBUG=False`, your domain, HTTPS), see `empowerher/backe
 | --- | --- | --- | --- |
 | Users | `/register/`, `/login/`, `/profile/` | `/api/users/` | Expiring token auth, rate-limited login; profile (state, city, stage, language) personalises other modules; password change, **data export**, **account deletion** |
 | Business validation | `/business/validation/` | `/api/business/` | Financial estimate, strengths/risks, census market indicators, matching schemes, optional AI advice; optional 🔒 Confidential mode |
-| Schemes | `/schemes/` | `/api/schemes/` | 25 curated central/state schemes; rule + TF-IDF recommender with reasons |
+| Schemes | `/schemes/` | `/api/schemes/`, `/api/schemes/alerts/` | 25 curated central/state schemes; rule + TF-IDF recommender with reasons; status flags; alerts for new matches and deadlines |
 | Funding | `/funding/` | `/api/funding/` | EMI + amortisation, affordability, PMEGP subsidy, loan routes |
 | Private check (HE) | `/funding/` | `/api/privacy/financial-check/` | Paillier homomorphic loan-affordability check; server never sees the figures |
 | Market | `/market/` | `/api/market/` | District demand-potential index per business category from Census 2011; state women-MSME ecosystem |
-| Documents | `/documents/` | `/api/documents/` | OCR (RapidOCR / pypdf), PAN/Aadhaar/GSTIN/Udyam/IFSC validation, encrypted storage, masked fields |
-| Idea Vault (ZKP) | `/vault/`, `/vault/verify/` | `/api/ideas/` | Encrypted ideas, Pedersen commitments, zero-knowledge ownership proofs, public verifier |
-| Assistant | `/assistant/` | `/api/assistant/chat/` | English/Telugu/Hindi, text or voice (Web Speech API); knowledge-base answers, optional OpenAI |
-| Safety | `/safety/` | `/api/safety/resources/` | Helplines, reporting portals, safety guides |
+| Documents | `/documents/` | `/api/documents/`, `/api/documents/digilocker/` | OCR (RapidOCR / pypdf), PAN/Aadhaar/GSTIN/Udyam/IFSC validation, encrypted storage, masked fields, DigiLocker confirmation |
+| Idea Vault (ZKP) | `/vault/`, `/vault/verify/` | `/api/ideas/`, `/api/ideas/key/` | End-to-end encrypted ideas (browser), Pedersen commitments, zero-knowledge ownership proofs, public verifier |
+| Assistant | `/assistant/` | `/api/assistant/chat/` | 7 languages, text or voice (Web Speech API); knowledge-base answers, optional OpenAI |
+| Safety | `/safety/` (no login needed) | `/api/safety/resources/` | Helplines, reporting portals, safety guides; available offline in the installed app |
 
 The frontend is in `empowerher/backend/frontend/` and the backend apps are in `empowerher/backend/apps/`. See [empowerher/backend/README.md](empowerher/backend/README.md) for the code layout.
 
@@ -161,18 +179,37 @@ There is no automatic "sensitive or not" detection. **The user decides**, by cho
 | --- | --- |
 | Business idea, **normal** | Plain text, so the server can build the report (and send it to the AI if enabled) |
 | Business idea, **🔒 Confidential** | Description and target customers **encrypted** (Fernet); never sent to the AI |
-| Idea Vault idea | **Encrypted** (Fernet) + commitments for zero-knowledge proofs |
+| Idea Vault idea | **End-to-end encrypted in the browser** (AES-256-GCM, key from your vault passphrase); the server stores only ciphertext and commitments |
 | Uploaded documents and OCR text | **Encrypted** (Fernet, separate key) |
 | ID numbers read from documents | **Masked**: PAN `ABXXX1234F`, Aadhaar `XXXX XXXX 1234` |
 | Income and EMIs in the private check | **Never stored**; the server only sees Paillier ciphertexts |
 | Password | **Hashed** (PBKDF2-SHA256 with salt) |
-| Login token | Random, **expires after 7 days**, replaced at every login and password change |
-| Profile (name, phone, city, state, stage, language) | Plain text, used to personalise results |
+| Login token | In an **HttpOnly cookie** that page scripts can't read, with CSRF protection; **expires after 7 days**, replaced at every login and password change |
+| Profile phone number and city | **Encrypted** (Fernet) |
+| Profile name, state, stage, language | Plain text, used to personalise results |
 
 **Rule of thumb:** use **normal validation** for ideas you're happy to store readable, **🔒 Confidential** when the description reveals the idea, and the **Idea Vault** for an idea that must stay fully secret or that you may need to prove is yours later.
 
+> [!IMPORTANT]
+> The Idea Vault passphrase never leaves your device. **If you forget it, vault ideas cannot be recovered**, by you or by EmpowerHer.
+
 <details>
-<summary><b>Fernet encryption at rest</b> (Idea Vault, confidential ideas, documents)</summary>
+<summary><b>End-to-end encrypted Idea Vault</b> (how it works)</summary>
+
+Code: `frontend/static/js/vault-crypto.js` (browser) and `apps/idea_vault/` (server).
+
+1. **Passphrase → key, on your device.** The first time, you choose a vault passphrase. The browser derives an AES-256-GCM key from it with PBKDF2-SHA256 (600,000 rounds, random per-user salt). The key is created *non-extractable* and lives only in memory while the page is open.
+2. **The server keeps only public settings:** the salt, the round count and a small encrypted "key check" value, which lets the browser tell a wrong passphrase from a right one.
+3. **Registering an idea:** the browser makes a random 32-byte witness, computes the Pedersen commitment `C = g^m · h^r mod p`, encrypts `{idea, witness}` with AES-GCM, and uploads only the ciphertext and `C`. The server checks that `C` is a valid group element but cannot read anything.
+4. **Proving ownership:** the browser decrypts, builds the Fiat–Shamir proof (version 2, hashed with SHA-256) and shows it to you. The server's public verifier accepts it like any other proof.
+5. **Older ideas** registered before this change stay server-encrypted (Fernet) and keep working, marked "server-encrypted (older)".
+
+The JavaScript and Python implementations are checked against each other: the same idea and witness give the same commitment, and browser-made proofs verify on the server.
+
+</details>
+
+<details>
+<summary><b>Fernet encryption at rest</b> (confidential ideas, documents, profile, older vault ideas)</summary>
 
 [Fernet](https://cryptography.io/en/latest/fernet/) from the `cryptography` library is authenticated symmetric encryption:
 - AES-128 in CBC mode with a random 128-bit IV for every message;
@@ -181,15 +218,15 @@ There is no automatic "sensitive or not" detection. **The user decides**, by cho
 
 Keys:
 - **Two separate keys**, both read from `backend/.env` (see `apps/idea_vault/encryption.py` and `config/crypto.py`). A leak of one does not expose the other kind of data.
-  - `IDEA_VAULT_ENCRYPTION_KEY` protects ideas: the Idea Vault and confidential business-validation ideas.
-  - `DOCUMENT_ENCRYPTION_KEY` protects uploaded documents.
+  - `IDEA_VAULT_ENCRYPTION_KEY` protects ideas: confidential business-validation ideas and older (server-encrypted) vault ideas.
+  - `DOCUMENT_ENCRYPTION_KEY` protects personal data: uploaded documents and the profile's phone number and city.
 - **Keys are never stored in the database and never generated automatically.** A new key would make existing data unreadable, so the server refuses to start encryption without one.
 - **Even the admin panel cannot show ciphertext:** the encrypted fields are excluded there.
 
 </details>
 
 <details>
-<summary><b>Idea Vault: what happens when an idea is registered</b></summary>
+<summary><b>Idea Vault (older, server-encrypted ideas): what happens on registration</b></summary>
 
 Code: `apps/idea_vault/views.py`
 
@@ -269,6 +306,7 @@ From the **Business Validation** history, users can view their own confidential 
 <details>
 <summary><b>Login protection and rate limits</b></summary>
 
+- **The website never sees the token.** Login puts it in an `HttpOnly`, `SameSite=Lax` cookie (`Secure` in production), so even an injected script can't steal it. Requests authenticated by the cookie must carry Django's CSRF token. Other API clients can still send `Authorization: Token …`.
 - **Tokens expire** after `DJANGO_TOKEN_TTL_HOURS` (default 7 days) and are replaced at every login.
 - **Rate limits:**
   - login, registration, password change and account deletion: `DJANGO_AUTH_RATE` per IP (default 10/minute);
@@ -285,9 +323,9 @@ From the **Business Validation** history, users can view their own confidential 
 
 - **Normal business-validation ideas are plain text.** They are sent to OpenAI when an API key is configured. Tick **Confidential** to avoid both.
 - **Some fields of confidential ideas stay readable.** The business name, category, location and figures are stored readable, because the report needs them.
-- **Profile details are plain text.**
-- **The server can decrypt vault ideas and documents**, because it holds the Fernet keys. The protection is against database leaks and against verifiers (investors, mentors), not against the server operator. True end-to-end protection would need the encryption to happen in the browser.
-- **Login tokens are stored plainly**, in the database and in the browser's `localStorage`. They expire, but anyone who copies a valid token can use it until then.
+- **Name, state, business stage and language are plain text** (phone number and city are encrypted).
+- **The server can decrypt documents, confidential validation ideas and older vault ideas**, because it holds the Fernet keys. The protection is against database leaks, not against the server operator. New Idea Vault entries are end-to-end encrypted and safe even from the operator.
+- **Login tokens are stored plainly in the database** (scripts in the browser can't read them, but someone with database access could use a valid one until it expires).
 - **The SQLite file itself is not encrypted.** Use disk encryption, or PostgreSQL with encryption at rest, in production.
 
 </details>
@@ -309,9 +347,11 @@ All in `empowerher/backend/datasets/`:
 
 - **Market data is old.** Census indicators are from 2011, the latest district-level census, and districts created since then appear under their parent district. The demand index ranks districts against each other; it does not forecast sales.
 - **Scheme data can go stale.** Scheme limits, rates and eligibility change. Each scheme links to its official source, and the dataset records its review date. Re-check before relying on it.
-- **Document checks are format checks.** They confirm number formats and checksums only, not authenticity with the issuing authority (that needs DigiLocker or an authorised API).
+- **Document checks are format checks** unless DigiLocker is switched on. DigiLocker confirmation needs EmpowerHer to be registered as a DigiLocker partner (API Setu); until then the feature stays off. It is tested against a simulated DigiLocker, not the real service.
+- **Some schemes' status is uncertain.** Stand-Up India, PMEGP, PMFME and the Startup India Seed Fund had ended or were awaiting renewal when checked (13 Nov 2026); they are flagged "check status" with sources.
 - **Privacy has limits.** See "What is not protected yet" above.
-- **Not deployed yet.** The production configuration is ready and passes `check --deploy`, but it has not been run on a public server. It uses SQLite by default; set `DATABASE_URL` to use PostgreSQL for many concurrent users.
+- **Not deployed yet.** The production configuration is ready, passes `check --deploy`, and runs in Docker with PostgreSQL, but it has not been run on a public server.
+- **Only the assistant is multilingual.** The rest of the interface is in English.
 
 ## 📖 Documentation
 

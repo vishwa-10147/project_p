@@ -2,6 +2,26 @@
 
 One command sets up and starts the whole project. EmpowerHer's frontend (the HTML pages) is served by the same Django server as the API, so there is only one thing to start.
 
+## 0. The quickest way: Docker
+
+If you have Docker, one command runs EmpowerHer with PostgreSQL, exactly as it would run on a server:
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:8000 (demo login below). What runs:
+
+| Service | What it does |
+| --- | --- |
+| `db` | PostgreSQL 17; data in the `db-data` volume |
+| `web` | EmpowerHer on gunicorn, debug off. On first start it generates the secret and encryption keys into the `app-data` volume, applies migrations and creates the demo account |
+| `scheduler` | Runs `send_scheme_alerts` once a day |
+
+**Back up both volumes together:** the keys in `app-data` are needed to read the encrypted data in `db-data`. Stop with `docker compose down` (add `-v` only if you want to delete all data). Run a command inside with e.g. `docker compose exec web python manage.py seed_demo`.
+
+No Docker Desktop? On a Mac, the free command-line route is the official `docker` CLI plus [Colima](https://github.com/abiosoft/colima): `colima start`, then the command above.
+
 ## 1. Requirements
 
 - **Python 3.11, 3.12 or 3.13** from https://www.python.org/downloads/
@@ -45,7 +65,7 @@ Later runs use the same command and start in a few seconds. Existing packages, k
 
 | Option | Effect |
 | --- | --- |
-| `--test` | Run the automated tests (74 tests) before starting |
+| `--test` | Run the automated tests (127 tests) before starting |
 | `--no-run` | Set up only; don't start the server |
 | `--no-demo` | Don't create or reset the demo account |
 | `PORT=8080 ./setup.sh` (macOS/Linux) or `set PORT=8080` then `setup.bat` (Windows) | Use a different port |
@@ -130,6 +150,39 @@ SQLite is fine for a small deployment. For many concurrent users, use PostgreSQL
 `DATABASE_URL=postgres://user:password@host:5432/empowerher` in `.env`; `run_production.sh` then creates the tables in it. (The driver, `psycopg`, is already in `requirements.txt`.) Back up the database and `.env` together, since the encryption keys in `.env` are needed to read the data.
 
 **Debug mode is off by default.** If `DJANGO_DEBUG` is missing, EmpowerHer runs in production mode and refuses to start without a real `DJANGO_SECRET_KEY`. The setup scripts write `DJANGO_DEBUG=True` into your local `.env`, so this only matters on a server.
+
+### Scheme alerts
+
+Users see alerts on the Schemes page and a badge on the dashboard. To create them for everyone (not only when a user opens the page), run this once a day, e.g. from cron:
+
+```bash
+python manage.py send_scheme_alerts
+```
+
+A scheme can carry an optional `"deadline": "YYYY-MM-DD"` in `datasets/curated/schemes.json`; matching users are alerted 30 days before.
+
+### DigiLocker verification (optional)
+
+DigiLocker lets users confirm, with their consent, that an uploaded PAN matches the one issued by the Income Tax Department. It needs EmpowerHer to be registered as a DigiLocker **Requester** partner on [API Setu](https://apisetu.gov.in/), which gives a client ID and secret. Then set in `.env`:
+
+```
+DIGILOCKER_CLIENT_ID=...
+DIGILOCKER_CLIENT_SECRET=...
+DIGILOCKER_REDIRECT_URI=https://your-domain/api/documents/digilocker/callback/
+# Only if DigiLocker gives you a different base URL (e.g. a sandbox):
+DIGILOCKER_BASE_URL=https://api.digitallocker.gov.in/public/oauth2
+```
+
+Register the same redirect URI with DigiLocker. Without these values the Documents page explains that DigiLocker isn't switched on.
+
+### Checks for developers
+
+```bash
+pip install -r requirements-dev.txt     # ruff + coverage
+ruff check .                            # lint (also runs on GitHub)
+coverage run manage.py test && coverage report
+python3 ../../scripts/smoke_test.py http://localhost:8000   # against a running server
+```
 
 ## 8. Troubleshooting
 
