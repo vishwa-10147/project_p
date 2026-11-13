@@ -49,6 +49,9 @@ services:
 
   # Checks scheme alerts (new matching schemes, deadlines) once a day.
   scheduler:
+    # Same image as web (the second build is a cache hit). Without `build`,
+    # a fresh machine would try to download "empowerher" from Docker Hub.
+    build: ./empowerher/backend
     image: empowerher:latest
     restart: unless-stopped
     depends_on:
