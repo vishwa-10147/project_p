@@ -28,3 +28,8 @@ staticfiles/
 
 # Original project report
 !final_project-report (1).pdf
+
+# Test coverage output
+.coverage
+htmlcov/
+.ruff_cache/

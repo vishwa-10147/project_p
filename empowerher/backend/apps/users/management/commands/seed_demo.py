@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 from rest_framework.test import APIClient
 
 DEMO_USERNAME = "demo_entrepreneur"
-DEFAULT_DEMO_PASSWORD = "EmpowerHer@Demo2026"
+DEFAULT_DEMO_PASSWORD = "EmpowerHer@Demo2026"  # noqa: S105 - public demo account
 
 
 def synthetic_pan_card():

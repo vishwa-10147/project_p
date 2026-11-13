@@ -4,8 +4,6 @@ import secrets
 
 from cryptography.fernet import Fernet, InvalidToken
 from django.core.exceptions import ImproperlyConfigured
-from django.conf import settings
-
 
 COMMITMENT_PREFIX = b"EmpowerHer-Idea-Commitment-v1:"
 

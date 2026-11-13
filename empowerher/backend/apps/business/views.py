@@ -4,9 +4,6 @@ from decimal import Decimal, InvalidOperation
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from config.authentication import (
-    ExpiringTokenAuthentication as TokenAuthentication,
-)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
@@ -14,9 +11,12 @@ from rest_framework.views import APIView
 
 from apps.market.analysis import analyse
 from apps.schemes.recommender import recommend
+from config.authentication import (
+    ExpiringTokenAuthentication as TokenAuthentication,
+)
 
-from .models import BusinessIdea
 from .ai_recommendations import generate_ai_recommendations
+from .models import BusinessIdea
 
 
 def money(value):

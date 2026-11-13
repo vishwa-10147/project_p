@@ -1,0 +1,69 @@
+# EmpowerHer with PostgreSQL, in one command:
+#
+#   docker compose up --build
+#
+# Then open http://localhost:8000  (demo login: demo_entrepreneur / EmpowerHer@Demo2026)
+#
+# This runs the production setup (gunicorn, debug off) over plain HTTP on
+# your own computer. For a public server, put HTTPS in front and turn the
+# HTTPS settings below back on (see SETUP.md).
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: empowerher
+      POSTGRES_USER: empowerher
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-empowerher-local-only}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U empowerher -d empowerher"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: ./empowerher/backend
+    image: empowerher:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgres://empowerher:${POSTGRES_PASSWORD:-empowerher-local-only}@db:5432/empowerher
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      # Local HTTP only: no HTTPS redirect, no secure-only cookies, no HSTS.
+      DJANGO_SECURE_SSL_REDIRECT: "False"
+      DJANGO_SECURE_COOKIES: "False"
+      DJANGO_HSTS_SECONDS: "0"
+      SEED_DEMO: ${SEED_DEMO:-True}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      # Generated keys + rate-limit cache. Back this up with the database.
+      - app-data:/app/data
+
+  # Checks scheme alerts (new matching schemes, deadlines) once a day.
+  scheduler:
+    image: empowerher:latest
+    restart: unless-stopped
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://empowerher:${POSTGRES_PASSWORD:-empowerher-local-only}@db:5432/empowerher
+      DJANGO_ALLOWED_HOSTS: localhost
+    volumes:
+      - app-data:/app/data
+    entrypoint: []
+    command: ["sh", "-c", "while true; do python manage.py send_scheme_alerts; sleep 86400; done"]
+    healthcheck:
+      disable: true
+
+volumes:
+  db-data:
+  app-data:

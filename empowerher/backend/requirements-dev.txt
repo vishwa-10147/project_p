@@ -1,0 +1,4 @@
+# Development tools (not needed to run the app).
+-r requirements.txt
+ruff==0.17.5
+coverage[toml]==7.17.3

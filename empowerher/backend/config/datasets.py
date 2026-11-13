@@ -7,20 +7,20 @@ Files are loaded once per process and cached.
 """
 
 import json
-from functools import lru_cache
+from functools import cache
 
 import pandas as pd
 from django.conf import settings
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_json(name):
     path = settings.DATASETS_DIR / "curated" / f"{name}.json"
     with open(path, encoding="utf-8") as handle:
         return json.load(handle)
 
 
-@lru_cache(maxsize=None)
+@cache
 def load_csv(name):
     path = settings.DATASETS_DIR / "processed" / f"{name}.csv"
     return pd.read_csv(path)

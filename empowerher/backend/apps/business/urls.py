@@ -2,9 +2,9 @@
 from django.urls import path
 
 from .views import (
-    BusinessIdeaValidationView,
-    BusinessIdeaHistoryView,
     BusinessIdeaDetailView,
+    BusinessIdeaHistoryView,
+    BusinessIdeaValidationView,
 )
 
 urlpatterns = [

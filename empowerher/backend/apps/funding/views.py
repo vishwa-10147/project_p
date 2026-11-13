@@ -27,7 +27,7 @@ def number(data, field, minimum=0.0, maximum=1e10, required=True,
     try:
         value = float(raw)
     except (TypeError, ValueError):
-        raise InputError(f"{field.replace('_', ' ')} must be a number.")
+        raise InputError(f"{field.replace('_', ' ')} must be a number.") from None
     if value != value or not minimum <= value <= maximum:
         raise InputError(
             f"{field.replace('_', ' ')} must be between "

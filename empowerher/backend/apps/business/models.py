@@ -67,6 +67,9 @@ class BusinessIdea(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def __str__(self):
+        return f"{self.business_name} - {self.user.username}"
+
     def seal_confidential_fields(self):
         """Encrypt the free-text fields and clear their plain copies."""
         payload = json.dumps({
@@ -85,6 +88,3 @@ class BusinessIdea(models.Model):
         return json.loads(decrypt_bytes(
             CONFIDENTIAL_KEY_ENV, self.encrypted_details.encode("ascii")
         ))
-
-    def __str__(self):
-        return f"{self.business_name} - {self.user.username}"

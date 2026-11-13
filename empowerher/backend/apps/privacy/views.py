@@ -14,14 +14,14 @@ def parse_hex(value, name):
     try:
         return int(value, 16)
     except ValueError:
-        raise ValueError(f"{name} must be a hexadecimal string.")
+        raise ValueError(f"{name} must be a hexadecimal string.") from None
 
 
 def parse_int(value, name, low, high):
     try:
         number = int(value)
     except (TypeError, ValueError):
-        raise ValueError(f"{name} must be a whole number.")
+        raise ValueError(f"{name} must be a whole number.") from None
     if not low <= number <= high:
         raise ValueError(f"{name} must be between {low} and {high}.")
     return number

@@ -110,7 +110,6 @@ def squash(text):
 
 
 def detect_type(text):
-    lower = text.lower()
     squashed = squash(text)
     scores = {
         doc_type: sum(squash(word) in squashed for word in words)

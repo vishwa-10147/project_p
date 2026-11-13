@@ -1,0 +1,23 @@
+# Dependabot opens pull requests when a newer (or security-fixed) version
+# of a library is available. Each PR runs the full test suite first.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /empowerher/backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Patch and minor updates arrive together in one PR.
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+
+  - package-ecosystem: docker
+    directory: /empowerher/backend
+    schedule:
+      interval: monthly

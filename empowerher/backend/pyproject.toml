@@ -1,0 +1,32 @@
+# Tool settings for EmpowerHer (the app itself is configured in config/settings.py).
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# E/W: style errors, F: real bugs (undefined names, unused imports),
+# B: likely bugs, S: security issues, DJ: Django pitfalls, UP: old syntax.
+select = ["E", "W", "F", "B", "S", "DJ", "UP", "I"]
+ignore = [
+    "S101",   # assert is fine in tests
+    "S311",   # random is used for non-security things (demo data)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests.py" = ["S105", "S106", "S107"]   # test passwords
+"config/testing.py" = ["S105", "S106"]
+"config/settings.py" = ["S105"]          # the DEV_SECRET_KEY placeholder
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config", "frontend"]
+
+[tool.coverage.run]
+source = ["apps", "config", "frontend"]
+omit = ["*/migrations/*", "*/tests.py", "config/testing.py", "*/management/commands/run_benchmarks.py", "config/asgi.py", "config/wsgi.py"]
+
+[tool.coverage.report]
+show_missing = false
+skip_covered = false
+precision = 1

@@ -7,7 +7,6 @@ Writes report/results/benchmarks.json (relative to the project root) and
 prints a summary. Uses only synthetic data.
 """
 
-import io
 import json
 import os
 import platform
@@ -20,7 +19,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.documents.ocr import extract_text
-from apps.documents.validators import extract_fields, detect_type
+from apps.documents.validators import detect_type, extract_fields
 from apps.funding.calculator import loan_summary
 from apps.idea_vault import zkp
 from apps.market.analysis import analyse

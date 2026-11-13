@@ -1,7 +1,7 @@
 from django.test import TestCase
 
-from config.testing import make_client
 from apps.privacy.paillier import generate_keypair
+from config.testing import make_client
 
 
 class PaillierTests(TestCase):
@@ -23,7 +23,9 @@ class PaillierTests(TestCase):
 
     def test_financial_check_endpoint(self):
         _, client = make_client()
-        enc = lambda v: format(self.public.encrypt(v), "x")
+        def enc(value):
+            return format(self.public.encrypt(value), "x")
+
         response = client.post("/api/privacy/financial-check/", {
             "public_key": {"n": format(self.public.n, "x")},
             "monthly_income": enc(60000),
