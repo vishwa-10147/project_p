@@ -45,7 +45,7 @@ Later runs use the same command and start in a few seconds. Existing packages, k
 
 | Option | Effect |
 | --- | --- |
-| `--test` | Run the automated tests (56 tests) before starting |
+| `--test` | Run the automated tests (74 tests) before starting |
 | `--no-run` | Set up only; don't start the server |
 | `--no-demo` | Don't create or reset the demo account |
 | `PORT=8080 ./setup.sh` (macOS/Linux) or `set PORT=8080` then `setup.bat` (Windows) | Use a different port |
@@ -109,6 +109,7 @@ The steps above run EmpowerHer in development mode. To run it for real users:
    - a new long `DJANGO_SECRET_KEY`
    - your domain in `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS` and `DJANGO_CORS_ALLOWED_ORIGINS`
    - `DJANGO_BEHIND_PROXY=True`
+   - `DATABASE_URL` for PostgreSQL (recommended; see below)
 
    **Keep the existing encryption keys.**
 3. **Start the app:**
@@ -123,9 +124,12 @@ What production mode turns on:
 - compressed, cache-busting static files (WhiteNoise);
 - a JSON-only API, and CORS limited to your domain;
 - refusal to start without a real secret key;
-- login rate limits shared across all workers.
+- rate limits (login, AI, uploads) shared across all workers.
 
-SQLite is fine for a small deployment. For many concurrent users, move to PostgreSQL, which is not set up in this project yet. Back up `db.sqlite3` and `.env` together.
+SQLite is fine for a small deployment. For many concurrent users, use PostgreSQL: create a database and set
+`DATABASE_URL=postgres://user:password@host:5432/empowerher` in `.env`; `run_production.sh` then creates the tables in it. (The driver, `psycopg`, is already in `requirements.txt`.) Back up the database and `.env` together, since the encryption keys in `.env` are needed to read the data.
+
+**Debug mode is off by default.** If `DJANGO_DEBUG` is missing, EmpowerHer runs in production mode and refuses to start without a real `DJANGO_SECRET_KEY`. The setup scripts write `DJANGO_DEBUG=True` into your local `.env`, so this only matters on a server.
 
 ## 8. Troubleshooting
 
