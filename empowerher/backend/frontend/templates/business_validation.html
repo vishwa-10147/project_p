@@ -3,6 +3,10 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#8e3b9d">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script src="{% static 'js/pwa.js' %}" defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Idea Validation | EmpowerHer</title>
@@ -483,10 +487,12 @@
     </p>
 </main>
 
+<script src="{% static 'js/auth.js' %}"></script>
 <script>
 "use strict";
 
-const token = localStorage.getItem("empowerher_token");
+// The login token is in an HttpOnly cookie; EmpowerHerAuth.fetch sends it.
+const signedIn = EmpowerHerAuth.signedIn();
 
 const form = document.getElementById("businessForm");
 const submitButton = document.getElementById("submitButton");
@@ -496,7 +502,7 @@ const reportContent = document.getElementById("reportContent");
 const historyList = document.getElementById("historyList");
 const historyMessage = document.getElementById("historyMessage");
 
-if (!token) {
+if (!signedIn) {
     window.location.href = "/login/";
 }
 
@@ -568,9 +574,7 @@ function addListSection(container, title, items) {
 
 async function showIdeaDetails(id, container, button) {
     try {
-        const response = await fetch("/api/business/" + id + "/", {
-            headers: { "Authorization": "Token " + token }
-        });
+        const response = await EmpowerHerAuth.fetch("/api/business/" + id + "/");
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.error || "Unable to load details.");
@@ -592,9 +596,8 @@ async function deleteIdea(id, name) {
         return;
     }
     try {
-        const response = await fetch("/api/business/" + id + "/", {
-            method: "DELETE",
-            headers: { "Authorization": "Token " + token }
+        const response = await EmpowerHerAuth.fetch("/api/business/" + id + "/", {
+            method: "DELETE"
         });
         if (!response.ok) {
             throw new Error("Unable to delete the assessment.");
@@ -826,19 +829,18 @@ form.addEventListener("submit", async function (event) {
     };
 
     try {
-        const response = await fetch("/api/business/validate/", {
+        const response = await EmpowerHerAuth.fetch("/api/business/validate/", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Token " + token
+                "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
         });
 
         const data = await response.json();
 
-        if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem("empowerher_token");
+        if (response.status === 401) {
+            EmpowerHerAuth.clear();
             window.location.href = "/login/";
             return;
         }
@@ -884,16 +886,12 @@ async function loadHistory() {
     historyList.replaceChildren();
 
     try {
-        const response = await fetch("/api/business/history/", {
-            headers: {
-                "Authorization": "Token " + token
-            }
-        });
+        const response = await EmpowerHerAuth.fetch("/api/business/history/");
 
         const data = await response.json();
 
-        if (response.status === 401 || response.status === 403) {
-            localStorage.removeItem("empowerher_token");
+        if (response.status === 401) {
+            EmpowerHerAuth.clear();
             window.location.href = "/login/";
             return;
         }
@@ -996,7 +994,7 @@ async function loadHistory() {
     }
 }
 
-if (token) {
+if (signedIn) {
     loadHistory();
 }
 </script>

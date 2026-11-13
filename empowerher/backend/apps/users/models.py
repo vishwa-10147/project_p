@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from config.fields import EncryptedCharField
+
 
 class EntrepreneurProfile(models.Model):
     """
@@ -11,6 +13,10 @@ class EntrepreneurProfile(models.Model):
         ("en", "English"),
         ("te", "Telugu"),
         ("hi", "Hindi"),
+        ("ta", "Tamil"),
+        ("kn", "Kannada"),
+        ("mr", "Marathi"),
+        ("bn", "Bengali"),
     ]
 
     BUSINESS_STAGE_CHOICES = [
@@ -26,15 +32,11 @@ class EntrepreneurProfile(models.Model):
         related_name="entrepreneur_profile"
     )
 
-    phone_number = models.CharField(
-        max_length=15,
-        blank=True
-    )
+    # Encrypted at rest (Fernet): a copy of the database doesn't reveal
+    # where an entrepreneur lives or how to call her.
+    phone_number = EncryptedCharField(max_length=15)
 
-    city = models.CharField(
-        max_length=100,
-        blank=True
-    )
+    city = EncryptedCharField(max_length=100)
 
     state = models.CharField(
         max_length=100,

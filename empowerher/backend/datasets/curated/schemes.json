@@ -10,9 +10,12 @@
       "stages": "idea | startup | existing | expansion",
       "benefit_type": "loan | subsidy | grant | guarantee | training | incubation | market_access",
       "social_groups": "extra target groups: sc_st, obc, minority, rural, shg, artisan, street_vendor; empty = open to all women",
-      "max_amount_inr": "upper limit of financial support where one exists (null when not applicable)"
+      "max_amount_inr": "upper limit of financial support where one exists (null when not applicable)",
+      "status": "active | check_status (the scheme's validity period ended or its continuation was pending when checked; see status_note)",
+      "deadline": "optional YYYY-MM-DD application deadline; users matching the scheme get an alert 30 days before (deadline_note describes it)"
     },
-    "review_note": "Amounts and eligibility were checked against official portals and published sources in November 2026. Where sources disagreed, the more recent official figure was used."
+    "review_note": "Amounts and eligibility were checked against official portals and published sources in November 2026. Where sources disagreed, the more recent official figure was used.",
+    "status_checked": "2026-11-13"
   },
   "schemes": [
     {
@@ -46,7 +49,13 @@
       ],
       "how_to_apply": "Apply online on the Stand-Up Mitra portal or directly at a scheduled commercial bank branch.",
       "keywords": "greenfield new enterprise manufacturing trading services bank loan composite term loan working capital",
-      "source_url": "https://www.standupmitra.in/"
+      "source_url": "https://www.standupmitra.in/",
+      "status": "check_status",
+      "status_note": "The original Stand-Up India scheme ended on 31 March 2025. A revamped version was announced in March 2026, but its launch was not confirmed when checked. Ask your bank or the Stand-Up Mitra portal whether new applications are being accepted.",
+      "status_sources": [
+        "https://www.newsonair.gov.in/fm-nirmala-sitharaman-announces-revamped-stand-up-india-scheme-for-sc-st-and-women-entrepreneurs",
+        "https://www.ibef.org/news/union-finance-minister-ms-nirmala-sitharaman-announces-revamped-stand-up-india-scheme-for-sc-st-and-women-entrepreneurs"
+      ]
     },
     {
       "id": "pmmy-mudra",
@@ -80,7 +89,8 @@
       ],
       "how_to_apply": "Apply at any bank, NBFC, MFI or through the JanSamarth portal.",
       "keywords": "micro loan shishu kishore tarun small shop tailoring beauty parlour food stall collateral free",
-      "source_url": "https://www.mudra.org.in/"
+      "source_url": "https://www.mudra.org.in/",
+      "status": "active"
     },
     {
       "id": "pmegp",
@@ -113,7 +123,13 @@
       ],
       "how_to_apply": "Apply online on the KVIC PMEGP e-portal; applications are forwarded to banks.",
       "keywords": "margin money subsidy rural urban manufacturing service unit khadi village industries",
-      "source_url": "https://www.kviconline.gov.in/pmegpeportal/"
+      "source_url": "https://www.kviconline.gov.in/pmegpeportal/",
+      "status": "check_status",
+      "status_note": "PMEGP was approved up to 31 March 2026. Its continuation for 2026-31 was under government review when checked, and new margin-money subsidy releases depend on that approval. Confirm on the KVIC PMEGP portal before applying.",
+      "status_sources": [
+        "https://kashmirlife.net/pmegp-subsidy-release-put-on-hold-pending-scheme-extension-approval-jammu-kashmir-had-1-46-lakh-beneficiaries-centre-446210/",
+        "https://business-standard.com/article/economy-policy/pmegp-extended-till-fy26-with-rs-13k-cr-outlay-to-create-4-mn-jobs-govt-122053001333_1.html"
+      ]
     },
     {
       "id": "cgtmse",
@@ -146,7 +162,8 @@
       ],
       "how_to_apply": "Ask your bank to cover the loan under CGTMSE when applying.",
       "keywords": "collateral free guarantee working capital term loan msme",
-      "source_url": "https://www.cgtmse.in/"
+      "source_url": "https://www.cgtmse.in/",
+      "status": "active"
     },
     {
       "id": "pmfme",
@@ -184,7 +201,13 @@
       ],
       "how_to_apply": "Apply on the PMFME portal; District Resource Persons help prepare the project report.",
       "keywords": "pickles papad spices millet bakery snacks food processing branding packaging odop",
-      "source_url": "https://pmfme.mofpi.gov.in/"
+      "source_url": "https://pmfme.mofpi.gov.in/",
+      "status": "check_status",
+      "status_note": "PMFME was extended up to September 2026. A five-year continuation (2026-31) with revised guidelines was proposed but not yet approved when checked. Confirm on the PMFME portal before applying.",
+      "status_sources": [
+        "https://www.outlookbusiness.com/news/pmfme-scheme-set-for-extension-after-hitting-2-lakh-unit-target",
+        "https://www.thehitavada.com/Encyc/2026/5/23/food-processing-industries-ministry-seeking-pmfme-scheme-extension-with-revised-norms.html"
+      ]
     },
     {
       "id": "pm-vishwakarma",
@@ -222,7 +245,8 @@
       ],
       "how_to_apply": "Register at a Common Service Centre (CSC) through the PM Vishwakarma portal.",
       "keywords": "artisan tailor darzi basket mat pottery potter doll toy weaving traditional craft toolkit",
-      "source_url": "https://pmvishwakarma.gov.in/"
+      "source_url": "https://pmvishwakarma.gov.in/",
+      "status": "active"
     },
     {
       "id": "pm-svanidhi",
@@ -257,7 +281,8 @@
       ],
       "how_to_apply": "Apply on the PM SVANidhi portal or through a CSC or bank.",
       "keywords": "street vendor hawker cart stall vegetables fruits tea snacks working capital",
-      "source_url": "https://pmsvanidhi.mohua.gov.in/"
+      "source_url": "https://pmsvanidhi.mohua.gov.in/",
+      "status": "active"
     },
     {
       "id": "startup-india-seed-fund",
@@ -295,7 +320,12 @@
       ],
       "how_to_apply": "Apply on the Startup India Seed Fund portal and choose up to three incubators.",
       "keywords": "startup technology innovation prototype proof of concept incubator dpiit app platform",
-      "source_url": "https://seedfund.startupindia.gov.in/"
+      "source_url": "https://seedfund.startupindia.gov.in/",
+      "status": "check_status",
+      "status_note": "The scheme has run beyond its original four-year term and a 2026 application cycle was reported, but no formal extension notice was found when checked. Check the Seed Fund portal for open calls.",
+      "status_sources": [
+        "https://beststartup.in/india-startup-grants-government-funds-daily-update-july-13-2026/"
+      ]
     },
     {
       "id": "dayny-nrlm",
@@ -332,7 +362,8 @@
       ],
       "how_to_apply": "Contact the block-level office of the State Rural Livelihoods Mission or the village SHG federation.",
       "keywords": "self help group shg rural village livelihood lakhpati didi saras bank linkage",
-      "source_url": "https://aajeevika.gov.in/"
+      "source_url": "https://aajeevika.gov.in/",
+      "status": "active"
     },
     {
       "id": "mahila-samriddhi-yojana",
@@ -366,7 +397,8 @@
       ],
       "how_to_apply": "Apply through the State Channelising Agency for NBCFDC in your state.",
       "keywords": "backward class obc micro finance concessional interest",
-      "source_url": "https://nbcfdc.gov.in/"
+      "source_url": "https://nbcfdc.gov.in/",
+      "status": "active"
     },
     {
       "id": "nsfdc-mahila-samriddhi",
@@ -400,7 +432,8 @@
       ],
       "how_to_apply": "Apply through the State Channelising Agency for NSFDC.",
       "keywords": "scheduled caste sc micro credit concessional",
-      "source_url": "https://nsfdc.nic.in/"
+      "source_url": "https://nsfdc.nic.in/",
+      "status": "active"
     },
     {
       "id": "nmdfc-mahila-samridhi",
@@ -435,7 +468,8 @@
       ],
       "how_to_apply": "Apply through the State Channelising Agency for NMDFC.",
       "keywords": "minority muslim christian sikh buddhist jain parsi micro credit shg tailoring embroidery",
-      "source_url": "https://nmdfc.org/"
+      "source_url": "https://nmdfc.org/",
+      "status": "active"
     },
     {
       "id": "msme-champions-women",
@@ -467,7 +501,8 @@
       ],
       "how_to_apply": "Register free of cost on the Udyam Registration portal.",
       "keywords": "udyam registration msme certificate government procurement gem tender priority sector",
-      "source_url": "https://udyamregistration.gov.in/"
+      "source_url": "https://udyamregistration.gov.in/",
+      "status": "active"
     },
     {
       "id": "gem-womaniya",
@@ -506,7 +541,8 @@
       ],
       "how_to_apply": "Register as a seller on gem.gov.in and select the Womaniya category.",
       "keywords": "government buyers sell online marketplace handloom jute office supplies",
-      "source_url": "https://gem.gov.in/"
+      "source_url": "https://gem.gov.in/",
+      "status": "active"
     },
     {
       "id": "wep-niti",
@@ -540,7 +576,8 @@
       ],
       "how_to_apply": "Sign up on the WEP portal.",
       "keywords": "mentorship network incubation accelerator community guidance",
-      "source_url": "https://wep.gov.in/"
+      "source_url": "https://wep.gov.in/",
+      "status": "active"
     },
     {
       "id": "samarth-textiles",
@@ -572,7 +609,8 @@
       ],
       "how_to_apply": "Enrol through a SAMARTH implementing partner listed on the portal.",
       "keywords": "tailoring stitching garment apparel embroidery handloom skill training",
-      "source_url": "https://samarth-textiles.gov.in/"
+      "source_url": "https://samarth-textiles.gov.in/",
+      "status": "active"
     },
     {
       "id": "we-hub-telangana",
@@ -607,7 +645,8 @@
       ],
       "how_to_apply": "Apply to an open programme on the WE Hub website.",
       "keywords": "hyderabad incubator accelerator women founders mentorship investors rural",
-      "source_url": "https://wehub.telangana.gov.in/"
+      "source_url": "https://wehub.telangana.gov.in/",
+      "status": "active"
     },
     {
       "id": "telangana-stree-nidhi",
@@ -640,7 +679,8 @@
       ],
       "how_to_apply": "Apply through your SHG and village organisation.",
       "keywords": "shg village organisation quick credit rural telangana livelihood",
-      "source_url": "https://www.streenidhi.telangana.gov.in/"
+      "source_url": "https://www.streenidhi.telangana.gov.in/",
+      "status": "active"
     },
     {
       "id": "t-pride",
@@ -673,7 +713,8 @@
       ],
       "how_to_apply": "Apply through the TS-iPASS portal of the Industries Department.",
       "keywords": "scheduled caste tribe dalit capital subsidy interest subsidy telangana industries",
-      "source_url": "https://ipass.telangana.gov.in/"
+      "source_url": "https://ipass.telangana.gov.in/",
+      "status": "active"
     },
     {
       "id": "ap-women-msme-incentives",
@@ -704,7 +745,8 @@
       ],
       "how_to_apply": "Apply through the AP Single Desk portal.",
       "keywords": "andhra pradesh industrial policy investment subsidy power reimbursement stamp duty",
-      "source_url": "https://apindustries.gov.in/"
+      "source_url": "https://apindustries.gov.in/",
+      "status": "active"
     },
     {
       "id": "karnataka-udyogini",
@@ -737,7 +779,8 @@
       ],
       "how_to_apply": "Apply at the district office of the Karnataka State Women's Development Corporation.",
       "keywords": "karnataka small business loan subsidy women development corporation",
-      "source_url": "https://kswdc.karnataka.gov.in/"
+      "source_url": "https://kswdc.karnataka.gov.in/",
+      "status": "active"
     },
     {
       "id": "tamilnadu-needs",
@@ -769,7 +812,8 @@
       ],
       "how_to_apply": "Apply online through the MSME Tamil Nadu portal.",
       "keywords": "first generation entrepreneur capital subsidy tamil nadu",
-      "source_url": "https://www.msmeonline.tn.gov.in/needs/"
+      "source_url": "https://www.msmeonline.tn.gov.in/needs/",
+      "status": "active"
     },
     {
       "id": "kerala-kudumbashree",
@@ -804,7 +848,8 @@
       ],
       "how_to_apply": "Contact the local Community Development Society (CDS).",
       "keywords": "kerala neighbourhood group cafe catering bazaar micro enterprise",
-      "source_url": "https://www.kudumbashree.org/"
+      "source_url": "https://www.kudumbashree.org/",
+      "status": "active"
     },
     {
       "id": "maharashtra-women-startup",
@@ -840,7 +885,8 @@
       ],
       "how_to_apply": "Apply online on the MSInS portal when a call for applications is open (applications run in rounds).",
       "keywords": "maharashtra women startup grant msins innovation",
-      "source_url": "https://msins.in/"
+      "source_url": "https://msins.in/",
+      "status": "active"
     },
     {
       "id": "kerala-women-entrepreneurship",
@@ -876,7 +922,8 @@
       ],
       "how_to_apply": "Apply through the KSUM portal.",
       "keywords": "kerala startup innovation grant incubation ksum",
-      "source_url": "https://startupmission.kerala.gov.in/"
+      "source_url": "https://startupmission.kerala.gov.in/",
+      "status": "active"
     }
   ]
 }

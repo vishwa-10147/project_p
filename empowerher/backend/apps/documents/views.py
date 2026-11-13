@@ -1,5 +1,6 @@
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +11,8 @@ from rest_framework.views import APIView
 from config.crypto import decrypt_bytes, encrypt_bytes
 from config.throttles import WriteScopedRateThrottle
 
-from .models import Document
+from . import digilocker
+from .models import DigiLockerLink, Document
 from .ocr import extract_text
 from .validators import DOC_TYPES, detect_type, extract_fields, name_matches
 
@@ -39,6 +41,10 @@ def serialise(document):
         "ocr_confidence": round(document.ocr_confidence, 3),
         "extracted_fields": document.extracted_fields,
         "checks": document.checks,
+        "digilocker_verified_at": (
+            document.digilocker_verified_at.isoformat()
+            if document.digilocker_verified_at else None
+        ),
         "created_at": document.created_at.isoformat(),
     }
 
@@ -161,3 +167,61 @@ class DocumentDownloadView(APIView):
         response["Content-Disposition"] = f'attachment; filename="{safe_name}"'
         response["Cache-Control"] = "no-store"
         return response
+
+
+class DigiLockerStatusView(APIView):
+    """GET: is DigiLocker available, and what did it confirm. DELETE: forget it."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        link = DigiLockerLink.objects.filter(owner=request.user).first()
+        return Response({
+            "configured": digilocker.is_configured(),
+            "connected": link is not None,
+            "connected_at": link.connected_at.isoformat() if link else None,
+            "issued_documents": link.issued_documents if link else [],
+        })
+
+    def delete(self, request):
+        DigiLockerLink.objects.filter(owner=request.user).delete()
+        request.user.documents.update(digilocker_verified_at=None)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DigiLockerStartView(APIView):
+    """POST: get the DigiLocker consent page URL to send the browser to."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            url = digilocker.start(request.user)
+        except digilocker.DigiLockerError as error:
+            return Response({"error": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"authorize_url": url})
+
+
+class DigiLockerCallbackView(APIView):
+    """
+    DigiLocker sends the browser back here (DIGILOCKER_REDIRECT_URI) with a
+    consent code. The `state` value ties it to the request this user began.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        params = request.query_params
+        if params.get("error"):
+            return redirect("/documents/?digilocker=cancelled")
+        try:
+            issued = digilocker.finish(request.user, params.get("code"), params.get("state"))
+        except digilocker.DigiLockerError:
+            return redirect("/documents/?digilocker=error")
+        now = timezone.now()
+        DigiLockerLink.objects.update_or_create(
+            owner=request.user,
+            defaults={"issued_documents": issued, "connected_at": now},
+        )
+        digilocker.apply_to_documents(request.user, issued, now)
+        return redirect("/documents/?digilocker=connected")

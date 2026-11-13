@@ -11,6 +11,21 @@
     </p>
 </section>
 
+<section class="panel" id="alertsPanel">
+    <h2>Your scheme alerts <span id="alertCount" class="tag hidden"></span></h2>
+    <p class="muted">
+        We tell you when a new scheme matching your profile is added, and when a
+        matching scheme's application deadline is less than 30 days away.
+    </p>
+    <div id="alerts" class="cards"></div>
+    <div class="actions">
+        <label class="hint" style="display:flex;gap:8px;align-items:center">
+            <input type="checkbox" id="alertsEnabled" style="width:auto"> Send me scheme alerts
+        </label>
+        <button type="button" class="secondary hidden" id="markRead">Mark all as read</button>
+    </div>
+</section>
+
 <section class="panel">
     <h2>Recommended for you</h2>
     <form id="recommendForm" class="form-grid">
@@ -113,6 +128,8 @@ function formatAmount(scheme) {
 
 function schemeCard(scheme, extra) {
     const card = el("article", "card");
+    // Catalogue cards get an anchor so alerts can link to them.
+    if (!extra) { card.id = scheme.id; }
     card.appendChild(el("h3", "", scheme.name));
     card.appendChild(el("span", "muted", scheme.authority +
         (scheme.level === "state" ? " · " + scheme.states.join(", ") : " · All India")));
@@ -128,7 +145,13 @@ function schemeCard(scheme, extra) {
     if (amount) {
         tags.appendChild(el("span", "tag amber", amount));
     }
+    if (scheme.status === "check_status") {
+        tags.appendChild(el("span", "tag red", "⚠ check status"));
+    }
     card.appendChild(tags);
+    if (scheme.status === "check_status" && !extra) {
+        card.appendChild(el("p", "message error", scheme.status_note));
+    }
     card.appendChild(el("p", "", scheme.summary));
 
     if (extra) {
@@ -240,6 +263,58 @@ document.getElementById("recommendForm").addEventListener("submit", async functi
 
 loadCatalogue().catch(function (error) {
     showMessage(recommendMessage, error.message, "error");
+});
+
+/* ---- Scheme alerts ---- */
+function alertCard(alert) {
+    const card = el("article", "card");
+    const tags = el("div", "tags");
+    tags.appendChild(el("span", alert.kind === "deadline" ? "tag amber" : "tag green",
+        alert.kind === "deadline" ? "⏰ Deadline" : "✨ New scheme"));
+    if (!alert.read) { tags.appendChild(el("span", "tag", "Unread")); }
+    card.appendChild(tags);
+    card.appendChild(el("h3", "", alert.title));
+    card.appendChild(el("p", "muted", alert.message));
+    card.appendChild(el("span", "hint", new Date(alert.created_at).toLocaleDateString("en-IN")));
+    if (alert.link) {
+        const link = el("a", "", "See the scheme →");
+        link.href = alert.link;
+        card.appendChild(link);
+    }
+    return card;
+}
+
+async function loadAlerts() {
+    const data = await api("/api/schemes/alerts/");
+    const box = document.getElementById("alerts");
+    box.replaceChildren();
+    data.notifications.forEach(function (n) { box.appendChild(alertCard(n)); });
+    if (!data.notifications.length) {
+        box.appendChild(el("p", "muted", data.enabled
+            ? "No alerts yet. We'll let you know here when something changes."
+            : "Alerts are switched off."));
+    }
+    document.getElementById("alertsEnabled").checked = data.enabled;
+    const count = document.getElementById("alertCount");
+    count.textContent = data.unread + " new";
+    count.classList.toggle("hidden", !data.unread);
+    document.getElementById("markRead").classList.toggle("hidden", !data.unread);
+}
+
+document.getElementById("alertsEnabled").addEventListener("change", async function () {
+    try {
+        await api("/api/schemes/alerts/", { method: "PATCH", body: { enabled: this.checked } });
+        await loadAlerts();
+    } catch (error) { showMessage(recommendMessage, error.message, "error"); }
+});
+
+document.getElementById("markRead").addEventListener("click", async function () {
+    await api("/api/schemes/alerts/read/", { method: "POST" });
+    await loadAlerts();
+});
+
+loadAlerts().catch(function (error) {
+    document.getElementById("alerts").appendChild(el("p", "muted", error.message));
 });
 </script>
 {% endblock %}

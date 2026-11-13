@@ -2,6 +2,10 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#8e3b9d">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script src="{% static 'js/pwa.js' %}" defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}EmpowerHer{% endblock %} | EmpowerHer</title>
@@ -276,13 +280,13 @@
         {% block content %}{% endblock %}
     </main>
 
+    <script src="{% static 'js/auth.js' %}"></script>
     <script>
         "use strict";
 
         const PUBLIC_PAGE = {% block public_page %}false{% endblock %};
-        const token = localStorage.getItem("empowerher_token");
 
-        if (!token && !PUBLIC_PAGE) {
+        if (!EmpowerHerAuth.signedIn() && !PUBLIC_PAGE) {
             window.location.href = "/login/";
         }
 
@@ -293,34 +297,25 @@
         });
 
         function currentUser() {
-            try {
-                return JSON.parse(localStorage.getItem("empowerher_user")) || {};
-            } catch (error) {
-                return {};
-            }
+            return EmpowerHerAuth.user();
         }
 
-        /* JSON API helper: adds the auth token and surfaces errors. */
+        /* JSON API helper: sends the login cookie + CSRF token, surfaces errors. */
         async function api(path, options) {
             options = options || {};
             const headers = Object.assign({}, options.headers || {});
-            // Read the token on every call: it changes after a password change.
-            const currentToken = localStorage.getItem("empowerher_token");
-            if (currentToken) {
-                headers["Authorization"] = "Token " + currentToken;
-            }
             let body = options.body;
             if (body && !(body instanceof FormData) && typeof body !== "string") {
                 body = JSON.stringify(body);
                 headers["Content-Type"] = "application/json";
             }
-            const response = await fetch(path, {
+            const response = await EmpowerHerAuth.fetch(path, {
                 method: options.method || "GET",
                 headers: headers,
                 body: body
             });
             if (response.status === 401 && !PUBLIC_PAGE) {
-                localStorage.removeItem("empowerher_token");
+                EmpowerHerAuth.clear();
                 window.location.href = "/login/";
                 throw new Error("Session expired.");
             }
@@ -391,15 +386,8 @@
             container.appendChild(metric);
         }
 
-        async function logout() {
-            try {
-                await api("/api/users/logout/", { method: "POST" });
-            } catch (error) {
-                /* Clear local session regardless. */
-            }
-            localStorage.removeItem("empowerher_token");
-            localStorage.removeItem("empowerher_user");
-            window.location.href = "/login/";
+        function logout() {
+            return EmpowerHerAuth.logout();
         }
     </script>
     {% block scripts %}{% endblock %}

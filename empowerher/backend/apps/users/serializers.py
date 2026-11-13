@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-
 from rest_framework import serializers
 
 from .models import EntrepreneurProfile
@@ -18,6 +17,11 @@ class EntrepreneurProfileSerializer(serializers.ModelSerializer):
             "business_stage",
             "preferred_language",
         ]
+        # The model stores ciphertext, so the plain-text limits live here.
+        extra_kwargs = {
+            "phone_number": {"max_length": 15, "allow_blank": True},
+            "city": {"max_length": 100, "allow_blank": True},
+        }
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -53,12 +57,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     phone_number = serializers.CharField(
         required=False,
-        allow_blank=True
+        allow_blank=True,
+        max_length=15,
     )
 
     city = serializers.CharField(
         required=False,
-        allow_blank=True
+        allow_blank=True,
+        max_length=100,
     )
 
     state = serializers.CharField(

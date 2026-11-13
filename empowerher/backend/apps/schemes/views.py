@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -6,6 +7,8 @@ from rest_framework.views import APIView
 from apps.business.models import BusinessIdea
 from config.datasets import load_json
 
+from .alerts import check_alerts, serialise
+from .models import SchemeAlertState
 from .recommender import (
     SOCIAL_GROUP_LABELS,
     filter_schemes,
@@ -126,3 +129,44 @@ class SchemeRecommendView(APIView):
             "disclaimer": load_json("schemes")["meta"]["disclaimer"],
             "recommendations": results,
         })
+
+
+class SchemeAlertsView(APIView):
+    """
+    GET: the user's scheme alerts (checks for new ones first).
+    PATCH {"enabled": bool}: switch alerts on or off.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        state, _ = SchemeAlertState.objects.get_or_create(user=request.user)
+        check_alerts(request.user)
+        notifications = request.user.scheme_notifications.all()[:50]
+        return Response({
+            "enabled": state.enabled,
+            "unread": request.user.scheme_notifications.filter(read_at__isnull=True).count(),
+            "notifications": [serialise(n) for n in notifications],
+        })
+
+    def patch(self, request):
+        enabled = request.data.get("enabled")
+        if not isinstance(enabled, bool):
+            return Response({"error": "enabled must be true or false."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        state, _ = SchemeAlertState.objects.get_or_create(user=request.user)
+        state.enabled = enabled
+        state.save(update_fields=["enabled"])
+        return Response({"enabled": state.enabled})
+
+
+class SchemeAlertsReadView(APIView):
+    """POST: mark all alerts as read."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.user.scheme_notifications.filter(read_at__isnull=True).update(
+            read_at=timezone.now()
+        )
+        return Response({"unread": 0})

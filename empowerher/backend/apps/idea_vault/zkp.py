@@ -27,6 +27,15 @@ Group: the 2048-bit MODP safe prime from RFC 3526 (group 14). We work
 in its prime-order subgroup of quadratic residues (order q = (p-1)/2),
 with generator g = 4 and a second generator h derived by hashing, so
 nobody knows log_g(h).
+
+Versions
+--------
+v1  hashes with SHAKE-256; used for ideas encrypted on the server, where
+    the server builds the proof (prove()).
+v2  hashes with SHA-256 in counter mode, which every browser provides
+    (WebCrypto). Used for end-to-end encrypted ideas: the browser builds
+    the commitment and the proof (frontend/static/js/vault-crypto.js), and
+    the server only verifies. Same group, same g and h.
 """
 
 import hashlib
@@ -60,45 +69,78 @@ def _hash_to_int(*parts, length=256):
     return int.from_bytes(shake.digest(length), "big")
 
 
+DOMAIN_V2 = b"EmpowerHer-IdeaVault-ZKP-v2"
+
+
+def _hash_to_int_v2(*parts, length=256):
+    """SHA-256 in counter mode over length-prefixed parts (browser-friendly)."""
+    data = b""
+    for part in parts:
+        part = part if isinstance(part, bytes) else str(part).encode()
+        data += len(part).to_bytes(4, "big") + part
+    output = b"".join(
+        hashlib.sha256(data + counter.to_bytes(4, "big")).digest()
+        for counter in range(length // 32)
+    )
+    return int.from_bytes(output, "big")
+
+
 # Second generator: hash to the group, then square into the QR subgroup.
 H = pow(_hash_to_int(DOMAIN, b"generator-h") % P, 2, P)
 
 
-def idea_scalar(idea):
-    return _hash_to_int(DOMAIN, b"message", idea.encode("utf-8")) % Q
+def _hasher(version):
+    if version == 2:
+        return DOMAIN_V2, _hash_to_int_v2
+    return DOMAIN, _hash_to_int
 
 
-def witness_scalar(witness_hex):
-    return _hash_to_int(DOMAIN, b"blinding", bytes.fromhex(witness_hex)) % Q
+def idea_scalar(idea, version=1):
+    domain, hash_to_int = _hasher(version)
+    return hash_to_int(domain, b"message", idea.encode("utf-8")) % Q
 
 
-def commit(idea, witness_hex):
-    m = idea_scalar(idea)
-    r = witness_scalar(witness_hex)
+def witness_scalar(witness_hex, version=1):
+    domain, hash_to_int = _hasher(version)
+    return hash_to_int(domain, b"blinding", bytes.fromhex(witness_hex)) % Q
+
+
+def commit(idea, witness_hex, version=1):
+    m = idea_scalar(idea, version)
+    r = witness_scalar(witness_hex, version)
     return pow(G, m, P) * pow(H, r, P) % P
 
 
-def _challenge(commitment, t, context):
-    return _hash_to_int(DOMAIN, b"challenge", commitment, t, context) % Q
+def _challenge(commitment, t, context, version=1):
+    domain, hash_to_int = _hasher(version)
+    return hash_to_int(domain, b"challenge", commitment, t, context) % Q
 
 
-def prove(idea, witness_hex, context):
-    m = idea_scalar(idea)
-    r = witness_scalar(witness_hex)
+def is_group_element(value):
+    """True for an element of the order-q subgroup (a valid commitment)."""
+    return 1 < value < P and pow(value, Q, P) == 1
+
+
+def prove(idea, witness_hex, context, version=1):
+    m = idea_scalar(idea, version)
+    r = witness_scalar(witness_hex, version)
     commitment = pow(G, m, P) * pow(H, r, P) % P
 
     a = secrets.randbelow(Q)
     b = secrets.randbelow(Q)
     t = pow(G, a, P) * pow(H, b, P) % P
-    c = _challenge(commitment, t, context)
+    c = _challenge(commitment, t, context, version)
 
-    return {
+    proof = {
         "commitment": format(commitment, "x"),
         "t": format(t, "x"),
         "z1": format((a + c * m) % Q, "x"),
         "z2": format((b + c * r) % Q, "x"),
         "context": context,
     }
+    if version != 1:
+        proof["version"] = version
+    return proof
 
 
 def verify(proof):
@@ -108,17 +150,20 @@ def verify(proof):
         z1 = int(proof["z1"], 16)
         z2 = int(proof["z2"], 16)
         context = str(proof["context"])
-    except (KeyError, TypeError, ValueError):
+        version = int(proof.get("version", 1))
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return False
+    if version not in (1, 2):
         return False
 
     # Elements must be in the order-q subgroup; responses in Z_q.
     for element in (commitment, t):
-        if not 1 < element < P or pow(element, Q, P) != 1:
+        if not is_group_element(element):
             return False
     if not (0 <= z1 < Q and 0 <= z2 < Q):
         return False
 
-    c = _challenge(commitment, t, context)
+    c = _challenge(commitment, t, context, version)
     left = pow(G, z1, P) * pow(H, z2, P) % P
     right = t * pow(commitment, c, P) % P
     return secrets.compare_digest(format(left, "x"), format(right, "x"))

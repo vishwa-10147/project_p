@@ -1,57 +1,96 @@
 {% extends "base_app.html" %}
+{% load static %}
 {% block title %}Idea Vault{% endblock %}
 
 {% block content %}
 <section class="hero">
     <h1>Idea Vault 🔐</h1>
     <p>
-        Register a confidential business idea. It is encrypted, and you
-        receive a cryptographic commitment with a timestamp. Later you can
-        prove to an investor or mentor that the idea is yours, using a
-        zero-knowledge proof, without revealing it.
+        Register a confidential business idea. It is <strong>encrypted in your
+        browser</strong> with a key made from your vault passphrase, so not even
+        the EmpowerHer server can read it. You get a cryptographic commitment
+        with a timestamp, and can later prove to an investor or mentor that the
+        idea is yours with a zero-knowledge proof, without revealing it.
     </p>
 </section>
 
-<section class="panel">
+<!-- Step 1a: first visit, choose a passphrase -->
+<section class="panel hidden" id="setupPanel">
+    <h2>Choose your vault passphrase</h2>
+    <p class="muted">
+        This is separate from your login password and <strong>never leaves this
+        device</strong>. Your ideas can only be opened with it.
+    </p>
+    <div class="message error" role="note">
+        <strong>If you forget it, your vault ideas cannot be recovered</strong>,
+        by you or by EmpowerHer. Write it down somewhere safe.
+    </div>
+    <form id="setupForm" class="form-grid">
+        <div class="field">
+            <label for="newPassphrase">Vault passphrase (at least 10 characters)</label>
+            <input id="newPassphrase" type="password" minlength="10" required autocomplete="new-password">
+        </div>
+        <div class="field">
+            <label for="confirmPassphrase">Type it again</label>
+            <input id="confirmPassphrase" type="password" minlength="10" required autocomplete="new-password">
+        </div>
+        <div class="actions field full"><button type="submit">Create my vault</button></div>
+    </form>
+    <div id="setupMessage" class="hidden" role="status"></div>
+</section>
+
+<!-- Step 1b: later visits, unlock -->
+<section class="panel hidden" id="unlockPanel">
+    <h2>Unlock your vault</h2>
+    <p class="muted">Enter your vault passphrase. It stays on this device; the key is kept only while this page is open.</p>
+    <form id="unlockForm" class="form-grid">
+        <div class="field full">
+            <label for="passphrase">Vault passphrase</label>
+            <input id="passphrase" type="password" required autocomplete="current-password">
+        </div>
+        <div class="actions field full"><button type="submit">Unlock</button></div>
+    </form>
+    <div id="unlockMessage" class="hidden" role="status"></div>
+</section>
+
+<!-- Step 2: register -->
+<section class="panel hidden" id="registerPanel">
     <h2>Register an idea</h2>
     <form id="ideaForm" class="form-grid">
         <div class="field full">
-            <label for="title">Title (visible in your list)</label>
+            <label for="title">Title (visible in your list, not encrypted)</label>
             <input id="title" maxlength="150" required placeholder="e.g. Millet snack subscription">
         </div>
         <div class="field full">
             <label for="idea">Your confidential idea</label>
             <textarea id="idea" maxlength="10000" required
-                      placeholder="Describe the idea in detail. It is encrypted before it is stored."></textarea>
+                      placeholder="Describe the idea in detail. It is encrypted on this device before it is sent."></textarea>
         </div>
-        <div class="actions field full"><button type="submit">Encrypt and register</button></div>
+        <div class="actions field full">
+            <button type="submit">Encrypt here and register</button>
+            <button type="button" class="secondary" id="lockButton">Lock vault</button>
+        </div>
     </form>
     <div id="message" class="hidden" role="status"></div>
-
-    <div id="witnessBox" class="hidden message info">
-        <strong>Save your witness secret now.</strong>
-        It is shown only once and is not stored anywhere. You need it to
-        create ownership proofs.
-        <p class="mono" id="witness" style="margin:10px 0"></p>
-        <div class="actions">
-            <button type="button" class="secondary" id="copyWitness">Copy</button>
-            <button type="button" class="secondary" id="downloadWitness">Download as file</button>
-        </div>
-    </div>
 </section>
 
 <section class="panel">
     <h2>Your registered ideas</h2>
     <div id="ideas" class="cards"></div>
+    <div id="ideaView" class="hidden message info" role="region" aria-live="polite">
+        <strong id="ideaViewTitle"></strong>
+        <p id="ideaViewText" style="white-space:pre-wrap;margin:8px 0"></p>
+        <button type="button" class="secondary" id="closeIdeaView">Hide</button>
+    </div>
 </section>
 
 <section class="panel hidden" id="proofPanel">
     <h2>Create an ownership proof</h2>
     <p class="muted" id="proofFor"></p>
     <form id="proofForm" class="form-grid">
-        <div class="field full">
-            <label for="proofWitness">Witness secret</label>
-            <input id="proofWitness" class="mono" required autocomplete="off">
+        <div class="field full hidden" id="witnessField">
+            <label for="proofWitness">Witness secret (older ideas only)</label>
+            <input id="proofWitness" class="mono" autocomplete="off">
         </div>
         <div class="field full">
             <label for="context">Who is this proof for?</label>
@@ -74,9 +113,16 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="{% static 'js/vault-crypto.js' %}"></script>
 <script>
 const message = document.getElementById("message");
+let vaultSettings = null;   // salt, iterations, key check (from the server)
+let vaultKey = null;        // CryptoKey, in memory only, never exported
 let selectedIdea = null;
+
+function show(id, visible) {
+    document.getElementById(id).classList.toggle("hidden", !visible);
+}
 
 function copyText(text, target) {
     navigator.clipboard.writeText(text).then(function () {
@@ -84,12 +130,44 @@ function copyText(text, target) {
     });
 }
 
+function needsKey(idea) {
+    if (idea.encryption === "browser" && !vaultKey) {
+        showMessage(message, "Unlock your vault first.", "error");
+        document.getElementById("unlockPanel").scrollIntoView({ behavior: "smooth" });
+        return true;
+    }
+    return false;
+}
+
+function updatePanels() {
+    show("setupPanel", !vaultSettings.configured);
+    show("unlockPanel", vaultSettings.configured && !vaultKey);
+    show("registerPanel", Boolean(vaultKey));
+}
+
+async function viewIdea(idea) {
+    if (needsKey(idea)) { return; }
+    try {
+        const data = await api("/api/ideas/" + idea.id + "/");
+        const text = data.encryption === "browser"
+            ? (await VaultCrypto.openIdea(vaultKey, data.encrypted_payload)).idea
+            : data.idea;
+        document.getElementById("ideaViewTitle").textContent = data.title;
+        document.getElementById("ideaViewText").textContent = text;
+        show("ideaView", true);
+    } catch (error) { showMessage(message, error.message, "error"); }
+}
+
 function ideaCard(idea) {
     const card = el("article", "card");
     card.appendChild(el("h3", "", idea.title));
     card.appendChild(el("span", "muted", "Registered " + new Date(idea.created_at).toLocaleString("en-IN")));
     const tags = el("div", "tags");
-    tags.appendChild(el("span", "tag green", "🔒 encrypted"));
+    if (idea.encryption === "browser") {
+        tags.appendChild(el("span", "tag green", "🔒 end-to-end encrypted"));
+    } else {
+        tags.appendChild(el("span", "tag amber", "🔒 server-encrypted (older)"));
+    }
     tags.appendChild(el("span", "tag", idea.pedersen_commitment ? "ZK proofs enabled" : "commitment only"));
     card.appendChild(tags);
     card.appendChild(el("span", "", "Commitment:"));
@@ -98,22 +176,22 @@ function ideaCard(idea) {
     const actions = el("div", "actions");
     const view = el("button", "secondary", "View idea");
     view.type = "button";
-    view.addEventListener("click", async function () {
-        try {
-            const data = await api("/api/ideas/" + idea.id + "/");
-            alert(data.title + "\n\n" + data.idea);
-        } catch (error) { showMessage(message, error.message, "error"); }
-    });
+    view.addEventListener("click", function () { viewIdea(idea); });
+
     const prove = el("button", "", "Create proof");
     prove.type = "button";
     prove.disabled = !idea.pedersen_commitment;
     prove.addEventListener("click", function () {
+        if (needsKey(idea)) { return; }
         selectedIdea = idea;
         document.getElementById("proofFor").textContent = "Idea: " + idea.title;
-        document.getElementById("proofPanel").classList.remove("hidden");
-        document.getElementById("proofResult").classList.add("hidden");
+        show("witnessField", idea.encryption !== "browser");
+        document.getElementById("proofWitness").required = idea.encryption !== "browser";
+        show("proofPanel", true);
+        show("proofResult", false);
         document.getElementById("proofPanel").scrollIntoView({ behavior: "smooth" });
     });
+
     const remove = el("button", "danger", "Delete");
     remove.type = "button";
     remove.addEventListener("click", async function () {
@@ -136,22 +214,75 @@ async function loadIdeas() {
     if (!data.ideas.length) { box.appendChild(el("p", "muted", "No ideas registered yet.")); }
 }
 
+document.getElementById("setupForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const box = document.getElementById("setupMessage");
+    const passphrase = document.getElementById("newPassphrase").value;
+    if (passphrase !== document.getElementById("confirmPassphrase").value) {
+        showMessage(box, "The two passphrases are different.", "error");
+        return;
+    }
+    const button = this.querySelector("button");
+    button.disabled = true;
+    showMessage(box, "Creating your key on this device…", "info");
+    try {
+        const created = await VaultCrypto.createVaultKey(passphrase);
+        vaultSettings = await api("/api/ideas/key/", { method: "POST", body: created.settings });
+        vaultKey = created.key;
+        this.reset();
+        clearMessage(box);
+        showMessage(message, "Vault created and unlocked. Remember your passphrase.", "success");
+        updatePanels();
+    } catch (error) {
+        showMessage(box, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("unlockForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const box = document.getElementById("unlockMessage");
+    const button = this.querySelector("button");
+    button.disabled = true;
+    showMessage(box, "Unlocking…", "info");
+    try {
+        vaultKey = await VaultCrypto.unlock(document.getElementById("passphrase").value, vaultSettings);
+        this.reset();
+        clearMessage(box);
+        updatePanels();
+    } catch (error) {
+        showMessage(box, error.message, "error");
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.getElementById("lockButton").addEventListener("click", function () {
+    vaultKey = null;
+    show("ideaView", false);
+    show("proofPanel", false);
+    clearMessage(message);
+    updatePanels();
+});
+
+document.getElementById("closeIdeaView").addEventListener("click", function () {
+    show("ideaView", false);
+});
+
 document.getElementById("ideaForm").addEventListener("submit", async function (event) {
     event.preventDefault();
     const button = this.querySelector("button");
     button.disabled = true;
-    clearMessage(message);
+    showMessage(message, "Encrypting on this device…", "info");
     try {
+        const idea = document.getElementById("idea").value.trim();
+        const sealed = await VaultCrypto.sealIdea(vaultKey, idea);
         const data = await api("/api/ideas/", {
             method: "POST",
-            body: {
-                title: document.getElementById("title").value,
-                idea: document.getElementById("idea").value
-            }
+            body: Object.assign({ title: document.getElementById("title").value }, sealed)
         });
-        document.getElementById("witness").textContent = data.witness_secret;
-        document.getElementById("witnessBox").classList.remove("hidden");
-        showMessage(message, data.message, "success");
+        showMessage(message, data.message + " Only your passphrase can open it.", "success");
         this.reset();
         loadIdeas();
     } catch (error) {
@@ -161,39 +292,39 @@ document.getElementById("ideaForm").addEventListener("submit", async function (e
     }
 });
 
-document.getElementById("copyWitness").addEventListener("click", function () {
-    copyText(document.getElementById("witness").textContent, message);
-});
-
-document.getElementById("downloadWitness").addEventListener("click", function () {
-    const blob = new Blob([
-        "EmpowerHer Idea Vault witness secret\n",
-        "Keep this file private.\n\n",
-        document.getElementById("witness").textContent, "\n"
-    ], { type: "text/plain" });
-    const link = el("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "empowerher-witness.txt";
-    link.click();
-});
-
 document.getElementById("proofForm").addEventListener("submit", async function (event) {
     event.preventDefault();
     const proofMessage = document.getElementById("proofMessage");
     const button = this.querySelector("button");
+    const context = document.getElementById("context").value.trim();
     button.disabled = true;
     clearMessage(proofMessage);
     try {
-        const data = await api("/api/ideas/" + selectedIdea.id + "/proof/", {
-            method: "POST",
-            body: {
-                witness_secret: document.getElementById("proofWitness").value.trim(),
-                context: document.getElementById("context").value.trim()
+        let proof;
+        if (selectedIdea.encryption === "browser") {
+            // Decrypt and prove right here; nothing secret is sent anywhere.
+            showMessage(proofMessage, "Creating the proof on this device…", "info");
+            const data = await api("/api/ideas/" + selectedIdea.id + "/");
+            const opened = await VaultCrypto.openIdea(vaultKey, data.encrypted_payload);
+            proof = await VaultCrypto.prove(opened.idea, opened.witness, context);
+            if (proof.commitment !== selectedIdea.pedersen_commitment) {
+                throw new Error("This idea does not match its registered commitment.");
             }
-        });
-        document.getElementById("proofJson").value = JSON.stringify({ proof: data.proof }, null, 2);
-        document.getElementById("proofResult").classList.remove("hidden");
-        showMessage(proofMessage, data.note, "success");
+        } else {
+            const data = await api("/api/ideas/" + selectedIdea.id + "/proof/", {
+                method: "POST",
+                body: {
+                    witness_secret: document.getElementById("proofWitness").value.trim(),
+                    context: context
+                }
+            });
+            proof = data.proof;
+        }
+        document.getElementById("proofJson").value = JSON.stringify({ proof: proof }, null, 2);
+        show("proofResult", true);
+        showMessage(proofMessage,
+            "Proof ready. Share it with the person named in the context; they can verify it without seeing your idea.",
+            "success");
     } catch (error) {
         showMessage(proofMessage, error.message, "error");
     } finally {
@@ -205,6 +336,14 @@ document.getElementById("copyProof").addEventListener("click", function () {
     copyText(document.getElementById("proofJson").value, document.getElementById("proofMessage"));
 });
 
-loadIdeas().catch(function (e) { showMessage(message, e.message, "error"); });
+(async function init() {
+    if (!window.crypto || !crypto.subtle) {
+        showMessage(message, "This browser cannot encrypt securely here. Open EmpowerHer over HTTPS or on localhost.", "error");
+        return;
+    }
+    vaultSettings = await api("/api/ideas/key/");
+    updatePanels();
+    await loadIdeas();
+})().catch(function (e) { showMessage(message, e.message, "error"); });
 </script>
 {% endblock %}

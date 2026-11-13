@@ -16,6 +16,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load local secrets (encryption keys, API keys) from backend/.env.
 load_dotenv(BASE_DIR / ".env")
+# In Docker, keys generated on first start live in the data volume
+# (see docker-entrypoint.sh). Values already set in the environment win.
+if os.environ.get("EMPOWERHER_KEYS_FILE"):
+    load_dotenv(os.environ["EMPOWERHER_KEYS_FILE"])
 
 # Security: use environment variables for deployment.
 # Rotate the previously exposed development SECRET_KEY before deployment.
@@ -228,6 +232,9 @@ DATASETS_DIR = BASE_DIR / "datasets"
 
 # Login sessions (API tokens) expire after this many hours.
 TOKEN_TTL_HOURS = int(os.environ.get("DJANGO_TOKEN_TTL_HOURS", "168"))
+# The website keeps the token in an HttpOnly cookie (config/authentication.py),
+# sent only over HTTPS in production.
+AUTH_COOKIE_SECURE = False
 
 # ---------------------------------------------------------------------
 # Production security (applied when DJANGO_DEBUG=False)
@@ -236,6 +243,7 @@ if not DEBUG:
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT", True)
     SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", True)
     CSRF_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", True)
+    AUTH_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", True)
     SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "31536000"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("DJANGO_HSTS_SUBDOMAINS", True)
     # Preloading is a long-term commitment to HTTPS for the whole domain,

@@ -16,11 +16,13 @@ Website pages (frontend). The JSON API routes are in config/urls.py.
 | /assistant/            | assistant.html            | /api/assistant/            |
 | /safety/               | safety.html               | /api/safety/               |
 | /profile/              | profile.html              | /api/users/                |
+| /offline/              | offline.html              | - (shown when offline)     |
+| /sw.js, /manifest.webmanifest | installable app (PWA) | -                      |
 """
 
 from django.urls import path
 
-from .views import page
+from .views import page, service_worker, web_manifest
 
 urlpatterns = [
     path("", page("home.html"), name="home"),
@@ -40,4 +42,8 @@ urlpatterns = [
     path("assistant/", page("assistant.html"), name="assistant-page"),
     path("safety/", page("safety.html"), name="safety-page"),
     path("profile/", page("profile.html"), name="profile-page"),
+    path("offline/", page("offline.html"), name="offline-page"),
+    # Installable app (PWA)
+    path("sw.js", service_worker, name="service-worker"),
+    path("manifest.webmanifest", web_manifest, name="web-manifest"),
 ]

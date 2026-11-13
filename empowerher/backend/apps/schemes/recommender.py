@@ -108,7 +108,7 @@ def recommend(state=None, category=None, stage=None, social_groups=None,
     similarities = text_similarity(description)
     recommendations = []
 
-    for scheme, similarity in zip(all_schemes(), similarities):
+    for scheme, similarity in zip(all_schemes(), similarities, strict=True):
         reasons = []
         cautions = []
         score = 0.0
@@ -189,6 +189,14 @@ def recommend(state=None, category=None, stage=None, social_groups=None,
         if similarity > 0.05:
             score += round(similarity * 60, 1)
             reasons.append("Matches words in your business description")
+
+        if scheme.get("status") == "check_status":
+            # Validity ended or continuation pending: ranked by relevance as
+            # usual, but clearly flagged so nobody applies blind.
+            cautions.append(
+                "Check this scheme's current status before applying: "
+                + scheme.get("status_note", "")
+            )
 
         recommendations.append({
             "scheme": scheme,

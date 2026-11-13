@@ -1,10 +1,14 @@
+import base64
+import hashlib
 import io
+import os
+from unittest import mock
+from urllib.parse import parse_qs, urlparse
 
 from django.test import TestCase
 from PIL import Image, ImageDraw, ImageFont
 
-from config.testing import make_client, throttle_rates
-from apps.documents.models import Document
+from apps.documents.models import DigiLockerLink, Document
 from apps.documents.validators import (
     aadhaar_valid,
     detect_type,
@@ -13,6 +17,7 @@ from apps.documents.validators import (
     gstin_valid,
     verhoeff_valid,
 )
+from config.testing import make_client, throttle_rates
 
 
 def verhoeff_complete(prefix):
@@ -124,3 +129,155 @@ class UploadTests(TestCase):
             listing = self.client.get("/api/documents/").status_code
         self.assertEqual(codes, [400, 400, 429])
         self.assertEqual(listing, 200)
+
+
+DIGILOCKER_ENV = {
+    "DIGILOCKER_CLIENT_ID": "test-client",
+    "DIGILOCKER_CLIENT_SECRET": "test-secret",
+    "DIGILOCKER_REDIRECT_URI": "http://localhost:8000/api/documents/digilocker/callback/",
+}
+
+
+class FakeDigiLocker:
+    """Stands in for api.digitallocker.gov.in and checks what we send it."""
+
+    ACCESS_TOKEN = "fake-access-token-never-stored"
+
+    def __init__(self, test, challenge, items):
+        self.test, self.challenge, self.items = test, challenge, items
+        self.calls = []
+
+    def __call__(self, method, url, data=None, headers=None):
+        self.calls.append(url)
+        if url.endswith("/1/token"):
+            self.test.assertEqual(method, "POST")
+            self.test.assertEqual(data["grant_type"], "authorization_code")
+            self.test.assertEqual(data["client_secret"], "test-secret")
+            # PKCE: the verifier must hash to the challenge sent earlier.
+            digest = hashlib.sha256(data["code_verifier"].encode()).digest()
+            expected = base64.urlsafe_b64encode(digest).decode().rstrip("=")
+            self.test.assertEqual(expected, self.challenge)
+            return {"access_token": self.ACCESS_TOKEN, "token_type": "Bearer"}
+        if url.endswith("/2/files/issued"):
+            self.test.assertEqual(headers["Authorization"], f"Bearer {self.ACCESS_TOKEN}")
+            return {"items": self.items}
+        raise AssertionError(url)
+
+
+class DigiLockerTests(TestCase):
+    ITEMS = [
+        {"name": "My Documents", "type": "dir", "uri": ""},
+        {"name": "PAN Verification Record", "type": "file", "doctype": "PANCR",
+         "issuer": "Income Tax Department", "date": "2024-01-02",
+         "uri": "in.gov.pan-PANCR-ABCPE1234F"},
+        {"name": "Aadhaar Card", "type": "file", "doctype": "ADHAR",
+         "issuer": "UIDAI", "uri": "in.gov.uidai-ADHAR-9f8e7d6c5b4a"},
+    ]
+
+    def setUp(self):
+        self.user, self.client = make_client()
+        self.pan = Document.objects.create(
+            owner=self.user, doc_type="pan", original_name="pan.png",
+            content_type="image/png", size_bytes=1, encrypted_file=b"x",
+            status="verified", extracted_fields={"pan": "ABXXX1234F"},
+        )
+
+    def start(self):
+        response = self.client.post("/api/documents/digilocker/start/")
+        self.assertEqual(response.status_code, 200, response.data)
+        query = parse_qs(urlparse(response.data["authorize_url"]).query)
+        return query["state"][0], query["code_challenge"][0], query
+
+    def test_switched_off_without_credentials(self):
+        with mock.patch.dict(os.environ, {"DIGILOCKER_CLIENT_ID": ""}):
+            self.assertFalse(self.client.get("/api/documents/digilocker/").data["configured"])
+            self.assertEqual(
+                self.client.post("/api/documents/digilocker/start/").status_code, 400)
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_consent_url_uses_pkce(self):
+        _, _, query = self.start()
+        self.assertEqual(query["code_challenge_method"], ["S256"])
+        self.assertEqual(query["response_type"], ["code"])
+        self.assertEqual(query["client_id"], ["test-client"])
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_full_flow_verifies_matching_pan_and_forgets_token(self):
+        state, challenge, _ = self.start()
+        fake = FakeDigiLocker(self, challenge, self.ITEMS)
+        with mock.patch("apps.documents.digilocker._http", fake):
+            response = self.client.get("/api/documents/digilocker/callback/",
+                                       {"code": "abc", "state": state})
+        self.assertRedirects(response, "/documents/?digilocker=connected",
+                             fetch_redirect_response=False)
+        self.assertEqual(len(fake.calls), 2)
+
+        status = self.client.get("/api/documents/digilocker/").data
+        self.assertTrue(status["connected"])
+        pan = next(d for d in status["issued_documents"] if d["doctype"] == "PANCR")
+        self.assertEqual(pan["masked_number"], "ABXXX1234F")
+        self.assertEqual(len(status["issued_documents"]), 2)      # folder skipped
+
+        self.pan.refresh_from_db()
+        self.assertIsNotNone(self.pan.digilocker_verified_at)
+        stored = str(DigiLockerLink.objects.get(owner=self.user).issued_documents)
+        self.assertNotIn(FakeDigiLocker.ACCESS_TOKEN, stored)
+        self.assertNotIn("ABCPE1234F", stored)                    # full PAN never kept
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_different_pan_is_not_marked(self):
+        state, challenge, _ = self.start()
+        items = [dict(self.ITEMS[1], uri="in.gov.pan-PANCR-ZZZPE9999Z")]
+        with mock.patch("apps.documents.digilocker._http",
+                        FakeDigiLocker(self, challenge, items)):
+            self.client.get("/api/documents/digilocker/callback/",
+                            {"code": "abc", "state": state})
+        self.pan.refresh_from_db()
+        self.assertIsNone(self.pan.digilocker_verified_at)
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_state_must_be_this_users_and_single_use(self):
+        state, challenge, _ = self.start()
+        _, other = make_client(username="other")
+        fake = FakeDigiLocker(self, challenge, self.ITEMS)
+        with mock.patch("apps.documents.digilocker._http", fake):
+            stolen = other.get("/api/documents/digilocker/callback/",
+                               {"code": "abc", "state": state})
+            self.assertRedirects(stolen, "/documents/?digilocker=error",
+                                 fetch_redirect_response=False)
+            # The state was consumed, so even the owner can't reuse it.
+            reused = self.client.get("/api/documents/digilocker/callback/",
+                                     {"code": "abc", "state": state})
+            self.assertRedirects(reused, "/documents/?digilocker=error",
+                                 fetch_redirect_response=False)
+            forged = self.client.get("/api/documents/digilocker/callback/",
+                                     {"code": "abc", "state": "made-up"})
+            self.assertRedirects(forged, "/documents/?digilocker=error",
+                                 fetch_redirect_response=False)
+        self.assertEqual(fake.calls, [])
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_user_cancelled(self):
+        response = self.client.get("/api/documents/digilocker/callback/",
+                                   {"error": "access_denied"})
+        self.assertRedirects(response, "/documents/?digilocker=cancelled",
+                             fetch_redirect_response=False)
+
+    @mock.patch.dict(os.environ, {**DIGILOCKER_ENV,
+                                  "DIGILOCKER_BASE_URL": "http://insecure.example"})
+    def test_refuses_plain_http(self):
+        from apps.documents.digilocker import DigiLockerError, _http
+        with self.assertRaises(DigiLockerError):
+            _http("GET", "http://insecure.example/2/files/issued")
+
+    @mock.patch.dict(os.environ, DIGILOCKER_ENV)
+    def test_disconnect_forgets_everything(self):
+        state, challenge, _ = self.start()
+        with mock.patch("apps.documents.digilocker._http",
+                        FakeDigiLocker(self, challenge, self.ITEMS)):
+            self.client.get("/api/documents/digilocker/callback/",
+                            {"code": "abc", "state": state})
+        self.assertEqual(self.client.delete("/api/documents/digilocker/").status_code, 204)
+        self.assertFalse(DigiLockerLink.objects.exists())
+        self.pan.refresh_from_db()
+        self.assertIsNone(self.pan.digilocker_verified_at)

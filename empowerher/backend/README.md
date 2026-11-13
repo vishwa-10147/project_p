@@ -5,13 +5,16 @@ EmpowerHer is a **Django** project, with **no React**. One Django server provide
 ```
 empowerher/backend/
 ├── manage.py            run commands: runserver, test, migrate, seed_demo, run_benchmarks
-├── requirements.txt     Python packages
+├── requirements.txt     Python packages (requirements-dev.txt adds ruff + coverage)
+├── Dockerfile           container image (docker compose up, from the project root)
 ├── .env                 secret keys (never commit; created by setup.sh)
 │
 ├── config/              PROJECT SETTINGS + SHARED HELPERS
 │   ├── settings.py          settings: apps, security, database, static files
 │   ├── urls.py              routing: pages -> frontend/urls.py, /api/... -> apps/*/urls.py
-│   ├── authentication.py    login tokens that expire
+│   ├── authentication.py    login tokens that expire, sent in an HttpOnly cookie
+│   ├── fields.py            EncryptedCharField (profile phone number and city)
+│   ├── throttles.py         rate limit for uploads
 │   ├── crypto.py            Fernet encryption helpers
 │   ├── datasets.py          reads files from datasets/
 │   └── testing.py           helpers used by the tests
@@ -32,7 +35,9 @@ empowerher/backend/
 │   ├── urls.py          which URL shows which page (table of pages -> APIs inside)
 │   ├── views.py         renders the pages
 │   ├── templates/       one HTML file per page; base_app.html is the shared layout
-│   └── static/js/       paillier.js (encryption that runs in the browser)
+│   └── static/          js/: auth.js (login cookie + CSRF), vault-crypto.js (end-to-end
+│                        Idea Vault), paillier.js, pwa.js; img/: logo and app icons
+│                        templates/sw.js + manifest.webmanifest make it an installable app
 │
 └── datasets/            DATA the backend reads
     ├── raw/             original downloads (Census 2011, Ministry of MSME PDF)

@@ -2,9 +2,10 @@
 from django.urls import path
 
 from .views import (
-    ConfidentialIdeaListCreateView,
     ConfidentialIdeaDetailView,
+    ConfidentialIdeaListCreateView,
     OwnershipProofView,
+    VaultKeyView,
     VerifyProofView,
 )
 
@@ -13,6 +14,11 @@ urlpatterns = [
         "",
         ConfidentialIdeaListCreateView.as_view(),
         name="idea-list-create",
+    ),
+    path(
+        "key/",
+        VaultKeyView.as_view(),
+        name="idea-vault-key",
     ),
     path(
         "<int:pk>/",

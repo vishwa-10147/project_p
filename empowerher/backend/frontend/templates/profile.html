@@ -45,6 +45,10 @@
                 <option value="en">English</option>
                 <option value="te">Telugu</option>
                 <option value="hi">Hindi</option>
+                <option value="ta">Tamil</option>
+                <option value="kn">Kannada</option>
+                <option value="mr">Marathi</option>
+                <option value="bn">Bengali</option>
             </select>
         </div>
         <div class="actions field full"><button type="submit">Save profile</button></div>
@@ -138,7 +142,7 @@ document.getElementById("profileForm").addEventListener("submit", async function
     });
     try {
         const user = await api("/api/users/profile/", { method: "PATCH", body: body });
-        localStorage.setItem("empowerher_user", JSON.stringify(user));
+        EmpowerHerAuth.saveUser(user);
         fill(user);
         showMessage(message, "Profile saved.", "success");
     } catch (error) {
@@ -159,10 +163,10 @@ document.getElementById("passwordForm").addEventListener("submit", async functio
             method: "POST",
             body: {
                 current_password: document.getElementById("current_password").value,
-                new_password: document.getElementById("new_password").value
+                new_password: document.getElementById("new_password").value,
+                session: "cookie"
             }
         });
-        localStorage.setItem("empowerher_token", data.token);
         this.reset();
         showMessage(box, data.message, "success");
     } catch (error) {
@@ -199,8 +203,7 @@ document.getElementById("deleteForm").addEventListener("submit", async function 
             method: "POST",
             body: { password: document.getElementById("delete_password").value }
         });
-        localStorage.removeItem("empowerher_token");
-        localStorage.removeItem("empowerher_user");
+        EmpowerHerAuth.clear();
         window.location.href = "/";
     } catch (error) {
         showMessage(box, error.message, "error");
@@ -212,7 +215,7 @@ document.getElementById("deleteForm").addEventListener("submit", async function 
     const select = document.getElementById("state");
     select.appendChild(new Option("Select state", ""));
     states.states.forEach(function (s) { select.appendChild(new Option(s, s)); });
-    localStorage.setItem("empowerher_user", JSON.stringify(user));
+    EmpowerHerAuth.saveUser(user);
     fill(user);
     await loadDistricts();
 })().catch(function (e) { showMessage(message, e.message, "error"); });

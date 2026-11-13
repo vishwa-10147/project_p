@@ -39,6 +39,9 @@ class Document(models.Model):
     extracted_fields = models.JSONField(default=dict, blank=True)
     checks = models.JSONField(default=list, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+    # Set when the same document was found among those issued to the owner
+    # in DigiLocker (i.e. confirmed by the issuing department).
+    digilocker_verified_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -47,3 +50,21 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.get_doc_type_display()} - {self.owner_id}"
+
+
+class DigiLockerLink(models.Model):
+    """
+    What DigiLocker confirmed for a user: the documents issued to her, with
+    numbers masked. The DigiLocker access token is never stored.
+    """
+
+    owner = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="digilocker_link",
+    )
+    issued_documents = models.JSONField(default=list, blank=True)
+    connected_at = models.DateTimeField()
+
+    def __str__(self):
+        return f"DigiLocker - {self.owner_id}"

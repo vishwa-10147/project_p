@@ -7,9 +7,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from apps.business.models import BusinessIdea
-from config.testing import make_client, throttle_rates
 from apps.documents.models import Document
 from apps.idea_vault.models import ConfidentialIdea
+from config.testing import make_client, throttle_rates
 
 PASSWORD = "Str0ng-Pass-9876"
 
@@ -135,3 +135,134 @@ class DataControlTests(TestCase):
         self.assertFalse(BusinessIdea.objects.exists())
         self.assertFalse(ConfidentialIdea.objects.exists())
         self.assertFalse(Document.objects.exists())
+
+
+class CookieSessionTests(TestCase):
+    """The website keeps the login token in an HttpOnly cookie."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username="cookie", password=PASSWORD)
+        self.client = APIClient(enforce_csrf_checks=True)
+
+    def login(self):
+        return self.client.post("/api/users/login/", {
+            "username": "cookie", "password": PASSWORD, "session": "cookie",
+        }, format="json")
+
+    def csrf(self):
+        return {"HTTP_X_CSRFTOKEN": self.client.cookies["csrftoken"].value}
+
+    def test_login_sets_httponly_cookie_and_hides_token(self):
+        response = self.login()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("token", response.data)
+        auth = response.cookies["empowerher_auth"]
+        self.assertTrue(auth["httponly"])
+        self.assertEqual(auth["samesite"], "Lax")
+        self.assertEqual(auth.value, Token.objects.get(user=self.user).key)
+        self.assertFalse(response.cookies["empowerher_signed_in"]["httponly"])
+        self.assertIn("csrftoken", response.cookies)
+
+    def test_api_clients_still_get_the_token(self):
+        response = APIClient().post("/api/users/login/", {
+            "username": "cookie", "password": PASSWORD,
+        }, format="json")
+        self.assertIn("token", response.data)
+        self.assertNotIn("empowerher_auth", response.cookies)
+
+    def test_cookie_authenticates_reads(self):
+        self.login()
+        response = self.client.get("/api/users/profile/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["username"], "cookie")
+
+    def test_cookie_writes_need_csrf_token(self):
+        self.login()
+        body = {"first_name": "Asha"}
+        blocked = self.client.patch("/api/users/profile/", body, format="json")
+        self.assertEqual(blocked.status_code, 403)
+        self.assertIn("CSRF", str(blocked.data))
+        allowed = self.client.patch("/api/users/profile/", body, format="json",
+                                    **self.csrf())
+        self.assertEqual(allowed.status_code, 200)
+
+    def test_header_token_needs_no_csrf(self):
+        token = Token.objects.create(user=self.user)
+        client = APIClient(enforce_csrf_checks=True)
+        client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+        response = client.patch("/api/users/profile/", {"first_name": "Asha"},
+                                format="json")
+        self.assertEqual(response.status_code, 200)
+
+    def test_stale_cookie_never_blocks_login_or_public_pages(self):
+        self.client.cookies["empowerher_auth"] = "not-a-real-token"
+        self.assertEqual(self.client.get("/api/safety/resources/").status_code, 200)
+        self.assertEqual(self.client.get("/api/users/profile/").status_code, 401)
+        self.assertEqual(self.login().status_code, 200)
+
+    def test_logout_clears_cookies_and_token(self):
+        self.login()
+        response = self.client.post("/api/users/logout/", **self.csrf())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.cookies["empowerher_auth"].value, "")
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+        self.assertEqual(self.client.get("/api/users/profile/").status_code, 401)
+
+    def test_logout_works_after_session_expired(self):
+        self.client.cookies["empowerher_auth"] = "expired-or-unknown"
+        response = self.client.post("/api/users/logout/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.cookies["empowerher_auth"].value, "")
+
+    def test_password_change_renews_the_cookie(self):
+        self.login()
+        old = self.client.cookies["empowerher_auth"].value
+        response = self.client.post("/api/users/change-password/", {
+            "current_password": PASSWORD, "new_password": "An0ther-Pass-1234",
+            "session": "cookie",
+        }, format="json", **self.csrf())
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("token", response.data)
+        self.assertNotEqual(response.cookies["empowerher_auth"].value, old)
+        self.assertEqual(self.client.get("/api/users/profile/").status_code, 200)
+
+
+class ProfileEncryptionTests(TestCase):
+    def test_phone_and_city_are_encrypted_in_the_database(self):
+        from django.db import connection
+
+        user, client = make_client()
+        client.patch("/api/users/profile/", {
+            "phone_number": "9876543210", "city": "Hanamkonda",
+        }, format="json")
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT phone_number, city FROM users_entrepreneurprofile "
+                "WHERE user_id = %s", [user.id])
+            phone, city = cursor.fetchone()
+        for stored in (phone, city):
+            self.assertTrue(stored.startswith("gAAAAA"))
+        self.assertNotIn("9876543210", phone)
+        self.assertNotIn("Hanamkonda", city)
+        # The owner still sees plain text.
+        profile = client.get("/api/users/profile/").data["profile"]
+        self.assertEqual(profile["phone_number"], "9876543210")
+        self.assertEqual(profile["city"], "Hanamkonda")
+
+    def test_plain_text_lengths_are_still_limited(self):
+        _, client = make_client()
+        response = client.patch("/api/users/profile/", {
+            "phone_number": "1" * 16}, format="json")
+        self.assertEqual(response.status_code, 400)
+
+    def test_old_plain_text_rows_are_still_readable(self):
+        from django.db import connection
+
+        user, _ = make_client()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE users_entrepreneurprofile SET city = %s WHERE user_id = %s",
+                ["Warangal", user.id])
+        user.entrepreneur_profile.refresh_from_db()
+        self.assertEqual(user.entrepreneur_profile.city, "Warangal")

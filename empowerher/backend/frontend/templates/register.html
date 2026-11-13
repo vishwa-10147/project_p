@@ -3,6 +3,10 @@
 
 <head>
     <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#8e3b9d">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script src="{% static 'js/pwa.js' %}" defer></script>
 
     <meta charset="UTF-8">
 
@@ -449,6 +453,22 @@
                     Hindi
                 </option>
 
+                <option value="ta">
+                    Tamil
+                </option>
+
+                <option value="kn">
+                    Kannada
+                </option>
+
+                <option value="mr">
+                    Marathi
+                </option>
+
+                <option value="bn">
+                    Bengali
+                </option>
+
             </select>
 
 
@@ -480,6 +500,7 @@
     </div>
 
 
+<script src="{% static 'js/auth.js' %}"></script>
 <script>
 
 document.getElementById("registerForm").addEventListener(
@@ -571,7 +592,9 @@ document.getElementById("registerForm").addEventListener(
                         "Content-Type": "application/json"
                     },
 
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify(
+                        Object.assign({ session: "cookie" }, userData)
+                    )
                 }
             );
 
@@ -582,19 +605,10 @@ document.getElementById("registerForm").addEventListener(
             if (response.ok) {
 
                 /*
-                 * Save token returned by Django
+                 * The server has set the HttpOnly login cookie.
                  */
 
-                localStorage.setItem(
-                    "empowerher_token",
-                    data.token
-                );
-
-
-                localStorage.setItem(
-                    "empowerher_user",
-                    JSON.stringify(data.user)
-                );
+                EmpowerHerAuth.saveUser(data.user);
 
 
                 message.className =

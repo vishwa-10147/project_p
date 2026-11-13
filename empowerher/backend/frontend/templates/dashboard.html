@@ -3,6 +3,10 @@
 
 <head>
     <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#8e3b9d">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script src="{% static 'js/pwa.js' %}" defer></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -124,6 +128,17 @@
         .icon {
             font-size: 38px;
             margin-bottom: 15px;
+        }
+
+        .alert-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            background: #8e3b9d;
+            color: #fff;
+            font-size: 12px;
+            vertical-align: middle;
         }
 
         .module-card h2 {
@@ -273,7 +288,7 @@
             >
                 <div class="icon">🏛️</div>
 
-                <h2>Government Schemes</h2>
+                <h2>Government Schemes <span id="schemeAlertBadge" class="alert-badge" hidden></span></h2>
 
                 <p>
                     Discover government schemes and opportunities
@@ -428,21 +443,20 @@
 
     </main>
 
+    <script src="{% static 'js/auth.js' %}"></script>
     <script>
-        /* CHECK LOGIN */
+        /* CHECK LOGIN (the token itself is in an HttpOnly cookie) */
 
-        const token = localStorage.getItem("empowerher_token");
-
-        if (!token) {
+        if (!EmpowerHerAuth.signedIn()) {
             window.location.href = "/login/";
         }
 
         /* LOAD STORED USER */
 
         function loadStoredUser() {
-            const storedUser = localStorage.getItem("empowerher_user");
+            const storedUser = JSON.stringify(EmpowerHerAuth.user());
 
-            if (!storedUser) {
+            if (storedUser === "{}") {
                 document.getElementById("profileInfo").textContent =
                     "Profile information is not available.";
                 return;
@@ -549,25 +563,22 @@
 
         /* LOGOUT */
 
-        async function logout() {
-            try {
-                if (token) {
-                    await fetch("/api/users/logout/", {
-                        method: "POST",
-                        headers: {
-                            "Authorization": "Token " + token,
-                            "Content-Type": "application/json"
-                        }
-                    });
-                }
-            } catch (error) {
-                console.log("Logout request failed.");
-            } finally {
-                localStorage.removeItem("empowerher_token");
-                localStorage.removeItem("empowerher_user");
-                window.location.href = "/login/";
-            }
+        function logout() {
+            return EmpowerHerAuth.logout();
         }
+
+        /* SCHEME ALERTS BADGE */
+
+        EmpowerHerAuth.fetch("/api/schemes/alerts/")
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (data) {
+                if (data && data.unread) {
+                    const badge = document.getElementById("schemeAlertBadge");
+                    badge.textContent = data.unread + " new";
+                    badge.hidden = false;
+                }
+            })
+            .catch(function () { /* the dashboard works without it */ });
     </script>
 
 </body>

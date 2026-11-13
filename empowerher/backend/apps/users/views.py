@@ -1,13 +1,22 @@
+import json
+
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.authtoken.models import Token
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
+
+from config.authentication import (
+    clear_auth_cookies,
+    set_auth_cookies,
+    wants_cookie_session,
+)
 
 from .models import EntrepreneurProfile
 from .serializers import (
@@ -23,11 +32,24 @@ def new_token(user):
     return Token.objects.create(user=user)
 
 
+def signed_in_response(request, token, data, status_code=status.HTTP_200_OK):
+    """
+    The website (session="cookie") gets the token only as an HttpOnly
+    cookie; other API clients get it in the response body.
+    """
+    if wants_cookie_session(request):
+        response = Response(data, status=status_code)
+        return set_auth_cookies(request, response, token)
+    return Response({**data, "token": token.key}, status=status_code)
+
+
 class RegisterView(APIView):
     """
     Register a new EmpowerHer entrepreneur.
     """
 
+    # No authentication: a stale login cookie must never block login.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
@@ -46,14 +68,10 @@ class RegisterView(APIView):
                 user=user
             )
 
-            return Response(
-                {
-                    "message": "Registration successful.",
-                    "token": token.key,
-                    "user": UserSerializer(user).data,
-                },
-                status=status.HTTP_201_CREATED
-            )
+            return signed_in_response(request, token, {
+                "message": "Registration successful.",
+                "user": UserSerializer(user).data,
+            }, status.HTTP_201_CREATED)
 
         return Response(
             serializer.errors,
@@ -66,6 +84,8 @@ class LoginView(APIView):
     Authenticate an EmpowerHer entrepreneur.
     """
 
+    # No authentication: a stale login cookie must never block login.
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "auth"
@@ -101,14 +121,10 @@ class LoginView(APIView):
         # Issue a fresh token on every login so the expiry period restarts.
         token = new_token(user)
 
-        return Response(
-            {
-                "message": "Login successful.",
-                "token": token.key,
-                "user": UserSerializer(user).data,
-            },
-            status=status.HTTP_200_OK
-        )
+        return signed_in_response(request, token, {
+            "message": "Login successful.",
+            "user": UserSerializer(user).data,
+        })
 
 
 class ProfileView(APIView):
@@ -167,24 +183,29 @@ class ProfileView(APIView):
 
 class LogoutView(APIView):
     """
-    Logout the currently authenticated entrepreneur.
+    Logout: delete the token and clear the login cookies. Works even when
+    the session has already expired, so the browser is always signed out.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
+
+    def perform_authentication(self, request):
+        try:
+            request.user  # noqa: B018 - triggers authentication
+        except (AuthenticationFailed, PermissionDenied):
+            request._not_authenticated()
 
     def post(self, request):
 
-        try:
-            request.user.auth_token.delete()
-        except Token.DoesNotExist:
-            pass
+        if request.user.is_authenticated:
+            Token.objects.filter(user=request.user).delete()
 
-        return Response(
+        return clear_auth_cookies(Response(
             {
                 "message": "Logout successful."
             },
             status=status.HTTP_200_OK
-        )
+        ))
 
 
 class ChangePasswordView(APIView):
@@ -216,9 +237,8 @@ class ChangePasswordView(APIView):
         user.save()
         token = new_token(user)
 
-        return Response({
+        return signed_in_response(request, token, {
             "message": "Password changed. Other sessions were logged out.",
-            "token": token.key,
         })
 
 
@@ -260,12 +280,19 @@ class DataExportView(APIView):
 
         vault = []
         for item in user.confidential_ideas.all():
-            try:
-                text = decrypt_idea(item.encrypted_idea)
-            except ValueError:
+            entry = {"title": item.title, "encryption": item.encryption}
+            if item.encryption == "browser":
+                # End-to-end: the server cannot decrypt it. The ciphertext
+                # opens with the owner's vault passphrase.
+                entry["encrypted_payload"] = json.loads(item.encrypted_idea)
                 text = None
+            else:
+                try:
+                    text = decrypt_idea(item.encrypted_idea)
+                except ValueError:
+                    text = None
             vault.append({
-                "title": item.title,
+                **entry,
                 "idea": text,
                 "commitment": item.commitment,
                 "pedersen_commitment": item.pedersen_commitment,
@@ -281,9 +308,10 @@ class DataExportView(APIView):
                 serialise_document(d) for d in user.documents.all()
             ],
             "note": (
-                "Idea Vault witness secrets are never stored, so they are "
-                "not included. Download document files from the "
-                "Documents page."
+                "Idea Vault witness secrets are never stored in readable "
+                "form, so they are not included. End-to-end encrypted ideas "
+                "are included as ciphertext that only your vault passphrase "
+                "can open. Download document files from the Documents page."
             ),
         }
         response = Response(data)
@@ -311,6 +339,6 @@ class DeleteAccountView(APIView):
             )
         # Cascades to profile, ideas, vault entries, documents and token.
         request.user.delete()
-        return Response({
+        return clear_auth_cookies(Response({
             "message": "Your account and all its data were deleted."
-        })
+        }))

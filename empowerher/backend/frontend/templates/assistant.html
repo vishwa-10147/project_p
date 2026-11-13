@@ -33,7 +33,7 @@
 <section class="hero">
     <h1>AI Assistant 🤖</h1>
     <p>
-        Ask in English, Telugu or Hindi, by typing or by voice. The
+        Ask in English, Telugu, Hindi, Tamil, Kannada, Marathi or Bengali, by typing or by voice. The
         assistant answers from EmpowerHer's scheme, loan and safety data.
     </p>
 </section>
@@ -46,6 +46,10 @@
                 <option value="en">English</option>
                 <option value="te">తెలుగు (Telugu)</option>
                 <option value="hi">हिन्दी (Hindi)</option>
+                <option value="ta">தமிழ் (Tamil)</option>
+                <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                <option value="mr">मराठी (Marathi)</option>
+                <option value="bn">বাংলা (Bengali)</option>
             </select>
         </div>
         <div class="field">
@@ -78,19 +82,33 @@ const question = document.getElementById("question");
 const languageSelect = document.getElementById("language");
 const message = document.getElementById("message");
 const history = [];
-const SPEECH_LANG = { en: "en-IN", te: "te-IN", hi: "hi-IN" };
+const SPEECH_LANG = {
+    en: "en-IN", te: "te-IN", hi: "hi-IN", ta: "ta-IN", kn: "kn-IN", mr: "mr-IN", bn: "bn-IN"
+};
 const SUGGESTIONS = {
     en: ["Which schemes suit me?", "EMI for 5 lakh at 10% for 3 years",
          "How do I protect my idea?", "Someone cheated me online"],
     te: ["నాకు సరిపోయే ప్రభుత్వ పథకాలు ఏమిటి?", "EMI for 5 lakh at 10% for 3 years",
          "నా ఆలోచనను ఎలా రక్షించుకోవాలి?", "ఆన్‌లైన్‌లో మోసం జరిగింది"],
     hi: ["मेरे लिए कौन सी सरकारी योजनाएँ हैं?", "EMI for 5 lakh at 10% for 3 years",
-         "अपने विचार को गोपनीय कैसे रखूँ?", "मेरे साथ ऑनलाइन धोखा हुआ"]
+         "अपने विचार को गोपनीय कैसे रखूँ?", "मेरे साथ ऑनलाइन धोखा हुआ"],
+    ta: ["எனக்குப் பொருந்தும் அரசு திட்டங்கள் எவை?", "EMI for 5 lakh at 10% for 3 years",
+         "என் யோசனையை ரகசியமாக வைப்பது எப்படி?", "ஆன்லைனில் என்னை ஏமாற்றிவிட்டார்கள்"],
+    kn: ["ನನಗೆ ಸೂಕ್ತವಾದ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಯಾವುವು?", "EMI for 5 lakh at 10% for 3 years",
+         "ನನ್ನ ಆಲೋಚನೆಯನ್ನು ಗೌಪ್ಯವಾಗಿ ಇಡುವುದು ಹೇಗೆ?", "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ನನಗೆ ವಂಚನೆ ಆಗಿದೆ"],
+    mr: ["माझ्यासाठी कोणत्या सरकारी योजना आहेत?", "EMI for 5 lakh at 10% for 3 years",
+         "माझी कल्पना गुप्त कशी ठेवू?", "माझी ऑनलाइन फसवणूक झाली"],
+    bn: ["আমার জন্য কোন সরকারি প্রকল্প আছে?", "EMI for 5 lakh at 10% for 3 years",
+         "আমার ভাবনা গোপন রাখব কীভাবে?", "অনলাইনে আমাকে ঠকিয়েছে"]
 };
 const GREETING = {
     en: "Hello! Ask me about schemes, loans, your market, documents, idea protection or safety.",
     te: "నమస్కారం! పథకాలు, రుణాలు, మార్కెట్, పత్రాలు, ఆలోచన రక్షణ లేదా భద్రత గురించి అడగండి.",
-    hi: "नमस्ते! योजनाओं, लोन, बाज़ार, दस्तावेज़ों, विचार की सुरक्षा या सुरक्षा के बारे में पूछें।"
+    hi: "नमस्ते! योजनाओं, लोन, बाज़ार, दस्तावेज़ों, विचार की सुरक्षा या सुरक्षा के बारे में पूछें।",
+    ta: "வணக்கம்! திட்டங்கள், கடன்கள், சந்தை, ஆவணங்கள், யோசனைப் பாதுகாப்பு அல்லது பாதுகாப்பு பற்றிக் கேளுங்கள்.",
+    kn: "ನಮಸ್ಕಾರ! ಯೋಜನೆಗಳು, ಸಾಲ, ಮಾರುಕಟ್ಟೆ, ದಾಖಲೆಗಳು, ಆಲೋಚನೆ ರಕ್ಷಣೆ ಅಥವಾ ಸುರಕ್ಷತೆಯ ಬಗ್ಗೆ ಕೇಳಿ.",
+    mr: "नमस्कार! योजना, कर्ज, बाजार, कागदपत्रे, कल्पनेचे संरक्षण किंवा सुरक्षितता याबद्दल विचारा.",
+    bn: "নমস্কার! প্রকল্প, ঋণ, বাজার, নথিপত্র, ভাবনার সুরক্ষা বা নিরাপত্তা নিয়ে জিজ্ঞাসা করুন।"
 };
 
 function addBubble(role, text, meta, link) {
@@ -165,7 +183,11 @@ languageSelect.addEventListener("change", function () {
         chat.replaceChildren();
         addBubble("assistant", GREETING[languageSelect.value]);
     }
-    question.placeholder = { en: "Ask a question…", te: "మీ ప్రశ్న అడగండి…", hi: "अपना सवाल पूछें…" }[languageSelect.value];
+    question.placeholder = {
+        en: "Ask a question…", te: "మీ ప్రశ్న అడగండి…", hi: "अपना सवाल पूछें…",
+        ta: "உங்கள் கேள்வியைக் கேளுங்கள்…", kn: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ…",
+        mr: "तुमचा प्रश्न विचारा…", bn: "আপনার প্রশ্ন লিখুন…"
+    }[languageSelect.value];
 });
 
 /* Voice input via the browser's Web Speech API (Chrome, Edge, Safari). */

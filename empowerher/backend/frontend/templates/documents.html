@@ -38,6 +38,22 @@
     <div id="message" class="hidden" role="status"></div>
 </section>
 
+<section class="panel" id="digilockerPanel">
+    <h2>Verify with DigiLocker 🇮🇳</h2>
+    <p class="muted">
+        Documents in DigiLocker are issued directly by the government department, so
+        they are genuine. With your consent we read the list of documents issued to you
+        and mark a matching upload (for example your PAN) as <strong>verified by
+        DigiLocker</strong>. We keep only masked numbers, never your DigiLocker login.
+    </p>
+    <div id="digilockerStatus"></div>
+    <div class="actions">
+        <button type="button" id="digilockerConnect" class="hidden">Connect DigiLocker</button>
+        <button type="button" id="digilockerForget" class="secondary hidden">Forget DigiLocker data</button>
+    </div>
+    <div id="digilockerMessage" class="hidden" role="status"></div>
+</section>
+
 <section class="panel">
     <h2>Your documents</h2>
     <p class="muted">
@@ -70,6 +86,9 @@ function documentCard(doc) {
     tags.appendChild(el("span", "tag " + STATUS_TAG[doc.status], doc.status_label));
     tags.appendChild(el("span", "tag", "OCR confidence " + Math.round(doc.ocr_confidence * 100) + "%"));
     tags.appendChild(el("span", "tag green", "🔒 encrypted"));
+    if (doc.digilocker_verified_at) {
+        tags.appendChild(el("span", "tag green", "✅ verified by DigiLocker"));
+    }
     card.appendChild(tags);
 
     const fields = Object.entries(doc.extracted_fields);
@@ -113,9 +132,7 @@ async function loadDocuments() {
 
 async function downloadDocument(doc) {
     try {
-        const response = await fetch("/api/documents/" + doc.id + "/download/", {
-            headers: { "Authorization": "Token " + token }
-        });
+        const response = await EmpowerHerAuth.fetch("/api/documents/" + doc.id + "/download/");
         if (!response.ok) { throw new Error("Download failed."); }
         const url = URL.createObjectURL(await response.blob());
         const link = el("a");
@@ -167,5 +184,60 @@ document.getElementById("uploadForm").addEventListener("submit", async function 
 });
 
 loadDocuments().catch(function (e) { showMessage(message, e.message, "error"); });
+
+/* ---- DigiLocker ---- */
+const digilockerMessage = document.getElementById("digilockerMessage");
+const DIGILOCKER_RESULT = {
+    connected: ["Connected. Matching documents are now marked as verified by DigiLocker.", "success"],
+    cancelled: ["DigiLocker was cancelled. Nothing was shared.", "info"],
+    error: ["DigiLocker could not be reached or the link expired. Please try again.", "error"]
+};
+
+async function loadDigiLocker() {
+    const data = await api("/api/documents/digilocker/");
+    const box = document.getElementById("digilockerStatus");
+    box.replaceChildren();
+    if (!data.configured && !data.connected) {
+        box.appendChild(el("p", "hint",
+            "DigiLocker isn't switched on for this EmpowerHer server yet. It needs the " +
+            "server to be registered as a DigiLocker partner (see SETUP.md)."));
+    }
+    if (data.connected) {
+        box.appendChild(el("p", "", "Connected " + new Date(data.connected_at).toLocaleString("en-IN") +
+            ". Documents DigiLocker confirmed:"));
+        const list = el("ul");
+        data.issued_documents.forEach(function (d) {
+            list.appendChild(el("li", "", d.name + (d.issuer ? " (" + d.issuer + ")" : "") +
+                (d.masked_number ? " · " + d.masked_number : "")));
+        });
+        box.appendChild(list);
+    }
+    document.getElementById("digilockerConnect").classList.toggle("hidden", !data.configured);
+    document.getElementById("digilockerConnect").textContent = data.connected ? "Check DigiLocker again" : "Connect DigiLocker";
+    document.getElementById("digilockerForget").classList.toggle("hidden", !data.connected);
+}
+
+document.getElementById("digilockerConnect").addEventListener("click", async function () {
+    try {
+        const data = await api("/api/documents/digilocker/start/", { method: "POST" });
+        window.location.href = data.authorize_url;      // DigiLocker's consent page
+    } catch (error) { showMessage(digilockerMessage, error.message, "error"); }
+});
+
+document.getElementById("digilockerForget").addEventListener("click", async function () {
+    if (!confirm("Forget what DigiLocker confirmed? Your uploads stay, without the DigiLocker mark.")) { return; }
+    await api("/api/documents/digilocker/", { method: "DELETE" });
+    await Promise.all([loadDigiLocker(), loadDocuments()]);
+});
+
+(function showDigiLockerResult() {
+    const result = DIGILOCKER_RESULT[new URLSearchParams(location.search).get("digilocker")];
+    if (result) {
+        showMessage(digilockerMessage, result[0], result[1]);
+        history.replaceState(null, "", location.pathname);
+    }
+})();
+
+loadDigiLocker().catch(function (e) { showMessage(digilockerMessage, e.message, "error"); });
 </script>
 {% endblock %}

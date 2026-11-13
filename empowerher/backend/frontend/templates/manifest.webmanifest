@@ -1,0 +1,25 @@
+{% load static %}{
+  "name": "EmpowerHer",
+  "short_name": "EmpowerHer",
+  "description": "Privacy-preserving AI platform for women entrepreneurs: schemes, funding, market insight, document checks and an end-to-end encrypted Idea Vault.",
+  "id": "/",
+  "start_url": "/dashboard/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f5fb",
+  "theme_color": "#8e3b9d",
+  "lang": "en-IN",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {"src": "{% static 'img/icon-192.png' %}", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "{% static 'img/icon-512.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "{% static 'img/icon-maskable-512.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    {"src": "{% static 'img/logo.svg' %}", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}
+  ],
+  "shortcuts": [
+    {"name": "Safety helplines", "url": "/safety/", "icons": [{"src": "{% static 'img/icon-192.png' %}", "sizes": "192x192"}]},
+    {"name": "Assistant", "url": "/assistant/", "icons": [{"src": "{% static 'img/icon-192.png' %}", "sizes": "192x192"}]},
+    {"name": "Idea Vault", "url": "/vault/", "icons": [{"src": "{% static 'img/icon-192.png' %}", "sizes": "192x192"}]}
+  ]
+}

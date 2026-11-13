@@ -3,6 +3,10 @@
 
 <head>
     <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#8e3b9d">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    <script src="{% static 'js/pwa.js' %}" defer></script>
 
     <meta charset="UTF-8">
 
@@ -223,6 +227,7 @@
     </div>
 
 
+<script src="{% static 'js/auth.js' %}"></script>
 <script>
 
 document.getElementById("loginForm").addEventListener("submit", async function(event) {
@@ -250,7 +255,9 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
             body: JSON.stringify({
 
                 username: username,
-                password: password
+                password: password,
+                // Ask for an HttpOnly cookie instead of a token in the reply.
+                session: "cookie"
 
             })
 
@@ -263,17 +270,11 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
         if (response.ok) {
 
             /*
-             * Save authentication token.
-             * The dashboard can use this token to
-             * access protected APIs.
+             * The server has set the login cookie (HttpOnly, so scripts
+             * can't read it). Keep only the display details.
              */
 
-            localStorage.setItem("empowerher_token", data.token);
-
-            localStorage.setItem(
-                "empowerher_user",
-                JSON.stringify(data.user)
-            );
+            EmpowerHerAuth.saveUser(data.user);
 
 
             /*

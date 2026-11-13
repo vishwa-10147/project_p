@@ -1,26 +1,98 @@
 
+import json
+
+from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.views import APIView
+
 from config.authentication import (
     ExpiringTokenAuthentication as TokenAuthentication,
 )
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from rest_framework.permissions import AllowAny
-from rest_framework.throttling import ScopedRateThrottle
 
 from . import zkp
+from .e2e import (
+    E2EError,
+    clean_envelope,
+    clean_key_settings,
+    clean_pedersen_commitment,
+    public_commitment,
+)
 from .encryption import (
     create_commitment,
     decrypt_idea,
     encrypt_idea,
     verify_commitment,
 )
-from .models import ConfidentialIdea
+from .models import ConfidentialIdea, VaultKey
 
 MAX_CONTEXT_LENGTH = 300
+
+
+def bad_request(message):
+    return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def key_settings(vault_key):
+    return {
+        "configured": True,
+        "salt": vault_key.salt,
+        "iterations": vault_key.iterations,
+        "key_check": json.loads(vault_key.key_check),
+        "created_at": vault_key.created_at.isoformat(),
+    }
+
+
+class VaultKeyView(APIView):
+    """
+    The public settings of the owner's end-to-end vault key (salt,
+    iteration count, encrypted check value). The passphrase and the key
+    never reach the server.
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        vault_key = VaultKey.objects.filter(owner=request.user).first()
+        if vault_key is None:
+            return Response({"configured": False})
+        return Response(key_settings(vault_key))
+
+    def post(self, request):
+        try:
+            settings = clean_key_settings(request.data)
+        except E2EError as error:
+            return bad_request(str(error))
+
+        existing = VaultKey.objects.filter(owner=request.user).first()
+        if existing is not None:
+            # Replacing the key would make existing ideas unreadable, so
+            # it's only allowed while no end-to-end idea uses it.
+            if request.user.confidential_ideas.filter(encryption="browser").exists():
+                return Response(
+                    {"error": "Your vault passphrase is already set. Delete "
+                              "your end-to-end ideas before choosing a new one."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            existing.delete()
+
+        vault_key = VaultKey.objects.create(owner=request.user, **settings)
+        return Response(key_settings(vault_key), status=status.HTTP_201_CREATED)
+
+
+def idea_summary(item):
+    return {
+        "id": item.id,
+        "title": item.title,
+        "encryption": item.encryption,
+        "commitment": item.commitment,
+        "pedersen_commitment": item.pedersen_commitment,
+        "created_at": item.created_at.isoformat(),
+    }
 
 
 class ConfidentialIdeaListCreateView(APIView):
@@ -36,20 +108,63 @@ class ConfidentialIdeaListCreateView(APIView):
             owner=request.user
         ).order_by("-created_at")
 
-        results = [
-            {
-                "id": item.id,
-                "title": item.title,
-                "commitment": item.commitment,
-                "pedersen_commitment": item.pedersen_commitment,
-                "created_at": item.created_at.isoformat(),
-            }
-            for item in ideas
-        ]
+        results = [idea_summary(item) for item in ideas]
 
         return Response({"ideas": results})
 
     def post(self, request):
+        if "encrypted_payload" in request.data:
+            return self.create_end_to_end(request)
+        return self.create_server_encrypted(request)
+
+    @staticmethod
+    def clean_title(title):
+        if not isinstance(title, str) or not title.strip():
+            raise E2EError("A title is required.")
+        if len(title.strip()) > 150:
+            raise E2EError("The title must be 150 characters or fewer.")
+        return title.strip()
+
+    def create_end_to_end(self, request):
+        """
+        End-to-end: the browser already encrypted the idea (and its witness)
+        and computed the Pedersen commitment. The server stores ciphertext
+        it cannot read.
+        """
+        if not VaultKey.objects.filter(owner=request.user).exists():
+            return bad_request("Set your vault passphrase first.")
+        try:
+            title = self.clean_title(request.data.get("title"))
+            envelope = clean_envelope(request.data.get("encrypted_payload"))
+            pedersen = clean_pedersen_commitment(
+                request.data.get("pedersen_commitment")
+            )
+        except E2EError as error:
+            return bad_request(str(error))
+
+        try:
+            with transaction.atomic():
+                saved_idea = ConfidentialIdea.objects.create(
+                    owner=request.user,
+                    title=title,
+                    encrypted_idea=envelope,
+                    encryption="browser",
+                    commitment=public_commitment(pedersen),
+                    pedersen_commitment=pedersen,
+                )
+        except IntegrityError:
+            return bad_request("This commitment is already registered.")
+
+        return Response(
+            {
+                "message": "Idea encrypted in your browser and registered.",
+                **idea_summary(saved_idea),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def create_server_encrypted(self, request):
+        """Older flow, kept for API clients: the server encrypts the idea."""
         title = request.data.get("title")
         idea = request.data.get("idea")
 
@@ -130,6 +245,14 @@ class ConfidentialIdeaDetailView(APIView):
     def get(self, request, pk):
         item = self.get_owned_idea(request, pk)
 
+        if item.encryption == "browser":
+            # Only the owner's browser can decrypt this.
+            return Response({
+                **idea_summary(item),
+                "encrypted_payload": json.loads(item.encrypted_idea),
+                "updated_at": item.updated_at.isoformat(),
+            })
+
         try:
             original_idea = decrypt_idea(item.encrypted_idea)
         except ValueError:
@@ -145,12 +268,8 @@ class ConfidentialIdeaDetailView(APIView):
 
         return Response(
             {
-                "id": item.id,
-                "title": item.title,
+                **idea_summary(item),
                 "idea": original_idea,
-                "commitment": item.commitment,
-                "pedersen_commitment": item.pedersen_commitment,
-                "created_at": item.created_at.isoformat(),
                 "updated_at": item.updated_at.isoformat(),
             }
         )
@@ -174,6 +293,11 @@ class OwnershipProofView(APIView):
 
     def post(self, request, pk):
         item = get_object_or_404(ConfidentialIdea, pk=pk, owner=request.user)
+        if item.encryption == "browser":
+            return bad_request(
+                "This idea is end-to-end encrypted: create its proof in your "
+                "browser on the Idea Vault page."
+            )
         witness = request.data.get("witness_secret")
         context = request.data.get("context")
 

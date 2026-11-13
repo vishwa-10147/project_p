@@ -82,3 +82,57 @@ class AssistantTests(TestCase):
                                  format="json").status_code
                      for _ in range(3)]
         self.assertEqual(codes, [200, 200, 429])
+
+
+class MoreLanguagesTests(TestCase):
+    """Tamil, Kannada, Marathi and Bengali (the page's suggested questions)."""
+
+    SUGGESTIONS = {
+        "ta": ["எனக்குப் பொருந்தும் அரசு திட்டங்கள் எவை?",
+               "என் யோசனையை ரகசியமாக வைப்பது எப்படி?",
+               "ஆன்லைனில் என்னை ஏமாற்றிவிட்டார்கள்"],
+        "kn": ["ನನಗೆ ಸೂಕ್ತವಾದ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಯಾವುವು?",
+               "ನನ್ನ ಆಲೋಚನೆಯನ್ನು ಗೌಪ್ಯವಾಗಿ ಇಡುವುದು ಹೇಗೆ?",
+               "ಆನ್‌ಲೈನ್‌ನಲ್ಲಿ ನನಗೆ ವಂಚನೆ ಆಗಿದೆ"],
+        "mr": ["माझ्यासाठी कोणत्या सरकारी योजना आहेत?",
+               "माझी कल्पना गुप्त कशी ठेवू?",
+               "माझी ऑनलाइन फसवणूक झाली"],
+        "bn": ["আমার জন্য কোন সরকারি প্রকল্প আছে?",
+               "আমার ভাবনা গোপন রাখব কীভাবে?",
+               "অনলাইনে আমাকে ঠকিয়েছে"],
+    }
+
+    def test_suggested_questions_find_the_right_topic(self):
+        for language, (schemes, privacy, safety) in self.SUGGESTIONS.items():
+            with self.subTest(language=language):
+                self.assertEqual(detect_intent(schemes), "schemes")
+                self.assertEqual(detect_intent(privacy), "privacy")
+                self.assertEqual(detect_intent(safety), "safety")
+
+    def test_emergency_words(self):
+        for message in ("நான் ஆபத்தில் இருக்கிறேன்", "ನಾನು ಅಪಾಯದಲ್ಲಿದ್ದೇನೆ",
+                        "मला वाचवा", "আমি বিপদে আছি"):
+            with self.subTest(message=message):
+                self.assertEqual(detect_intent(message), "emergency")
+
+    @mock.patch.dict(os.environ, {"OPENAI_API_KEY": ""})
+    def test_every_language_has_every_answer(self):
+        from apps.assistant.engine import LANGUAGES, TEXT
+        keys = set(TEXT["en"])
+        for language in LANGUAGES:
+            with self.subTest(language=language):
+                self.assertEqual(set(TEXT[language]), keys)
+                result = answer("EMI for 5 lakh at 10% for 3 years", language=language)
+                self.assertEqual(result["language"], language)
+                self.assertIn("16,134", result["reply"])
+
+    def test_short_english_words_still_match_whole_words(self):
+        self.assertEqual(detect_intent("hi there"), "greeting")
+        self.assertNotEqual(detect_intent("this is about something"), "greeting")
+
+    def test_profile_accepts_new_languages(self):
+        _, client = make_client()
+        response = client.patch("/api/users/profile/", {"preferred_language": "bn"},
+                                format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["profile"]["preferred_language"], "bn")
