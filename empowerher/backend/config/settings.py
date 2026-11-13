@@ -9,6 +9,7 @@ A Privacy-Preserving AI Framework for Women Entrepreneurship.
 import os
 from pathlib import Path
 
+import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,11 +39,15 @@ def env_list(name, default=""):
 
 
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or DEV_SECRET_KEY
-DEBUG = env_bool("DJANGO_DEBUG", True)
+# Debug mode is OFF unless DJANGO_DEBUG=True is set (setup.sh / setup.bat
+# write it into the local .env), so a forgotten setting never exposes
+# debug pages in production.
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
 if not DEBUG and SECRET_KEY == DEV_SECRET_KEY:
     raise ImproperlyConfigured(
-        "Set DJANGO_SECRET_KEY before running with DJANGO_DEBUG=False."
+        "Set DJANGO_SECRET_KEY for production, or set DJANGO_DEBUG=True "
+        "in backend/.env for local development."
     )
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 
@@ -111,11 +116,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+# SQLite by default (no setup needed). For production set DATABASE_URL,
+# e.g. postgres://user:password@host:5432/empowerher
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.parse(
+        # An empty DATABASE_URL also means SQLite.
+        os.environ.get("DATABASE_URL") or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=int(os.environ.get("DJANGO_DB_CONN_MAX_AGE", "60")),
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -183,10 +192,24 @@ REST_FRAMEWORK = {
         "config.authentication.ExpiringTokenAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
-    # Rate limits for login/registration and public endpoints.
+    # Every endpoint gets a generous overall limit (per IP for visitors,
+    # per account for logged-in users); expensive endpoints get tighter
+    # scoped limits on top of that.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
     "DEFAULT_THROTTLE_RATES": {
+        "anon": os.environ.get("DJANGO_ANON_RATE", "120/minute"),
+        "user": os.environ.get("DJANGO_USER_RATE", "600/minute"),
+        # Login and registration.
         "auth": os.environ.get("DJANGO_AUTH_RATE", "10/minute"),
+        # Public proof verification.
         "public": os.environ.get("DJANGO_PUBLIC_RATE", "60/minute"),
+        # AI assistant and idea validation (may call the OpenAI API).
+        "ai": os.environ.get("DJANGO_AI_RATE", "20/minute"),
+        # Document uploads (OCR is CPU-heavy).
+        "uploads": os.environ.get("DJANGO_UPLOAD_RATE", "10/minute"),
     },
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
