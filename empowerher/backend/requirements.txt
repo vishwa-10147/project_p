@@ -13,7 +13,7 @@ psycopg[binary]==3.3.9
 
 # Production serving (gunicorn runs on Linux/macOS; on Windows use runserver
 # for local use or deploy on Linux)
-whitenoise==6.11.0
+whitenoise==6.12.0
 gunicorn==23.0.0; sys_platform != "win32"
 
 # Encryption (Fernet for ideas and documents)
