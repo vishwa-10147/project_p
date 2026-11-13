@@ -63,9 +63,16 @@ services:
     volumes:
       - app-data:/app/data
     entrypoint: []
-    command: ["sh", "-c", "while true; do python manage.py send_scheme_alerts; sleep 86400; done"]
+    command:
+      - sh
+      - -c
+      - while true; do python manage.py send_scheme_alerts && touch /tmp/alerts-ok; sleep 86400; done
+    # Healthy once an alert run has completed.
     healthcheck:
-      disable: true
+      test: ["CMD", "test", "-f", "/tmp/alerts-ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
 volumes:
   db-data:
