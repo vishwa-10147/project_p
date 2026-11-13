@@ -1,6 +1,7 @@
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 from .engine import answer
@@ -10,6 +11,9 @@ MAX_MESSAGE_LENGTH = 1000
 
 class ChatView(APIView):
     permission_classes = [IsAuthenticated]
+    # Each question may call the OpenAI API, so limit how often it is used.
+    throttle_classes = [UserRateThrottle, ScopedRateThrottle]
+    throttle_scope = "ai"
 
     def post(self, request):
         message = request.data.get("message")

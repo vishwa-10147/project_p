@@ -4,9 +4,11 @@ from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from config.crypto import decrypt_bytes, encrypt_bytes
+from config.throttles import WriteScopedRateThrottle
 
 from .models import Document
 from .ocr import extract_text
@@ -52,6 +54,9 @@ def decide_status(text, checks, confidence):
 class DocumentListCreateView(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+    # OCR is CPU-heavy: limit uploads, but never listing.
+    throttle_classes = [UserRateThrottle, WriteScopedRateThrottle]
+    throttle_scope = "uploads"
 
     def get(self, request):
         documents = Document.objects.filter(owner=request.user)

@@ -9,6 +9,7 @@ from config.authentication import (
 )
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 from apps.market.analysis import analyse
@@ -319,6 +320,9 @@ def validate_business_data(data):
 class BusinessIdeaValidationView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
+    # Validation may call the OpenAI API, so limit how often it is used.
+    throttle_classes = [UserRateThrottle, ScopedRateThrottle]
+    throttle_scope = "ai"
 
     def post(self, request):
         cleaned, error = validate_business_data(request.data)
