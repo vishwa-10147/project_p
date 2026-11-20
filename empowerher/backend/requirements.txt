@@ -13,22 +13,22 @@ psycopg[binary]==3.3.9
 
 # Production serving (gunicorn runs on Linux/macOS; on Windows use runserver
 # for local use or deploy on Linux)
-whitenoise==6.11.0
+whitenoise==6.12.0
 gunicorn==23.0.0; sys_platform != "win32"
 
 # Encryption (Fernet for ideas and documents)
 cryptography==50.0.2
 
 # Data, recommendations and market analysis
-numpy==2.5.4
+numpy==2.5.5
 pandas==3.1.1
 scikit-learn==1.9.1
 
 # Document OCR and PDF text extraction
 pillow==13.0.0
-pypdf==7.0.1
-onnxruntime==1.31.1
+pypdf==7.1.0
+onnxruntime==1.32.0
 rapidocr-onnxruntime==1.4.4
 
 # Optional AI recommendations and assistant (used only if OPENAI_API_KEY is set)
-openai==3.49.0
+openai==3.53.0
